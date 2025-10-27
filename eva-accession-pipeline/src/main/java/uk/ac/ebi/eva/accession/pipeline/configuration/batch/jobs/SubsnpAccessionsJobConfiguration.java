@@ -29,18 +29,17 @@ import org.springframework.context.annotation.Configuration;
 
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSIONING_SHUTDOWN_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.BUILD_REPORT_STEP;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_JOB;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP_ACCESSION_STEP;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_JOB;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_JOB_LISTENER;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_STEP;
 
 @Configuration
 @EnableBatchProcessing
-public class CreateSubsnpAccessionsJobConfiguration {
+public class SubsnpAccessionsJobConfiguration {
 
     @Autowired
-    @Qualifier(CREATE_SUBSNP_ACCESSION_STEP)
-    private Step createSubsnpAccessionStep;
+    @Qualifier(SUBSNP_ACCESSION_STEP)
+    private Step subsnpAccessionStep;
 
     @Autowired
     @Qualifier(BUILD_REPORT_STEP)
@@ -51,21 +50,16 @@ public class CreateSubsnpAccessionsJobConfiguration {
     private Step accessioningShutdownStep;
 
     @Autowired
-    @Qualifier(QC_SUBSNP_ACCESSION_STEP)
-    private Step qcSubsnpAccessionStep;
-
-    @Autowired
     @Qualifier(SUBSNP_ACCESSION_JOB_LISTENER)
     private JobExecutionListener subsnpAccessionJobListener;
 
-    @Bean(CREATE_SUBSNP_ACCESSION_JOB)
-    public Job createSubsnpAccessionJob(JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(CREATE_SUBSNP_ACCESSION_JOB)
+    @Bean(SUBSNP_ACCESSION_JOB)
+    public Job subsnpAccessionJob(JobBuilderFactory jobBuilderFactory) {
+        return jobBuilderFactory.get(SUBSNP_ACCESSION_JOB)
                 .incrementer(new RunIdIncrementer())
-                .start(createSubsnpAccessionStep)
+                .start(subsnpAccessionStep)
                 .next(accessioningShutdownStep)
                 .next(buildReportStep)
-                .next(qcSubsnpAccessionStep)
                 .listener(subsnpAccessionJobListener)
                 .build();
     }

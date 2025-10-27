@@ -69,8 +69,8 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSIONING_SHUTDOWN_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.BUILD_REPORT_STEP;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUBSNP_ACCESSION_STEP;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_STEP;
+import static uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration.JOB_LAUNCHER_SUBSNP_ACCESSION_JOB;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
@@ -99,6 +99,7 @@ public class CreateSubsnpAccessionsRecoverStateTest {
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
     @Autowired
+    @Qualifier(JOB_LAUNCHER_SUBSNP_ACCESSION_JOB)
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
@@ -207,8 +208,8 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertEquals(4, blockRepository.count());
 
         /*
-        * Accessions that were already present in mongo but not updated in block's last committed were recovered.
-        * */
+         * Accessions that were already present in mongo but not updated in block's last committed were recovered.
+         * */
 
         // Block Recovered - (No accession used from this block as entire block was already used)
         ContiguousIdBlock block1 = blockRepository.findById(1l).get();
@@ -250,12 +251,11 @@ public class CreateSubsnpAccessionsRecoverStateTest {
     }
 
     private void assertStepNames(Collection<StepExecution> stepExecutions) {
-        assertEquals(4, stepExecutions.size());
+        assertEquals(3, stepExecutions.size());
         Iterator<StepExecution> iterator = stepExecutions.iterator();
-        assertEquals(CREATE_SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
+        assertEquals(SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
         assertEquals(ACCESSIONING_SHUTDOWN_STEP, iterator.next().getStepName());
         assertEquals(BUILD_REPORT_STEP, iterator.next().getStepName());
-        assertEquals(CHECK_SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
     }
 
     private void assertCountsInMongo(int expected) {
@@ -273,40 +273,40 @@ public class CreateSubsnpAccessionsRecoverStateTest {
 
         List<SubmittedVariantEntity> submittedVariantEntityList = new ArrayList<>();
         // Entries for 1st block
-        for(long i=5000000000l;i<=5000000029l;i++){
+        for (long i = 5000000000l; i <= 5000000029l; i++) {
             SubmittedVariant model = new SubmittedVariant("assembly", 1111,
                     "project", "contig", 100, "A", "T",
                     null, false, false, false,
                     false, null);
-            SubmittedVariantEntity entity = new SubmittedVariantEntity(i, "hash"+i, model, 1);
+            SubmittedVariantEntity entity = new SubmittedVariantEntity(i, "hash" + i, model, 1);
             submittedVariantEntityList.add(entity);
         }
 
         // Entries for 2nd block
-        for(long i=5000000030l;i<=5000000034l;i++){
+        for (long i = 5000000030l; i <= 5000000034l; i++) {
             SubmittedVariant model = new SubmittedVariant("assembly", 1111,
                     "project", "contig", 100, "A", "T",
                     null, false, false, false,
                     false, null);
-            SubmittedVariantEntity entity = new SubmittedVariantEntity(i, "hash"+i, model, 1);
+            SubmittedVariantEntity entity = new SubmittedVariantEntity(i, "hash" + i, model, 1);
             submittedVariantEntityList.add(entity);
         }
-        for(long i=5000000040l;i<=5000000059l;i++){
+        for (long i = 5000000040l; i <= 5000000059l; i++) {
             SubmittedVariant model = new SubmittedVariant("assembly", 1111,
                     "project", "contig", 100, "A", "T",
                     null, false, false, false,
                     false, null);
-            SubmittedVariantEntity entity = new SubmittedVariantEntity(i, "hash"+i, model, 1);
+            SubmittedVariantEntity entity = new SubmittedVariantEntity(i, "hash" + i, model, 1);
             submittedVariantEntityList.add(entity);
         }
 
         // Entries for 3rd block
-        for(long i=5000000060l;i<=5000000089l;i++){
+        for (long i = 5000000060l; i <= 5000000089l; i++) {
             SubmittedVariant model = new SubmittedVariant("assembly", 1111,
                     "project", "contig", 100, "A", "T",
                     null, false, false, false,
                     false, null);
-            SubmittedVariantEntity entity = new SubmittedVariantEntity(i, "hash"+i, model, 1);
+            SubmittedVariantEntity entity = new SubmittedVariantEntity(i, "hash" + i, model, 1);
             submittedVariantEntityList.add(entity);
         }
 

@@ -22,9 +22,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -49,7 +51,8 @@ import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_STEP;
+import static uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration.JOB_LAUNCHER_SUBSNP_ACCESSION_JOB;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
@@ -61,6 +64,7 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
     private static final long EXPECTED_CONTIGS = 1;
 
     @Autowired
+    @Qualifier(JOB_LAUNCHER_SUBSNP_ACCESSION_JOB)
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
@@ -112,8 +116,11 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
     @Test
     @DirtiesContext
     public void executeStep() throws IOException {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(CREATE_SUBSNP_ACCESSION_STEP);
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(SUBSNP_ACCESSION_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+
+        jobExecution.getStepExecutions().stream().filter(stepExec -> stepExec.getStepName().equals(SUBSNP_ACCESSION_STEP))
+                .forEach(stepExec -> assertEquals(ExitStatus.COMPLETED, stepExec.getExitStatus()));
 
         long numVariantsInDatabase = repository.count();
         assertEquals(EXPECTED_VARIANTS, numVariantsInDatabase);

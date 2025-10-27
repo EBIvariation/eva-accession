@@ -27,12 +27,18 @@ public class BeanNames {
     public static final String ACCESSION_WRITER = "ACCESSION_WRITER";
 
     public static final String CREATE_SUBSNP_ACCESSION_STEP = "CREATE_SUBSNP_ACCESSION_STEP";
-    
-    public static final String CHECK_SUBSNP_ACCESSION_STEP = "CHECK_SUBSNP_ACCESSION_STEP";
+
+    public static final String SUBSNP_ACCESSION_STEP = "SUBSNP_ACCESSION_STEP";
+
+    public static final String QC_SUBSNP_ACCESSION_STEP = "QC_SUBSNP_ACCESSION_STEP";
 
     public static final String BUILD_REPORT_STEP = "BUILD_REPORT_STEP";
 
     public static final String CREATE_SUBSNP_ACCESSION_JOB = "CREATE_SUBSNP_ACCESSION_JOB";
+
+    public static final String SUBSNP_ACCESSION_JOB = "SUBSNP_ACCESSION_JOB";
+
+    public static final String QC_SUBSNP_ACCESSION_JOB = "QC_SUBSNP_ACCESSION_JOB";
 
     public static final String SUBSNP_ACCESSION_STEP_LISTENER = "SUBSNP_ACCESSION_STEP_LISTENER";
 

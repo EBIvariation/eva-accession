@@ -16,71 +16,65 @@
 
 package uk.ac.ebi.eva.accession.pipeline.test;
 
-import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
+import org.springframework.batch.core.Job;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.batch.BatchProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.transaction.PlatformTransactionManager;
-
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.AccessionWriterConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.VcfReaderConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.CreateSubsnpAccessionsJobConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.QCSubsnpAccessionsJobConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.SubsnpAccessionsJobConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners.SubsnpAccessionJobExecutionListener;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.policies.InvalidVariantSkipPolicyConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.processors.VariantProcessorConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.VcfReaderConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.CreateSubsnpAccessionsJobConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.AccessioningShutdownStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.BuildReportStepConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.CheckSubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.CreateSubsnpAccessionsStepConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.QCSubsnpAccessionsStepConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.SubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.runner.EvaAccessionJobLauncherCommandLineRunner;
-import uk.ac.ebi.eva.commons.batch.configuration.SpringBoot1CompatibilityConfiguration;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
-import javax.persistence.EntityManagerFactory;
-import javax.sql.DataSource;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP_ACCESSION_JOB;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_JOB;
 
 @EnableAutoConfiguration
-@Import({CreateSubsnpAccessionsJobConfiguration.class,
-         CreateSubsnpAccessionsStepConfiguration.class, CheckSubsnpAccessionsStepConfiguration.class,
-         VcfReaderConfiguration.class, VariantProcessorConfiguration.class, AccessionWriterConfiguration.class,
-         BuildReportStepConfiguration.class, AccessioningShutdownStepConfiguration.class,
-         ChunkSizeCompletionPolicyConfiguration.class, InvalidVariantSkipPolicyConfiguration.class,
+@Import({CreateSubsnpAccessionsJobConfiguration.class, CreateSubsnpAccessionsStepConfiguration.class,
+        SubsnpAccessionsJobConfiguration.class, SubsnpAccessionsStepConfiguration.class,
+        QCSubsnpAccessionsJobConfiguration.class, QCSubsnpAccessionsStepConfiguration.class,
+        VcfReaderConfiguration.class, VariantProcessorConfiguration.class, AccessionWriterConfiguration.class,
+        BuildReportStepConfiguration.class, AccessioningShutdownStepConfiguration.class,
+        ChunkSizeCompletionPolicyConfiguration.class, InvalidVariantSkipPolicyConfiguration.class,
         EvaAccessionJobLauncherCommandLineRunner.class, SubsnpAccessionJobExecutionListener.class})
 public class BatchTestConfiguration {
+    public static final String JOB_LAUNCHER_SUBSNP_ACCESSION_JOB = "JOB_LAUNCHER_SUBSNP_ACCESSION_JOB";
+    public static final String JOB_LAUNCHER_QC_SUBSNP_ACCESSION_JOB = "JOB_LAUNCHER_QC_SUBSNP_ACCESSION_JOB";
 
-    @Autowired
-    private BatchProperties properties;
-
-    @Autowired
-    private ResourceLoader resourceLoader;
-
-    @Autowired
-    private DataSource dataSource;
-
-    @Autowired
-    private EntityManagerFactory entityManagerFactory;
-
-    @Autowired
-    private PlatformTransactionManager platformTransactionManager;
-
-    @Bean
-    public BatchConfigurer configurer(DataSource dataSource, EntityManagerFactory entityManagerFactory)
-            throws Exception {
-        return SpringBoot1CompatibilityConfiguration.getSpringBoot1CompatibleBatchConfigurer(dataSource,
-                entityManagerFactory);
+    @Bean(JOB_LAUNCHER_SUBSNP_ACCESSION_JOB)
+    public JobLauncherTestUtils jobLauncherTestUtilsCreate() {
+        return new JobLauncherTestUtils() {
+            @Override
+            @Autowired
+            public void setJob(@Qualifier(SUBSNP_ACCESSION_JOB) Job job) {
+                super.setJob(job);
+            }
+        };
     }
 
-    @Bean
-    public JobLauncherTestUtils jobLauncherTestUtils(BatchConfigurer configurer) throws Exception {
-        JobLauncherTestUtils jobLauncherTestUtils = new JobLauncherTestUtils();
-        jobLauncherTestUtils.setJobLauncher(configurer.getJobLauncher());
-        jobLauncherTestUtils.setJobRepository(configurer.getJobRepository());
-        return jobLauncherTestUtils;
+    @Bean(JOB_LAUNCHER_QC_SUBSNP_ACCESSION_JOB)
+    public JobLauncherTestUtils jobLauncherTestUtilsQC() {
+        return new JobLauncherTestUtils() {
+            @Override
+            @Autowired
+            public void setJob(@Qualifier(QC_SUBSNP_ACCESSION_JOB) Job job) {
+                super.setJob(job);
+            }
+        };
     }
 
     @Bean
