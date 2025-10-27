@@ -37,14 +37,14 @@ import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP_ACCESSION_STEP;
-import static uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration.JOB_LAUNCHER_QC_SUBSNP_JOB;
+import static uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration.JOB_LAUNCHER_QC_SUBSNP_ACCESSION_JOB;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:qc-accession-pipeline-test.properties")
 public class QCSubsnpAccessionsStepConfigurationTest {
     @Autowired
-    @Qualifier(JOB_LAUNCHER_QC_SUBSNP_JOB)
+    @Qualifier(JOB_LAUNCHER_QC_SUBSNP_ACCESSION_JOB)
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
@@ -65,7 +65,7 @@ public class QCSubsnpAccessionsStepConfigurationTest {
         jobExecution = jobLauncherTestUtils.launchStep(QC_SUBSNP_ACCESSION_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
-        jobExecution.getStepExecutions().stream().filter(stepExec->stepExec.getStepName().equals(QC_SUBSNP_ACCESSION_STEP))
+        jobExecution.getStepExecutions().stream().filter(stepExec -> stepExec.getStepName().equals(QC_SUBSNP_ACCESSION_STEP))
                 .forEach(stepExec -> assertEquals(ExitStatus.COMPLETED, stepExec.getExitStatus()));
     }
 }

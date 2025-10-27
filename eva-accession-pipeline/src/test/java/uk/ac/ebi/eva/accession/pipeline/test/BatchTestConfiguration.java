@@ -27,6 +27,7 @@ import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.AccessionWriterCo
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.VcfReaderConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.CreateSubsnpAccessionsJobConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.QCSubsnpAccessionsJobConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.SubsnpAccessionsJobConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners.SubsnpAccessionJobExecutionListener;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.policies.InvalidVariantSkipPolicyConfiguration;
@@ -35,35 +36,37 @@ import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.AccessioningSh
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.BuildReportStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.CreateSubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.QCSubsnpAccessionsStepConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.SubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.runner.EvaAccessionJobLauncherCommandLineRunner;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_JOB;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP_ACCESSION_JOB;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_JOB;
 
 @EnableAutoConfiguration
-@Import({CreateSubsnpAccessionsJobConfiguration.class, QCSubsnpAccessionsJobConfiguration.class,
-        CreateSubsnpAccessionsStepConfiguration.class, QCSubsnpAccessionsStepConfiguration.class,
+@Import({CreateSubsnpAccessionsJobConfiguration.class, CreateSubsnpAccessionsStepConfiguration.class,
+        SubsnpAccessionsJobConfiguration.class, SubsnpAccessionsStepConfiguration.class,
+        QCSubsnpAccessionsJobConfiguration.class, QCSubsnpAccessionsStepConfiguration.class,
         VcfReaderConfiguration.class, VariantProcessorConfiguration.class, AccessionWriterConfiguration.class,
         BuildReportStepConfiguration.class, AccessioningShutdownStepConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class, InvalidVariantSkipPolicyConfiguration.class,
         EvaAccessionJobLauncherCommandLineRunner.class, SubsnpAccessionJobExecutionListener.class})
 public class BatchTestConfiguration {
-    public static final String JOB_LAUNCHER_CREATE_SUBSNP_JOB = "JOB_LAUNCHER_CREATE_SUBSNP_JOB";
-    public static final String JOB_LAUNCHER_QC_SUBSNP_JOB = "JOB_LAUNCHER_QC_SUBSNP_JOB";
+    public static final String JOB_LAUNCHER_SUBSNP_ACCESSION_JOB = "JOB_LAUNCHER_SUBSNP_ACCESSION_JOB";
+    public static final String JOB_LAUNCHER_QC_SUBSNP_ACCESSION_JOB = "JOB_LAUNCHER_QC_SUBSNP_ACCESSION_JOB";
 
-    @Bean(JOB_LAUNCHER_CREATE_SUBSNP_JOB)
+    @Bean(JOB_LAUNCHER_SUBSNP_ACCESSION_JOB)
     public JobLauncherTestUtils jobLauncherTestUtilsCreate() {
         return new JobLauncherTestUtils() {
             @Override
             @Autowired
-            public void setJob(@Qualifier(CREATE_SUBSNP_ACCESSION_JOB) Job job) {
+            public void setJob(@Qualifier(SUBSNP_ACCESSION_JOB) Job job) {
                 super.setJob(job);
             }
         };
     }
 
-    @Bean(JOB_LAUNCHER_QC_SUBSNP_JOB)
+    @Bean(JOB_LAUNCHER_QC_SUBSNP_ACCESSION_JOB)
     public JobLauncherTestUtils jobLauncherTestUtilsQC() {
         return new JobLauncherTestUtils() {
             @Override

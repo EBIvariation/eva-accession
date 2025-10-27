@@ -60,8 +60,8 @@ import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_JOB;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_JOB;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.deleteTemporaryContigAndVariantFiles;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.getOriginalVcfContent;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.injectErrorIntoTempVcf;
@@ -145,7 +145,7 @@ public class RestartFailedJobTest {
             originalInputParametersCaptured = true;
         }
         jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository, datasource);
-        runner.setJobNames(CREATE_SUBSNP_ACCESSION_JOB);
+        runner.setJobNames(SUBSNP_ACCESSION_JOB);
         deleteTemporaryContigAndVariantFiles(inputParameters, tempVcfOutputDir);
         useOriginalVcfFile(inputParameters, originalVcfInputFilePath, vcfReader);
 
@@ -167,13 +167,13 @@ public class RestartFailedJobTest {
     }
 
     /*
-    * Separated this test from the rest of the tests in EvaAccessionJobLauncherCommandLineRunnerTest,
-    * as we have to Mock(Spy to be exact) on the SubmittedVariantAccessioningService bean in order to reuse the same
-    * without shutting down its accession generator.
-    *
-    * Ideally, we should not be Spying but rather the jobs when restarting should be using a new instance of the service.
-    * but it was tricky to inject, hence the workaround.
-    * */
+     * Separated this test from the rest of the tests in EvaAccessionJobLauncherCommandLineRunnerTest,
+     * as we have to Mock(Spy to be exact) on the SubmittedVariantAccessioningService bean in order to reuse the same
+     * without shutting down its accession generator.
+     *
+     * Ideally, we should not be Spying but rather the jobs when restarting should be using a new instance of the service.
+     * but it was tricky to inject, hence the workaround.
+     * */
     @Test
     @DirtiesContext
     public void restartFailedJobThatIsAlreadyInTheRepository() throws Exception {
@@ -193,12 +193,11 @@ public class RestartFailedJobTest {
     private JobInstance runJobAandCheckResults() throws Exception {
         runner.run();
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
-        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(CREATE_SUBSNP_ACCESSION_JOB,
+        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(SUBSNP_ACCESSION_JOB,
                         jobExplorer,
                         inputParameters.toJobParameters())
                 .getJobInstance();
-        StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance,
-                CREATE_SUBSNP_ACCESSION_STEP);
+        StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance, SUBSNP_ACCESSION_STEP);
         //Ensure that only the first batch was written (batch size is 5 and error was at line#9)
         assertEquals(inputParameters.getChunkSize(), stepExecution.getWriteCount());
 
@@ -208,7 +207,7 @@ public class RestartFailedJobTest {
     private void runJobBAndCheckRestart(JobInstance failingJobInstance) throws Exception {
         runner.run();
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(CREATE_SUBSNP_ACCESSION_JOB,
+        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(SUBSNP_ACCESSION_JOB,
                         jobExplorer,
                         inputParameters.toJobParameters())
                 .getJobInstance();

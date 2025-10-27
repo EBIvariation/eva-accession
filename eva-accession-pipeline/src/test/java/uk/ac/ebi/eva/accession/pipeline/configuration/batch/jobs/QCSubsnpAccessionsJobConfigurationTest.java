@@ -36,14 +36,14 @@ import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP_ACCESSION_STEP;
-import static uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration.JOB_LAUNCHER_QC_SUBSNP_JOB;
+import static uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration.JOB_LAUNCHER_QC_SUBSNP_ACCESSION_JOB;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:qc-accession-pipeline-test.properties")
 public class QCSubsnpAccessionsJobConfigurationTest {
     @Autowired
-    @Qualifier(JOB_LAUNCHER_QC_SUBSNP_JOB)
+    @Qualifier(JOB_LAUNCHER_QC_SUBSNP_ACCESSION_JOB)
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Test

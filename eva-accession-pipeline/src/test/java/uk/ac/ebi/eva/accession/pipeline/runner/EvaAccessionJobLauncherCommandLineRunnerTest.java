@@ -62,8 +62,8 @@ import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_JOB;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_JOB;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.deleteTemporaryContigAndVariantFiles;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.getOriginalVcfContent;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.injectErrorIntoTempVcf;
@@ -144,7 +144,7 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
             originalInputParametersCaptured = true;
         }
         jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository, datasource);
-        runner.setJobNames(CREATE_SUBSNP_ACCESSION_JOB);
+        runner.setJobNames(SUBSNP_ACCESSION_JOB);
         deleteTemporaryContigAndVariantFiles(inputParameters, tempVcfOutputDir);
         useOriginalVcfFile(inputParameters, originalVcfInputFilePath, vcfReader);
 
@@ -195,12 +195,11 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
     private JobInstance runJobAandCheckResults() throws Exception {
         runner.run();
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
-        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(CREATE_SUBSNP_ACCESSION_JOB,
+        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(SUBSNP_ACCESSION_JOB,
                         jobExplorer,
                         inputParameters.toJobParameters())
                 .getJobInstance();
-        StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance,
-                CREATE_SUBSNP_ACCESSION_STEP);
+        StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance, SUBSNP_ACCESSION_STEP);
         //Ensure that only the first batch was written (batch size is 5 and error was at line#9)
         assertEquals(inputParameters.getChunkSize(), stepExecution.getWriteCount());
 
@@ -255,12 +254,11 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
 
     private void runJobCAndCheckResumption(JobInstance failingJobInstance) throws Exception {
         runner.run();
-        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(CREATE_SUBSNP_ACCESSION_JOB,
+        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(SUBSNP_ACCESSION_JOB,
                         jobExplorer,
                         inputParameters.toJobParameters())
                 .getJobInstance();
-        StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance,
-                CREATE_SUBSNP_ACCESSION_STEP);
+        StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance, SUBSNP_ACCESSION_STEP);
         // Did we resume the previous failed job instance?
         assertEquals(failingJobInstance.getInstanceId(), currentJobInstance.getInstanceId());
 

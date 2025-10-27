@@ -41,11 +41,10 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
-
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
@@ -67,8 +66,8 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSIONING_SHUTDOWN_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.BUILD_REPORT_STEP;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
-import static uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration.JOB_LAUNCHER_CREATE_SUBSNP_JOB;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_STEP;
+import static uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration.JOB_LAUNCHER_SUBSNP_ACCESSION_JOB;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
@@ -113,7 +112,7 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
     @Autowired
-    @Qualifier(JOB_LAUNCHER_CREATE_SUBSNP_JOB)
+    @Qualifier(JOB_LAUNCHER_SUBSNP_ACCESSION_JOB)
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Before
@@ -145,7 +144,7 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
         runJob();
 
         assertEquals("The uncommitted accession should be assigned to only 1 object",
-                     1, repository.findByAccession(UNCOMMITTED_ACCESSION).size());
+                1, repository.findByAccession(UNCOMMITTED_ACCESSION).size());
 
         assertCountsInMongo(EXPECTED_VARIANTS_ACCESSIONED_FROM_VCF + 1);
         assertCountsInVcfReport(EXPECTED_VARIANTS_ACCESSIONED_FROM_VCF);
@@ -164,7 +163,7 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
         assertEquals(1, blockRepository.count());
 
         // This means that the last committed accession is the previous one to the UNCOMMITTED_ACCESSION
-        assertEquals(UNCOMMITTED_ACCESSION-1, blockRepository.findAll().iterator().next().getLastCommitted());
+        assertEquals(UNCOMMITTED_ACCESSION - 1, blockRepository.findAll().iterator().next().getLastCommitted());
     }
 
     private void runJob() throws Exception {
@@ -176,7 +175,7 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
     private void assertStepNames(Collection<StepExecution> stepExecutions) {
         assertEquals(3, stepExecutions.size());
         Iterator<StepExecution> iterator = stepExecutions.iterator();
-        assertEquals(CREATE_SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
+        assertEquals(SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
         assertEquals(ACCESSIONING_SHUTDOWN_STEP, iterator.next().getStepName());
         assertEquals(BUILD_REPORT_STEP, iterator.next().getStepName());
     }
@@ -194,7 +193,7 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
     private void assertCountsInBlockService(int expected) {
         assertEquals(1, blockRepository.count());
         ContiguousIdBlock block = blockRepository.findAll().iterator().next();
-        long committedAccessionsCount = block.getLastCommitted() - block.getFirstValue() +1; // +1: inclusive interval
+        long committedAccessionsCount = block.getLastCommitted() - block.getFirstValue() + 1; // +1: inclusive interval
         assertEquals(expected, committedAccessionsCount);
     }
 }

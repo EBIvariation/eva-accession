@@ -39,7 +39,7 @@ import java.nio.file.Path;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_JOB;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_JOB;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.deleteTemporaryContigAndVariantFiles;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.getOriginalVcfContent;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.injectErrorIntoTempVcf;
@@ -91,7 +91,7 @@ public class JobFailureBlocksReleasedTest {
         originalVcfContent = getOriginalVcfContent(originalVcfInputFilePath);
         writeToTempVCFFile(originalVcfContent, tempVcfInputFileToTestFailingJobs);
 
-        runner.setJobNames(CREATE_SUBSNP_ACCESSION_JOB);
+        runner.setJobNames(SUBSNP_ACCESSION_JOB);
         deleteTemporaryContigAndVariantFiles(inputParameters, tempVcfOutputDir);
         useOriginalVcfFile(inputParameters, originalVcfInputFilePath, vcfReader);
 
