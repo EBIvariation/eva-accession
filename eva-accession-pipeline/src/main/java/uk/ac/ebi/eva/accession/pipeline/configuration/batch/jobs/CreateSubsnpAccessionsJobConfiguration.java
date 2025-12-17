@@ -31,7 +31,6 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.BUILD_REPORT_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_JOB;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_JOB_LISTENER;
 
 @Configuration
@@ -50,9 +49,6 @@ public class CreateSubsnpAccessionsJobConfiguration {
     @Qualifier(ACCESSIONING_SHUTDOWN_STEP)
     private Step accessioningShutdownStep;
 
-    @Autowired
-    @Qualifier(QC_SUBSNP_ACCESSION_STEP)
-    private Step qcSubsnpAccessionStep;
 
     @Autowired
     @Qualifier(SUBSNP_ACCESSION_JOB_LISTENER)
@@ -65,7 +61,6 @@ public class CreateSubsnpAccessionsJobConfiguration {
                 .start(createSubsnpAccessionStep)
                 .next(accessioningShutdownStep)
                 .next(buildReportStep)
-                .next(qcSubsnpAccessionStep)
                 .listener(subsnpAccessionJobListener)
                 .build();
     }
