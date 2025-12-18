@@ -136,6 +136,8 @@ public class ReportCheckTasklet implements Tasklet {
             } catch (Exception exception) {
                 if (skipPolicy.shouldSkip(exception, 0)) {
                     // this was likely a non-variant, we must read the next line
+                    // TODO Exceptions are no longer thrown for non-variants so these will no longer be counted.
+                    //  We should refactor this once we decide on a new way to count skipped (non)variants.
                     bufferHelper.setSkippedVariants(bufferHelper.getSkippedVariants() + 1);
                 } else {
                     throw exception;
