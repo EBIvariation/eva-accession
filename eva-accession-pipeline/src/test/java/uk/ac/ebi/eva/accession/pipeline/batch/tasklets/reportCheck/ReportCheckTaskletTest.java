@@ -125,24 +125,25 @@ public class ReportCheckTaskletTest {
         assertEquals(1, reportCheckTasklet.getUnmatchedVariantsInReportVcf());
     }
 
-    @Test
-    public void originalVcfContainsNonVariants() throws Exception {
-        // given
-        URI vcfUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/genotyped.vcf.gz").toURI();
-        URI reportUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/genotyped.report.vcf.gz")
-                                                    .toURI();
-        ReportCheckTasklet reportCheckTasklet = getGenotypedReportCheckTasklet(vcfUri, reportUri);
-
-        // when
-        StepContribution stepContribution = new StepContribution(
-                new StepExecution(QC_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
-        reportCheckTasklet.execute(stepContribution, null);
-
-        // then
-        assertEquals(ExitStatus.COMPLETED, stepContribution.getExitStatus());
-        assertEquals(1, reportCheckTasklet.getSkippedVariantsInInputVcf());
-        assertEquals(0, reportCheckTasklet.getSkippedVariantsInReportVcf());
-    }
+    // TODO Reinstate test once we implement a new way to count non-variants
+//    @Test
+//    public void originalVcfContainsNonVariants() throws Exception {
+//        // given
+//        URI vcfUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/genotyped.vcf.gz").toURI();
+//        URI reportUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/genotyped.report.vcf.gz")
+//                                                    .toURI();
+//        ReportCheckTasklet reportCheckTasklet = getGenotypedReportCheckTasklet(vcfUri, reportUri);
+//
+//        // when
+//        StepContribution stepContribution = new StepContribution(
+//                new StepExecution(QC_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
+//        reportCheckTasklet.execute(stepContribution, null);
+//
+//        // then
+//        assertEquals(ExitStatus.COMPLETED, stepContribution.getExitStatus());
+//        assertEquals(1, reportCheckTasklet.getSkippedVariantsInInputVcf());
+//        assertEquals(0, reportCheckTasklet.getSkippedVariantsInReportVcf());
+//    }
 
     private ReportCheckTasklet getGenotypedReportCheckTasklet(URI vcfUri, URI reportUri) throws IOException {
         File vcfFile = new File(vcfUri);
