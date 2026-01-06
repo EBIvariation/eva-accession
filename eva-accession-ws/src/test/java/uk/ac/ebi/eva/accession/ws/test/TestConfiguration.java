@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.ws.test;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import uk.ac.ebi.ampt2d.commons.accession.core.AccessionSaveMode;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
@@ -40,7 +41,8 @@ public class TestConfiguration {
         return new DbsnpSubmittedVariantMonotonicAccessioningService(dbsnpSubmittedVariantAccessionGenerator,
                                                                      dbsnpSubmittedVariantAccessioningDatabaseService,
                                                                      new SubmittedVariantSummaryFunction(),
-                                                                     new SHA1HashingFunction());
+                                                                     new SHA1HashingFunction(),
+                                                                     AccessionSaveMode.SAVE_ALL_THEN_RESOLVE);
     }
 
     @Bean
@@ -51,6 +53,7 @@ public class TestConfiguration {
         return new DbsnpClusteredVariantMonotonicAccessioningService(dbsnpClusteredVariantAccessionGenerator,
                                                                      dbsnpClusteredVariantAccessioningDatabaseService,
                                                                      new ClusteredVariantSummaryFunction(),
-                                                                     new SHA1HashingFunction());
+                                                                     new SHA1HashingFunction(),
+                                                                     AccessionSaveMode.SAVE_ALL_THEN_RESOLVE);
     }
 }

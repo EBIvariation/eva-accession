@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
+import uk.ac.ebi.ampt2d.commons.accession.core.AccessionSaveMode;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
@@ -88,6 +89,9 @@ public class ClusteredVariantAccessioningConfiguration {
     @Value("${accessioning.clustered.categoryId}")
     private String categoryId;
 
+    @Value("${accession.save.mode:SAVE_ALL_THEN_RESOLVE}")
+    private AccessionSaveMode accessionSaveMode;
+
     @Bean
     public Long accessioningMonotonicInitRs() {
         return blockService.getBlockParameters(categoryId).getBlockStartValue();
@@ -105,7 +109,8 @@ public class ClusteredVariantAccessioningConfiguration {
         return new ClusteredVariantMonotonicAccessioningService(clusteredVariantAccessionGenerator(),
                                                                 clusteredVariantAccessioningDatabaseService(),
                                                                 new ClusteredVariantSummaryFunction(),
-                                                                new SHA1HashingFunction());
+                                                                new SHA1HashingFunction(),
+                                                                accessionSaveMode);
     }
 
     @Bean
@@ -113,7 +118,8 @@ public class ClusteredVariantAccessioningConfiguration {
         return new DbsnpClusteredVariantMonotonicAccessioningService(dbsnpClusteredVariantAccessionGenerator(),
                                                                      dbsnpClusteredVariantAccessioningDatabaseService(),
                                                                      new ClusteredVariantSummaryFunction(),
-                                                                     new SHA1HashingFunction());
+                                                                     new SHA1HashingFunction(),
+                                                                     accessionSaveMode);
     }
 
     @Bean
