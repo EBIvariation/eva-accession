@@ -16,10 +16,12 @@
 package uk.ac.ebi.eva.accession.core.configuration.human;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
+import uk.ac.ebi.ampt2d.commons.accession.core.AccessionSaveMode;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 
@@ -59,13 +61,17 @@ public class HumanClusteredVariantAccessioningConfiguration {
     @Autowired
     private ContigAliasService contigAliasService;
 
+    @Value("${accession.save.mode:SAVE_ALL_THEN_RESOLVE}")
+    private AccessionSaveMode accessionSaveMode;
+
     @Bean("humanActiveService")
     public HumanDbsnpClusteredVariantMonotonicAccessioningService humanDbsnpClusteredActiveVariantAccessioningService() {
         return new HumanDbsnpClusteredVariantMonotonicAccessioningService(
                 dbsnpClusteredVariantAccessionGenerator(),
                 humanDbsnpClusteredVariantAccessioningDatabaseService(),
                 new ClusteredVariantSummaryFunction(),
-                new SHA1HashingFunction());
+                new SHA1HashingFunction(),
+                accessionSaveMode);
     }
 
     private DbsnpMonotonicAccessionGenerator<IClusteredVariant> dbsnpClusteredVariantAccessionGenerator() {

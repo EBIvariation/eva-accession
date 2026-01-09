@@ -18,6 +18,7 @@
 
 package uk.ac.ebi.eva.accession.core.service.nonhuman.eva;
 
+import uk.ac.ebi.ampt2d.commons.accession.core.AccessionSaveMode;
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
@@ -25,7 +26,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedExcepti
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 
 import java.util.List;
 import java.util.function.Function;
@@ -41,8 +41,9 @@ public class ClusteredVariantMonotonicAccessioningService
             MonotonicAccessionGenerator<IClusteredVariant> accessionGenerator,
             ClusteredVariantAccessioningDatabaseService dbService,
             Function<IClusteredVariant, String> summaryFunction,
-            Function<String, String> hashingFunction) {
-        super(accessionGenerator, dbService, summaryFunction, hashingFunction);
+            Function<String, String> hashingFunction,
+            AccessionSaveMode accessionSaveMode) {
+        super(accessionGenerator, dbService, summaryFunction, hashingFunction, accessionSaveMode);
         this.dbService = dbService;
         this.hashingFunction = summaryFunction.andThen(hashingFunction);
     }

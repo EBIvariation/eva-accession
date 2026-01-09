@@ -33,6 +33,7 @@ import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.core.AccessionSaveMode;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
@@ -439,7 +440,7 @@ public class SubmittedVariantAccessioningServiceTest {
         DbsnpSubmittedVariantMonotonicAccessioningService accessioningServiceDbsnp =
                 new DbsnpSubmittedVariantMonotonicAccessioningService(
                         dbsnpAccessionGenerator, dbServiceDbsnp, new SubmittedVariantSummaryFunction(),
-                        new SHA1HashingFunction());
+                        new SHA1HashingFunction(), AccessionSaveMode.SAVE_ALL_THEN_RESOLVE);
 
         accessioningServiceDbsnp.getOrCreate(Collections.singletonList(submittedVariant), TEST_APPLICATION_INSTANCE_ID);
     }

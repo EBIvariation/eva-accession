@@ -15,11 +15,9 @@
  */
 package uk.ac.ebi.eva.accession.core.service.human.dbsnp;
 
+import uk.ac.ebi.ampt2d.commons.accession.core.AccessionSaveMode;
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.DatabaseService;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 
@@ -39,8 +37,9 @@ public class HumanDbsnpClusteredVariantMonotonicAccessioningService
             MonotonicAccessionGenerator<IClusteredVariant> accessionGenerator,
             HumanDbsnpClusteredVariantAccessioningDatabaseService dbService,
             Function<IClusteredVariant, String> summaryFunction,
-            Function<String, String> hashingFunction) {
-        super(accessionGenerator, dbService, summaryFunction, hashingFunction);
+            Function<String, String> hashingFunction,
+            AccessionSaveMode accessionSaveMode) {
+        super(accessionGenerator, dbService, summaryFunction, hashingFunction, accessionSaveMode);
 
         this.dbService = dbService;
         this.hashingFunction = summaryFunction.andThen(hashingFunction);

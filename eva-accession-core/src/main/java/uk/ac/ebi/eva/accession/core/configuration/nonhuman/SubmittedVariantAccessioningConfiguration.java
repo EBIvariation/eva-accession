@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
+import uk.ac.ebi.ampt2d.commons.accession.core.AccessionSaveMode;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
@@ -89,6 +90,9 @@ public class SubmittedVariantAccessioningConfiguration {
     @Value("${accessioning.submitted.categoryId}")
     private String categoryId;
 
+    @Value("${accession.save.mode:SAVE_ALL_THEN_RESOLVE}")
+    private AccessionSaveMode accessionSaveMode;
+
     @Bean
     public Long accessioningMonotonicInitSs() {
         return blockService.getBlockParameters(categoryId).getBlockStartValue();
@@ -105,14 +109,16 @@ public class SubmittedVariantAccessioningConfiguration {
         return new SubmittedVariantMonotonicAccessioningService(submittedVariantAccessionGenerator(),
                                                                 submittedVariantAccessioningDatabaseService(),
                                                                 new SubmittedVariantSummaryFunction(),
-                                                                new SHA1HashingFunction());
+                                                                new SHA1HashingFunction(),
+                                                                accessionSaveMode);
     }
 
     private DbsnpSubmittedVariantMonotonicAccessioningService dbsnpSubmittedVariantMonotonicAccessioningService() {
         return new DbsnpSubmittedVariantMonotonicAccessioningService(dbsnpSubmittedVariantAccessionGenerator(),
                                                                      dbsnpSubmittedVariantAccessioningDatabaseService(),
                                                                      new SubmittedVariantSummaryFunction(),
-                                                                     new SHA1HashingFunction());
+                                                                     new SHA1HashingFunction(),
+                                                                     accessionSaveMode);
     }
 
     @Bean
