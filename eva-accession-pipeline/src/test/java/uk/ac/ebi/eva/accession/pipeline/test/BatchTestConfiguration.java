@@ -25,7 +25,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.AccessionWriterConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.VcfReaderConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.CreateSubsnpAccessionsJobConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.QCSubsnpAccessionsJobConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.SubsnpAccessionsJobConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners.SubsnpAccessionJobExecutionListener;
@@ -34,7 +33,6 @@ import uk.ac.ebi.eva.accession.pipeline.configuration.batch.policies.InvalidVari
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.processors.VariantProcessorConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.AccessioningShutdownStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.BuildReportStepConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.CreateSubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.QCSubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.SubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.runner.EvaAccessionJobLauncherCommandLineRunner;
@@ -44,8 +42,7 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_JOB;
 
 @EnableAutoConfiguration
-@Import({CreateSubsnpAccessionsJobConfiguration.class, CreateSubsnpAccessionsStepConfiguration.class,
-        SubsnpAccessionsJobConfiguration.class, SubsnpAccessionsStepConfiguration.class,
+@Import({SubsnpAccessionsJobConfiguration.class, SubsnpAccessionsStepConfiguration.class,
         QCSubsnpAccessionsJobConfiguration.class, QCSubsnpAccessionsStepConfiguration.class,
         VcfReaderConfiguration.class, VariantProcessorConfiguration.class, AccessionWriterConfiguration.class,
         BuildReportStepConfiguration.class, AccessioningShutdownStepConfiguration.class,
