@@ -17,7 +17,6 @@ package uk.ac.ebi.eva.accession.pipeline.parameters;
 
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
-
 import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.commons.core.models.Aggregation;
 
@@ -47,6 +46,8 @@ public class InputParameters {
 
     private ContigNaming contigNaming;
 
+    private String duplicateSSAccFile;
+
     public JobParameters toJobParameters() {
         return new JobParametersBuilder()
                 .addString("vcf", vcf)
@@ -54,10 +55,10 @@ public class InputParameters {
                 .addString("aggregatedMappingFile", aggregatedMappingFile)
                 .addString("fasta", fasta)
                 .addString("outputVcf", outputVcf)
-                .addLong("taxonomyAccession", (long)taxonomyAccession)
+                .addLong("taxonomyAccession", (long) taxonomyAccession)
                 .addString("assemblyAccession", assemblyAccession)
                 .addString("projectAccession", projectAccession)
-                .addLong("chunkSize", (long)chunkSize)
+                .addLong("chunkSize", (long) chunkSize)
                 .addString("contigNaming", contigNaming.toString())
                 .toJobParameters();
     }
@@ -156,5 +157,13 @@ public class InputParameters {
 
     public void setContigNaming(ContigNaming contigNaming) {
         this.contigNaming = contigNaming;
+    }
+
+    public String getDuplicateSSAccFile() {
+        return duplicateSSAccFile;
+    }
+
+    public void setDuplicateSSAccFile(String duplicateSSAccFile) {
+        this.duplicateSSAccFile = duplicateSSAccFile;
     }
 }

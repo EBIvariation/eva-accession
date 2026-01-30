@@ -1,0 +1,9 @@
+##fileformat=VCFv4.2
+##contig=<ID=20,Description="20">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+20	14147	ss03	T	C	.	.	.
+20	60028	ss01	A	C	.	.	.
+20	74192	ss02	T	C	.	.	.
+20	75081	ss04	A	C	.	.	.
+20	75969	ss05	C	T	.	.	.
+

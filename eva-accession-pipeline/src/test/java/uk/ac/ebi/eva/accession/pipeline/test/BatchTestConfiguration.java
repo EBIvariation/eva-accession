@@ -24,20 +24,26 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.AccessionWriterConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.DuplicateSSAccQCFileReaderConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.DuplicateSSAccQCWriterConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.VcfReaderConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.DuplicateSSAccQCJobConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.QCSubsnpAccessionsJobConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.SubsnpAccessionsJobConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners.SubsnpAccessionJobExecutionListener;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.policies.InvalidVariantSkipPolicyConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.processors.DuplicateSSAccQCProcessorConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.processors.VariantProcessorConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.AccessioningShutdownStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.BuildReportStepConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.DuplicateSSAccQCStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.QCSubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.SubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.runner.EvaAccessionJobLauncherCommandLineRunner;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.DUPLICATE_SS_ACC_QC_JOB;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP_ACCESSION_JOB;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_JOB;
 
@@ -47,10 +53,14 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_AC
         VcfReaderConfiguration.class, VariantProcessorConfiguration.class, AccessionWriterConfiguration.class,
         BuildReportStepConfiguration.class, AccessioningShutdownStepConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class, InvalidVariantSkipPolicyConfiguration.class,
-        EvaAccessionJobLauncherCommandLineRunner.class, SubsnpAccessionJobExecutionListener.class})
+        EvaAccessionJobLauncherCommandLineRunner.class, SubsnpAccessionJobExecutionListener.class,
+        DuplicateSSAccQCJobConfiguration.class, DuplicateSSAccQCStepConfiguration.class,
+        DuplicateSSAccQCFileReaderConfiguration.class, DuplicateSSAccQCProcessorConfiguration.class,
+        DuplicateSSAccQCWriterConfiguration.class})
 public class BatchTestConfiguration {
     public static final String JOB_LAUNCHER_SUBSNP_ACCESSION_JOB = "JOB_LAUNCHER_SUBSNP_ACCESSION_JOB";
     public static final String JOB_LAUNCHER_QC_SUBSNP_ACCESSION_JOB = "JOB_LAUNCHER_QC_SUBSNP_ACCESSION_JOB";
+    public static final String JOB_LAUNCHER_DUPLICATE_SS_ACC_QC_JOB = "JOB_LAUNCHER_DUPLICATE_SS_ACC_QC_JOB";
 
     @Bean(JOB_LAUNCHER_SUBSNP_ACCESSION_JOB)
     public JobLauncherTestUtils jobLauncherTestUtilsCreate() {
@@ -69,6 +79,17 @@ public class BatchTestConfiguration {
             @Override
             @Autowired
             public void setJob(@Qualifier(QC_SUBSNP_ACCESSION_JOB) Job job) {
+                super.setJob(job);
+            }
+        };
+    }
+
+    @Bean(JOB_LAUNCHER_DUPLICATE_SS_ACC_QC_JOB)
+    public JobLauncherTestUtils jobLauncherTestUtilsDuplicateSSAccQC() {
+        return new JobLauncherTestUtils() {
+            @Override
+            @Autowired
+            public void setJob(@Qualifier(DUPLICATE_SS_ACC_QC_JOB) Job job) {
                 super.setJob(job);
             }
         };
