@@ -93,11 +93,6 @@ public class DuplicateSSAccQCJobConfigurationTest {
     }
 
     @Test
-    public void contextLoads() {
-
-    }
-
-    @Test
     public void duplicateSSAccQCTest_NoDuplicate() throws IOException {
         SubmittedVariantEntity ss1 = createSS("GCA_000000001.1", 60711, "study1", "hash" + 1, "chr1", 1L, 1L, 100L, "C", "T");
         SubmittedVariantEntity ss2 = createSS("GCA_000000001.1", 60711, "study2", "hash" + 2, "chr1", 2L, 2L, 100L, "C", "T");

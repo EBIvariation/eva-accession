@@ -4,6 +4,7 @@ import gherkin.deps.com.google.gson.Gson;
 import gherkin.deps.com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
 
@@ -32,7 +33,7 @@ public class DuplicateSSAccQCWriter implements ItemStreamWriter<List<DuplicateSS
     }
 
     @Override
-    public void update(org.springframework.batch.item.ExecutionContext executionContext) throws ItemStreamException {
+    public void update(ExecutionContext executionContext) throws ItemStreamException {
     }
 
     @Override
@@ -51,8 +52,6 @@ public class DuplicateSSAccQCWriter implements ItemStreamWriter<List<DuplicateSS
         for (List<DuplicateSSAccQCResult> duplicateSSAccQCResultList : listOfDuplicateSSAccQCResultLists) {
             if (duplicateSSAccQCResultList != null && !duplicateSSAccQCResultList.isEmpty()) {
                 appendToFile(duplicateSSAccQCResultList);
-            } else {
-                logger.info("No duplicate SS IDs in the batch to append");
             }
         }
     }

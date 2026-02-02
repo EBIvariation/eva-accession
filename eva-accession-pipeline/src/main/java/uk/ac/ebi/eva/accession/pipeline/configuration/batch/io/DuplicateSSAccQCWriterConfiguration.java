@@ -13,7 +13,7 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.DUPLICATE
 public class DuplicateSSAccQCWriterConfiguration {
     @Bean(DUPLICATE_SS_ACC_QC_WRITER)
     @StepScope
-    DuplicateSSAccQCWriter duplicateSSAccQCWrite(InputParameters parameters) {
+    DuplicateSSAccQCWriter duplicateSSAccQCWriter(InputParameters parameters) {
         return new DuplicateSSAccQCWriter(parameters.getDuplicateSSAccFile());
     }
 }
