@@ -4,7 +4,7 @@
 
     <groupId>uk.ac.ebi.eva</groupId>
     <artifactId>eva-accession</artifactId>
-    <version>0.6.54</version>
+    <version>0.6.55-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>eva-accession</name>
@@ -42,17 +42,17 @@
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
                 <artifactId>eva-accession-core</artifactId>
-                <version>0.6.54</version>
+                <version>0.6.55-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
                 <artifactId>eva-accession-clustering</artifactId>
-                <version>0.6.54</version>
+                <version>0.6.55-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
                 <artifactId>eva-remapping-get-source</artifactId>
-                <version>0.6.54</version>
+                <version>0.6.55-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>uk.ac.ebi.ampt2d</groupId>
