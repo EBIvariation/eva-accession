@@ -15,18 +15,18 @@ import uk.ac.ebi.eva.accession.pipeline.batch.io.DuplicateSSAccQCResult;
 
 import java.util.List;
 
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.DUPLICATE_SS_ACC_QC_FILE_READER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.DUPLICATE_SS_ACC_QC_PROCESSOR;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.DUPLICATE_SS_ACC_QC_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.DUPLICATE_SS_ACC_QC_WRITER;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SS_ACC_FILE_READER;
 
 @Configuration
 @EnableBatchProcessing
 public class DuplicateSSAccQCStepConfiguration {
 
     @Autowired
-    @Qualifier(DUPLICATE_SS_ACC_QC_FILE_READER)
-    private ItemStreamReader<List<Long>> duplicateSSAccFileReader;
+    @Qualifier(SS_ACC_FILE_READER)
+    private ItemStreamReader<List<Long>> ssAccFileReader;
 
     @Autowired
     @Qualifier(DUPLICATE_SS_ACC_QC_PROCESSOR)
@@ -42,7 +42,7 @@ public class DuplicateSSAccQCStepConfiguration {
                 // hardcoded the chunk size as 1, as the reader takes care of accumulating
                 // and sending the chunk size (defined in properties file) elements to the processor
                 .<List<Long>, List<DuplicateSSAccQCResult>>chunk(1)
-                .reader(duplicateSSAccFileReader)
+                .reader(ssAccFileReader)
                 .processor(duplicateSSAccQCProcessor)
                 .writer(duplicateSSAccQCWriter)
                 .build();

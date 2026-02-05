@@ -4,6 +4,7 @@ import gherkin.deps.com.google.gson.Gson;
 import gherkin.deps.com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
 
@@ -23,7 +24,7 @@ public class DuplicateRSAccQCWriter implements ItemStreamWriter<List<DuplicateRS
     }
 
     @Override
-    public void open(org.springframework.batch.item.ExecutionContext executionContext) throws ItemStreamException {
+    public void open(ExecutionContext executionContext) throws ItemStreamException {
         try {
             writer = new BufferedWriter(new FileWriter(duplicateRSAccFile, true));
         } catch (IOException e) {
@@ -32,7 +33,7 @@ public class DuplicateRSAccQCWriter implements ItemStreamWriter<List<DuplicateRS
     }
 
     @Override
-    public void update(org.springframework.batch.item.ExecutionContext executionContext) throws ItemStreamException {
+    public void update(ExecutionContext executionContext) throws ItemStreamException {
     }
 
     @Override

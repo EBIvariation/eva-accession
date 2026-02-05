@@ -24,7 +24,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.AccessionWriterConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.DuplicateSSAccQCFileReaderConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.SSAccFileReaderConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.DuplicateSSAccQCWriterConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.VcfReaderConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.DuplicateSSAccQCJobConfiguration;
@@ -55,7 +55,7 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_AC
         ChunkSizeCompletionPolicyConfiguration.class, InvalidVariantSkipPolicyConfiguration.class,
         EvaAccessionJobLauncherCommandLineRunner.class, SubsnpAccessionJobExecutionListener.class,
         DuplicateSSAccQCJobConfiguration.class, DuplicateSSAccQCStepConfiguration.class,
-        DuplicateSSAccQCFileReaderConfiguration.class, DuplicateSSAccQCProcessorConfiguration.class,
+        SSAccFileReaderConfiguration.class, DuplicateSSAccQCProcessorConfiguration.class,
         DuplicateSSAccQCWriterConfiguration.class})
 public class BatchTestConfiguration {
     public static final String JOB_LAUNCHER_SUBSNP_ACCESSION_JOB = "JOB_LAUNCHER_SUBSNP_ACCESSION_JOB";

@@ -5,13 +5,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.DuplicateSSAccQCResult;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
@@ -46,8 +44,6 @@ public class DuplicateSSAccQCProcessor implements ItemProcessor<List<Long>, List
     private List<SubmittedVariantEntity> getSubmittedVariantEntityList(List<Long> sveAccessions) {
         Query query = query(where(ACCESSION_FIELD).in(sveAccessions).and(REMAPPED_FROM_FIELD).exists(false));
         logger.info("Issuing find in EVA collection for SVEs containing the given accessions : {}", query);
-        List<SubmittedVariantEntity> evaResults = mongoTemplate.find(query, SubmittedVariantEntity.class);
-        List<DbsnpSubmittedVariantEntity> dbsnpResults = mongoTemplate.find(query, DbsnpSubmittedVariantEntity.class);
-        return Stream.concat(evaResults.stream(), dbsnpResults.stream()).collect(Collectors.toList());
+        return mongoTemplate.find(query, SubmittedVariantEntity.class);
     }
 }

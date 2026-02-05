@@ -24,7 +24,7 @@ public class DuplicateSSAccQCWriter implements ItemStreamWriter<List<DuplicateSS
     }
 
     @Override
-    public void open(org.springframework.batch.item.ExecutionContext executionContext) throws ItemStreamException {
+    public void open(ExecutionContext executionContext) throws ItemStreamException {
         try {
             writer = new BufferedWriter(new FileWriter(duplicateSSAccFile, true));
         } catch (IOException e) {

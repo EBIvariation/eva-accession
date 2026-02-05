@@ -15,14 +15,14 @@ import java.util.List;
 /**
  * Read all SubmittedVariant Accessions from VCF file in batches
  */
-public class DuplicateSSAccQCFileReader implements ItemStreamReader<List<Long>> {
-    private static final Logger logger = LoggerFactory.getLogger(DuplicateSSAccQCFileReader.class);
+public class SSAccFileReader implements ItemStreamReader<List<Long>> {
+    private static final Logger logger = LoggerFactory.getLogger(SSAccFileReader.class);
 
     private BufferedReader reader;
     private String vcfFileWithSSAcc;
     private int chunkSize;
 
-    public DuplicateSSAccQCFileReader(String vcfFileWithSSAcc, int chunkSize) {
+    public SSAccFileReader(String vcfFileWithSSAcc, int chunkSize) {
         this.vcfFileWithSSAcc = vcfFileWithSSAcc;
         this.chunkSize = chunkSize;
     }

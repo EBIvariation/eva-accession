@@ -134,23 +134,6 @@ public class DuplicateSSAccQCJobConfigurationTest {
         assertDuplicateSSAccFileContains(expectedSSAccs);
     }
 
-    @Test
-    public void duplicateSSAccQCTest_DuplicateInSVEAndDBSNP() throws IOException {
-        SubmittedVariantEntity ss1 = createSS("GCA_000000001.1", 60711, "study1", "hash" + 1, "chr1", 1L, 1L, 100L, "C", "T");
-        DbsnpSubmittedVariantEntity dbsnp1 = createDbsnpSS("GCA_000000001.1", 60711, "study2", "hash" + 2, "chr1", 1L, 1L, 100L, "C", "T");
-        mongoTemplate.save(ss1, mongoTemplate.getCollectionName(SubmittedVariantEntity.class));
-        mongoTemplate.save(dbsnp1, mongoTemplate.getCollectionName(DbsnpSubmittedVariantEntity.class));
-
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(DUPLICATE_SS_ACC_QC_STEP);
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-
-        Set<Long> expectedSSAccs = new HashSet<>();
-        expectedSSAccs.add(1L);
-
-        assertDuplicateSSAccFileContains(expectedSSAccs);
-    }
-
-
     public void assertDuplicateSSAccFileIsEmpty() throws IOException {
         assertTrue(Files.size(Paths.get(duplicateSsAccFile)) == 0);
     }
