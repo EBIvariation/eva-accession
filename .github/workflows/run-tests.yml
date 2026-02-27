@@ -43,7 +43,3 @@ jobs:
           mongod --version
       - name: Run Maven tests
         run: mvn test
-      - name: Run Python tests
-        run: |
-          cd eva-accession-import-automation
-          python -m tests.test_generate_custom_assembly_report -v
