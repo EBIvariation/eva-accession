@@ -312,7 +312,6 @@ public class ClusteringCommandLineRunnerTest {
         ASM1 = inputParameters.getRemappedFrom();
         ASM2 = inputParameters.getAssemblyAccession();
         jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository, datasource);
-        runner.setJobNames(CLUSTERING_FROM_VCF_JOB);
         jobRepositoryTestUtils.removeJobExecutions();
         inputParameters.setForceRestart(false);
         inputParameters.setRemappedFrom(originalRemappedFrom);
@@ -525,15 +524,6 @@ public class ClusteringCommandLineRunnerTest {
     @DirtiesContext
     public void runClusterUnclusteredVariantsJobWithNoErrors() throws JobExecutionException {
         runner.setJobNames(CLUSTER_UNCLUSTERED_VARIANTS_JOB);
-        runner.run();
-        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-    }
-
-    @Test
-    @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
-    @DirtiesContext
-    public void runResolveMergeThenSplitCandidatesJobWithNoErrors() throws JobExecutionException {
-        runner.setJobNames(RESOLVE_MERGE_THEN_SPLIT_CANDIDATE_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
@@ -978,43 +968,6 @@ public class ClusteringCommandLineRunnerTest {
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
 
-    @Test
-    @DirtiesContext
-    @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
-    public void restartFailedJobThatIsAlreadyInTheRepository() throws Exception {
-        useTempVcfFile();
-        injectErrorIntoTempVcf();
-        JobInstance failingJobInstance = runJobAandCheckResults();
-
-        inputParameters.setForceRestart(true);
-        remediateTempVcfError();
-        runJobBAndCheckRestart(failingJobInstance);
-    }
-
-    private JobInstance runJobAandCheckResults() throws Exception {
-        runner.run();
-        assertEquals(ClusteringCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
-        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_VCF_JOB,
-                                                                                    jobExplorer,
-                                                                                    inputParameters.toJobParameters())
-                                                               .getJobInstance();
-        StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance,
-                                                                         CLUSTERING_FROM_VCF_STEP);
-        //Ensure that only the first batch was written (batch size is 2 and error was at line#4)
-        assertEquals(inputParameters.getChunkSize(), stepExecution.getWriteCount());
-
-        return currentJobInstance;
-    }
-
-    private void runJobBAndCheckRestart(JobInstance failingJobInstance) throws Exception {
-        runner.run();
-        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_VCF_JOB,
-                                                                                    jobExplorer,
-                                                                                    inputParameters.toJobParameters())
-                                                               .getJobInstance();
-        assertNotEquals(failingJobInstance.getInstanceId(), currentJobInstance.getInstanceId());
-    }
 
     @Test
     @DirtiesContext
@@ -1026,26 +979,6 @@ public class ClusteringCommandLineRunnerTest {
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
 
-    @Test
-    @DirtiesContext
-    @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
-    public void resumeFailingJobFromCorrectChunk() throws Exception {
-        // Jobs A, B, C are run chronological order; A and C have SAME parameters;
-        // A is the job that is run after VCF fault injection (as part of the runTestWithFaultInjection method),
-        // therefore should fail.
-        // B is a job run with the original VCF without any faults (run separately), therefore should succeed.
-        // C is a job with the same parameters as A run after VCF fault remediation (as part of the
-        // runTestWithFaultInjection method), therefore should resume A and succeed.
-
-        useTempVcfFile();
-        injectErrorIntoTempVcf();
-        JobInstance failingJobInstance = runJobAandCheckResults();
-
-        runJobBAndCheckResults();
-
-        remediateTempVcfError();
-        runJobCAndCheckResumption(failingJobInstance);
-    }
 
     private void runJobBAndCheckResults() throws Exception {
         useOriginalVcfFile();
@@ -1056,23 +989,6 @@ public class ClusteringCommandLineRunnerTest {
         useTempVcfFile();
     }
 
-    private void runJobCAndCheckResumption(JobInstance failingJobInstance) throws Exception {
-        runner.run();
-        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_VCF_JOB,
-                                                                                    jobExplorer,
-                                                                                    inputParameters.toJobParameters())
-                                                               .getJobInstance();
-        StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance,
-                                                                         CLUSTERING_FROM_VCF_STEP);
-        // Did we resume the previous failed job instance?
-        assertEquals(failingJobInstance.getInstanceId(), currentJobInstance.getInstanceId());
-
-        int numberOfLinesInVcf = getNumberOfLinesInVcfString(originalVcfContent);
-        // Test resumption point - did we pick up where we left off?
-        // Ensure all the batches other than the first batch were processed
-        assertEquals(numberOfLinesInVcf - inputParameters.getChunkSize(), stepExecution.getWriteCount());
-        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-    }
 
     private void injectErrorIntoTempVcf() throws Exception {
         String modifiedVcfContent = originalVcfContent.replace("ss5000000004", "4ss--jibberish");

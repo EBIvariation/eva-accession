@@ -40,10 +40,8 @@ import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.VcfReaderConfig
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.BackPropagateRSJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusterUnclusteredVariantsJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusteringFromMongoJobConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusteringFromVcfJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ProcessRemappedVariantsWithRSJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.RSAccessionRecoveryJobConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ResolveMergeThenSplitCandidatesJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.StudyClusteringJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.DuplicateRSAccQCJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.NewClusteredVariantsQCJobConfiguration;
@@ -55,7 +53,6 @@ import uk.ac.ebi.eva.accession.clustering.configuration.batch.processors.Cluster
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.recovery.RSAccessionRecoveryServiceConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.AccessioningShutdownStepConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.ClusteringFromMongoStepConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.ClusteringFromVcfStepConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.RSAccessionRecoveryStepConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.qc.DuplicateRSAccQCStepConfiguration;
 import uk.ac.ebi.eva.accession.clustering.runner.ClusteringCommandLineRunner;
@@ -64,7 +61,6 @@ import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 import javax.sql.DataSource;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.DUPLICATE_RS_ACC_QC_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_ACCESSION_RECOVERY_JOB;
@@ -72,15 +68,12 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_C
 import static uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.NewClusteredVariantsQCJobConfiguration.NEW_CLUSTERED_VARIANTS_QC_JOB;
 
 @EnableAutoConfiguration
-@Import({ClusteringFromVcfJobConfiguration.class,
-        ResolveMergeThenSplitCandidatesJobConfiguration.class,
-        ClusteringFromMongoJobConfiguration.class,
+@Import({ClusteringFromMongoJobConfiguration.class,
         StudyClusteringJobConfiguration.class,
         NewClusteredVariantsQCJobConfiguration.class,
         ProcessRemappedVariantsWithRSJobConfiguration.class,
         ClusterUnclusteredVariantsJobConfiguration.class,
         BackPropagateRSJobConfiguration.class,
-        ClusteringFromVcfStepConfiguration.class,
         ClusteringFromMongoStepConfiguration.class,
         VcfReaderConfiguration.class,
         RSMergeAndSplitCandidatesReaderConfiguration.class,
@@ -107,8 +100,6 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.New
 })
 public class BatchTestConfiguration {
 
-    public static final String JOB_LAUNCHER_FROM_VCF = "JOB_LAUNCHER_FROM_VCF";
-
     public static final String JOB_LAUNCHER_FROM_MONGO = "JOB_LAUNCHER_FROM_MONGO";
 
     public static final String JOB_LAUNCHER_STUDY_FROM_MONGO = "JOB_LAUNCHER_STUDY_FROM_MONGO";
@@ -132,18 +123,6 @@ public class BatchTestConfiguration {
 
     @Autowired
     private PlatformTransactionManager platformTransactionManager;
-
-    @Bean(JOB_LAUNCHER_FROM_VCF)
-    public JobLauncherTestUtils jobLauncherTestUtils() {
-
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(CLUSTERING_FROM_VCF_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
-    }
 
     @Bean(JOB_LAUNCHER_FROM_MONGO)
     public JobLauncherTestUtils jobLauncherTestUtilsFromMongo() {
