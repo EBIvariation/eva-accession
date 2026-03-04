@@ -11,12 +11,13 @@ import uk.ac.ebi.eva.accession.release.configuration.InputParametersConfiguratio
 import uk.ac.ebi.eva.accession.release.configuration.batch.io.ActiveAccessionsVariantReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.io.DumpRSAccessionsInFileConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.io.MergedAndDeprecatedAccessionsVariantReaderConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.batch.jobs.AccessionReleaseJobConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.batch.io.VariantContextWriterConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.jobs.ActiveAccessionReleaseFromDBJobConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.jobs.DumpRSAccessionsJobConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.jobs.MergedAndDeprecatedAccessionReleaseFromDBJobConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.policies.IllegalStartSkipPolicyConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.batch.processors.ReleaseProcessorConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.ActiveAccessionReleaseFromDBStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.DumpRSAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.MergedAndDeprecatedAccessionReleaseFromDBStepConfiguration;
@@ -29,10 +30,11 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_AND
 
 
 @EnableAutoConfiguration
-@Import({AccessionReleaseJobConfiguration.class,
-        ChunkSizeCompletionPolicyConfiguration.class,
+@Import({ChunkSizeCompletionPolicyConfiguration.class,
         IllegalStartSkipPolicyConfiguration.class,
         InputParametersConfiguration.class,
+        ReleaseProcessorConfiguration.class,
+        VariantContextWriterConfiguration.class,
         DumpRSAccessionsJobConfiguration.class,
         DumpRSAccessionsStepConfiguration.class,
         DumpRSAccessionsInFileConfiguration.class,
