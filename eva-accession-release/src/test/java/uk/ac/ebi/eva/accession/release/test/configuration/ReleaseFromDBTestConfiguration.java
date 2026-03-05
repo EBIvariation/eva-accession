@@ -11,7 +11,6 @@ import uk.ac.ebi.eva.accession.release.configuration.InputParametersConfiguratio
 import uk.ac.ebi.eva.accession.release.configuration.batch.io.ActiveAccessionsVariantReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.io.DumpRSAccessionsInFileConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.io.MergedAndDeprecatedAccessionsVariantReaderConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.batch.jobs.AccessionReleaseJobConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.jobs.ActiveAccessionReleaseFromDBJobConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.jobs.DumpRSAccessionsJobConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.jobs.MergedAndDeprecatedAccessionReleaseFromDBJobConfiguration;
@@ -29,8 +28,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_AND
 
 
 @EnableAutoConfiguration
-@Import({AccessionReleaseJobConfiguration.class,
-        ChunkSizeCompletionPolicyConfiguration.class,
+@Import({ChunkSizeCompletionPolicyConfiguration.class,
         IllegalStartSkipPolicyConfiguration.class,
         InputParametersConfiguration.class,
         DumpRSAccessionsJobConfiguration.class,
