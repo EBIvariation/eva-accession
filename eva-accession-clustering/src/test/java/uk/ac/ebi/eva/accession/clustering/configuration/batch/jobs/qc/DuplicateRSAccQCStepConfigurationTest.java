@@ -107,11 +107,6 @@ public class DuplicateRSAccQCStepConfigurationTest {
     }
 
     @Test
-    public void contextLoads() {
-
-    }
-
-    @Test
     public void duplicateRSAccQCTest_OnlyOneDocument() throws IOException {
         populateTestDataOnlyOneDocument(this.mongoTemplate);
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(DUPLICATE_RS_ACC_QC_STEP);

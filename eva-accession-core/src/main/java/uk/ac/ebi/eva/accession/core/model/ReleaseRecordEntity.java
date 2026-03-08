@@ -18,10 +18,8 @@
 package uk.ac.ebi.eva.accession.core.model;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.List;

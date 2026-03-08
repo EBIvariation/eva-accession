@@ -23,12 +23,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
-
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.remapping.source.batch.io.DbsnpSubmittedVariantMongoReader;
 import uk.ac.ebi.eva.remapping.source.batch.io.EvaSubmittedVariantMongoReader;
 import uk.ac.ebi.eva.remapping.source.parameters.InputParameters;
-import uk.ac.ebi.eva.remapping.source.configuration.BeanNames;
 
 import static uk.ac.ebi.eva.remapping.source.configuration.BeanNames.DBSNP_SUBMITTED_VARIANT_READER;
 import static uk.ac.ebi.eva.remapping.source.configuration.BeanNames.EVA_SUBMITTED_VARIANT_READER;

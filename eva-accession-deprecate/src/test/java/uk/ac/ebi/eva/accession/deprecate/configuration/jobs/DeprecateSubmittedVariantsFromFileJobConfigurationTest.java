@@ -92,11 +92,6 @@ public class DeprecateSubmittedVariantsFromFileJobConfigurationTest {
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
-    @Test
-    public void contextLoads() {
-
-    }
-
     @Before
     public void setUp() throws Exception {
         this.mongoClient.dropDatabase(TEST_DB);

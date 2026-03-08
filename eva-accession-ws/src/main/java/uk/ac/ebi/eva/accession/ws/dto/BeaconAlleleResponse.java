@@ -18,8 +18,6 @@
 
 package uk.ac.ebi.eva.accession.ws.dto;
 
-import java.util.List;
-
 public class BeaconAlleleResponse {
 
     private String beaconId = "ebi-eva-beacon";
