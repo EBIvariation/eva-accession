@@ -36,7 +36,6 @@ import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.DuplicateRSAccQ
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.TargetSSReaderForBackPropRSConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.VcfReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.BackPropagateRSJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusterUnclusteredVariantsJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusteringFromMongoJobConfiguration;
@@ -75,7 +74,6 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.New
         ClusterUnclusteredVariantsJobConfiguration.class,
         BackPropagateRSJobConfiguration.class,
         ClusteringFromMongoStepConfiguration.class,
-        VcfReaderConfiguration.class,
         RSMergeAndSplitCandidatesReaderConfiguration.class,
         RSMergeAndSplitWriterConfiguration.class,
         ClusteringMongoReaderConfiguration.class,

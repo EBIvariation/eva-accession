@@ -84,22 +84,14 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessionin
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
-import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
-import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 import uk.ac.ebi.eva.commons.mongodb.readers.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 
 import javax.sql.DataSource;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -108,8 +100,6 @@ import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -173,9 +163,6 @@ public class ClusteringCommandLineRunnerTest {
     private ClusteringCommandLineRunner runner;
 
     @Autowired
-    private VcfReader vcfReader;
-
-    @Autowired
     private MongoTemplate mongoTemplate;
 
     //Required by nosql-unit
@@ -236,10 +223,6 @@ public class ClusteringCommandLineRunnerTest {
 
     private JobRepositoryTestUtils jobRepositoryTestUtils;
 
-    private static String originalVcfInputFilePath;
-
-    private static String originalVcfContent;
-
     private static String originalRemappedFrom;
 
     private static File tempVcfInputFileToTestFailingJobs;
@@ -299,10 +282,7 @@ public class ClusteringCommandLineRunnerTest {
     @Before
     public void setUp() throws Exception {
         if (!originalInputParametersCaptured) {
-            originalVcfInputFilePath = inputParameters.getVcf();
-            originalVcfContent = getOriginalVcfContent(originalVcfInputFilePath);
             originalRemappedFrom = inputParameters.getRemappedFrom();
-            writeToTempVCFFile(originalVcfContent);
             originalInputParametersCaptured = true;
         }
         ASM1 = inputParameters.getRemappedFrom();
@@ -311,7 +291,6 @@ public class ClusteringCommandLineRunnerTest {
         jobRepositoryTestUtils.removeJobExecutions();
         inputParameters.setForceRestart(false);
         inputParameters.setRemappedFrom(originalRemappedFrom);
-        useOriginalVcfFile();
 
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
@@ -974,31 +953,6 @@ public class ClusteringCommandLineRunnerTest {
         runner.run();
 
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-    }
-
-    private void useOriginalVcfFile() throws Exception {
-        inputParameters.setVcf(originalVcfInputFilePath);
-        vcfReader.setResource(FileUtils.getResource(new File(originalVcfInputFilePath)));
-    }
-
-    private void writeToTempVCFFile(String modifiedVCFContent) throws IOException {
-        FileOutputStream outputStream = new FileOutputStream(tempVcfInputFileToTestFailingJobs.getAbsolutePath());
-        GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outputStream);
-        gzipOutputStream.write(modifiedVCFContent.getBytes(StandardCharsets.UTF_8));
-        gzipOutputStream.close();
-    }
-
-    private String getOriginalVcfContent(String inputVcfPath) throws Exception {
-        StringBuilder originalVCFContent = new StringBuilder();
-
-        GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(inputVcfPath));
-        BufferedReader reader = new BufferedReader(new InputStreamReader(gzipInputStream));
-
-        String read;
-        while ((read = reader.readLine()) != null) {
-            originalVCFContent.append(read).append(System.lineSeparator());
-        }
-        return originalVCFContent.toString();
     }
 
     @Test
