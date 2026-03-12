@@ -24,12 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class InputParameters {
-
-    private String vcf;
-
     private String remappedFrom;
-
-    private String projectAccession;  // used for clustering from VCF job
 
     private List<String> projects;  // used for study clustering from Mongo job
 
@@ -46,22 +41,6 @@ public class InputParameters {
     private String rsAccFile;
 
     private String duplicateRSAccFile;
-
-    public String getVcf() {
-        return vcf;
-    }
-
-    public void setVcf(String vcf) {
-        this.vcf = vcf;
-    }
-
-    public String getProjectAccession() {
-        return projectAccession;
-    }
-
-    public void setProjectAccession(String projectAccession) {
-        this.projectAccession = projectAccession;
-    }
 
     public List<String> getProjects() {
         return projects;
@@ -123,9 +102,7 @@ public class InputParameters {
 
         return new JobParametersBuilder()
                 .addString("assemblyAccession", assemblyAccession)
-                .addString("projectAccession", projectAccession)
                 .addString("projects", projectsString)
-                .addString("vcf", vcf)
                 .addLong("chunkSize", (long) chunkSize, false)
                 .addString("rsAccFile", rsAccFile)
                 .toJobParameters();

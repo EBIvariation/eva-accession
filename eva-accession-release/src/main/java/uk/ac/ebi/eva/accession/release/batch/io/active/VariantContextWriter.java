@@ -30,7 +30,6 @@ import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
 
 import uk.ac.ebi.eva.accession.release.assembly.AssemblyNameRetriever;
-import uk.ac.ebi.eva.accession.release.configuration.batch.steps.ListContigsStepConfiguration;
 
 import java.io.BufferedReader;
 import java.io.File;

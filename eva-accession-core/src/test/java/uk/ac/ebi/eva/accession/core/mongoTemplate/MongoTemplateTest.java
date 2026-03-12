@@ -37,11 +37,6 @@ public class MongoTemplateTest {
     @Rule
     public ExpectedException exceptionRule = ExpectedException.none();
 
-    @Before
-    public void setUp() {
-
-    }
-
     @Test(expected = DataAccessException.class)
     public void testMongoTemplateWriteResultChecking() {
         AnnotationMetadata annotationMetadata = new AnnotationMetadata("vep_1", "vep_cache_1", true);

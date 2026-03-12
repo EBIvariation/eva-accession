@@ -18,7 +18,6 @@ package uk.ac.ebi.eva.accession.pipeline;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.batch.JobLauncherCommandLineRunner;
 import org.springframework.context.ConfigurableApplicationContext;
 
 // TODO: eva-pipeline is also excluding MongoDataAutoConfiguration

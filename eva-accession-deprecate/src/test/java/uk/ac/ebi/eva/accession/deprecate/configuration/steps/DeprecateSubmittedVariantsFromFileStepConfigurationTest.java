@@ -79,11 +79,6 @@ public class DeprecateSubmittedVariantsFromFileStepConfigurationTest {
     }
 
     @Test
-    public void contextLoads() {
-
-    }
-
-    @Test
     public void variantsDeprecated() {
         JobExecution jobExecution = jobLauncherTestUtilsFromFile.launchStep(BeanNames.DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());

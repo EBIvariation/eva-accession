@@ -20,7 +20,6 @@ import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,7 +55,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -69,7 +67,6 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PR
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_MERGE_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
@@ -78,7 +75,6 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_C
 import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATE_ID_PREFIX;
 import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATE_ID_PREFIX;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
-import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_VCF;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_RS_ACCESSION_RECOVERY;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_STUDY_FROM_MONGO;
 
@@ -88,10 +84,6 @@ import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestCon
 public class ClusteringVariantJobConfigurationTest {
 
     private static final String TEST_DB = "test-db";
-
-    @Autowired
-    @Qualifier(JOB_LAUNCHER_FROM_VCF)
-    private JobLauncherTestUtils jobLauncherTestUtilsFromVcf;
 
     @Autowired
     @Qualifier(JOB_LAUNCHER_FROM_MONGO)
@@ -142,18 +134,6 @@ public class ClusteringVariantJobConfigurationTest {
     @After
     public void tearDown() {
         mongoTemplate.getDb().drop();
-    }
-
-    @Ignore
-    @Test
-    @DirtiesContext
-    @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
-    // TODO: Re-visit during EVA-2611
-    public void jobFromVcf() throws Exception {
-        JobExecution jobExecution = jobLauncherTestUtilsFromVcf.launchJob();
-        List<String> expectedSteps = Collections.singletonList(CLUSTERING_FROM_VCF_STEP);
-        assertStepsExecuted(expectedSteps, jobExecution);
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
     @Test

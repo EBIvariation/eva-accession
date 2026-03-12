@@ -30,7 +30,6 @@ import org.mockito.Mockito;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionException;
 import org.springframework.batch.core.JobInstance;
-import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.item.ExecutionContext;
@@ -49,7 +48,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
@@ -62,7 +60,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
-
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.batch.io.RSSplitWriter;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
@@ -87,22 +84,14 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessionin
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
-import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
-import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 import uk.ac.ebi.eva.commons.mongodb.readers.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 
 import javax.sql.DataSource;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -111,11 +100,8 @@ import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
@@ -128,7 +114,7 @@ import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestCon
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes={BatchTestConfiguration.class})
+@ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
 public class ClusteringCommandLineRunnerTest {
     private static String TEST_APPLICATION_INSTANCE_ID = "test-application-instance-id";
@@ -175,9 +161,6 @@ public class ClusteringCommandLineRunnerTest {
 
     @Autowired
     private ClusteringCommandLineRunner runner;
-
-    @Autowired
-    private VcfReader vcfReader;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -240,10 +223,6 @@ public class ClusteringCommandLineRunnerTest {
 
     private JobRepositoryTestUtils jobRepositoryTestUtils;
 
-    private static String originalVcfInputFilePath;
-
-    private static String originalVcfContent;
-
     private static String originalRemappedFrom;
 
     private static File tempVcfInputFileToTestFailingJobs;
@@ -275,7 +254,7 @@ public class ClusteringCommandLineRunnerTest {
                     new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
             return hashingFunction.apply(
                     new ClusteredVariant(this.assembly, -1, this.contig, this.start, this.type, null,
-                                         null));
+                            null));
         }
     }
 
@@ -303,20 +282,15 @@ public class ClusteringCommandLineRunnerTest {
     @Before
     public void setUp() throws Exception {
         if (!originalInputParametersCaptured) {
-            originalVcfInputFilePath = inputParameters.getVcf();
-            originalVcfContent = getOriginalVcfContent(originalVcfInputFilePath);
             originalRemappedFrom = inputParameters.getRemappedFrom();
-            writeToTempVCFFile(originalVcfContent);
             originalInputParametersCaptured = true;
         }
         ASM1 = inputParameters.getRemappedFrom();
         ASM2 = inputParameters.getAssemblyAccession();
         jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository, datasource);
-        runner.setJobNames(CLUSTERING_FROM_VCF_JOB);
         jobRepositoryTestUtils.removeJobExecutions();
         inputParameters.setForceRestart(false);
         inputParameters.setRemappedFrom(originalRemappedFrom);
-        useOriginalVcfFile();
 
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
@@ -345,20 +319,20 @@ public class ClusteringCommandLineRunnerTest {
 
         JobInstance currentJobInstance =
                 CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_MONGO_JOB,
-                                                           jobExplorer, inputParameters.toJobParameters())
-                                      .getJobInstance();
+                                jobExplorer, inputParameters.toJobParameters())
+                        .getJobInstance();
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                                                            CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
+                CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                                                            PROCESS_RS_MERGE_CANDIDATES_STEP));
+                PROCESS_RS_MERGE_CANDIDATES_STEP));
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                                                            PROCESS_RS_SPLIT_CANDIDATES_STEP));
+                PROCESS_RS_SPLIT_CANDIDATES_STEP));
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                                                            CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP));
+                CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP));
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                                                            CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
+                CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                                                            BACK_PROPAGATE_NEW_RS_STEP));
+                BACK_PROPAGATE_NEW_RS_STEP));
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
                 BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP));
     }
@@ -376,7 +350,7 @@ public class ClusteringCommandLineRunnerTest {
 
         JobInstance currentJobInstance =
                 CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_MONGO_JOB,
-                                jobExplorer, inputParameters.toJobParameters()).getJobInstance();
+                        jobExplorer, inputParameters.toJobParameters()).getJobInstance();
         assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
                 CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
         assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
@@ -464,29 +438,29 @@ public class ClusteringCommandLineRunnerTest {
                 op -> op.getEventType().equals(EventType.RS_MERGE_CANDIDATES)).collect(Collectors.toList());
         List<SubmittedVariantOperationEntity> splitOperationsInDB = allOperationsInDB.stream().filter(
                 op -> op.getEventType().equals(EventType.RS_SPLIT_CANDIDATES)).collect(Collectors.toList());
-        assertEquals(expectedSSListInMergeOps.size() , mergeOperationsInDB.size());
-        assertEquals(expectedSSListInSplitOps.size() , splitOperationsInDB.size());
+        assertEquals(expectedSSListInMergeOps.size(), mergeOperationsInDB.size());
+        assertEquals(expectedSSListInSplitOps.size(), splitOperationsInDB.size());
         if (expectedSSListInMergeOps.size() > 0) {
             assertTrue(expectedSSListInMergeOps.stream()
-                                              .allMatch(participantSSList ->
-                                                                areAllSSPresentInOperation(participantSSList,
-                                                                                           mergeOperationsInDB)
-                                              ));
+                    .allMatch(participantSSList ->
+                            areAllSSPresentInOperation(participantSSList,
+                                    mergeOperationsInDB)
+                    ));
         }
         if (expectedSSListInSplitOps.size() > 0) {
             assertTrue(expectedSSListInSplitOps.stream()
-                                              .allMatch(participantSSList ->
-                                                                areAllSSPresentInOperation(participantSSList,
-                                                                                           splitOperationsInDB)
-                                              ));
+                    .allMatch(participantSSList ->
+                            areAllSSPresentInOperation(participantSSList,
+                                    splitOperationsInDB)
+                    ));
         }
         List<ClusteredVariantEntity> clusteredVariantEntities =
                 this.mongoTemplate.findAll(ClusteredVariantEntity.class);
         clusteredVariantEntities.addAll(this.mongoTemplate.findAll(DbsnpClusteredVariantEntity.class));
         assertEquals(expectedInsertedRSHashes.size(), clusteredVariantEntities.size());
         assertTrue(expectedInsertedRSHashes.containsAll(clusteredVariantEntities.stream()
-                                                                      .map(ClusteredVariantEntity::getHashedMessage)
-                                                                      .collect(Collectors.toList())));
+                .map(ClusteredVariantEntity::getHashedMessage)
+                .collect(Collectors.toList())));
     }
 
     private boolean areAllSSPresentInOperation(List<SubmittedVariantEntity> expectedParticipantSS,
@@ -497,25 +471,25 @@ public class ClusteringCommandLineRunnerTest {
                 .stream().map(SubmittedVariantEntity::getHashedMessage).collect(Collectors.toList());
         SubmittedVariantOperationEntity matchingOperation =
                 operationsInDB.stream().filter(op -> op.getInactiveObjects().stream()
-                                                   .anyMatch(inactiveEntity ->
-                                                                     expectedParticipantSSHashes.contains(
-                                                                             inactiveEntity.toSubmittedVariantEntity()
-                                                                                     .getHashedMessage())))
-                          .findFirst().get();
+                                .anyMatch(inactiveEntity ->
+                                        expectedParticipantSSHashes.contains(
+                                                inactiveEntity.toSubmittedVariantEntity()
+                                                        .getHashedMessage())))
+                        .findFirst().get();
         // Match both SS hashes and accessions because SS hash equality does not check for accessions
         boolean result = (expectedParticipantSSHashes.size() == matchingOperation.getInactiveObjects().size());
         result = result && expectedParticipantSSHashes.containsAll(
                 matchingOperation.getInactiveObjects()
-                                 .stream()
-                                 .map(SubmittedVariantInactiveEntity::
-                                              getHashedMessage)
-                                 .collect(Collectors.toList()));
+                        .stream()
+                        .map(SubmittedVariantInactiveEntity::
+                                getHashedMessage)
+                        .collect(Collectors.toList()));
         result = result && expectedParticipantSSAccessions.containsAll(
                 matchingOperation.getInactiveObjects()
-                                 .stream()
-                                 .map(SubmittedVariantInactiveEntity::
-                                              getAccession)
-                                 .collect(Collectors.toList()));
+                        .stream()
+                        .map(SubmittedVariantInactiveEntity::
+                                getAccession)
+                        .collect(Collectors.toList()));
         return result;
 
     }
@@ -525,15 +499,6 @@ public class ClusteringCommandLineRunnerTest {
     @DirtiesContext
     public void runClusterUnclusteredVariantsJobWithNoErrors() throws JobExecutionException {
         runner.setJobNames(CLUSTER_UNCLUSTERED_VARIANTS_JOB);
-        runner.run();
-        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-    }
-
-    @Test
-    @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
-    @DirtiesContext
-    public void runResolveMergeThenSplitCandidatesJobWithNoErrors() throws JobExecutionException {
-        runner.setJobNames(RESOLVE_MERGE_THEN_SPLIT_CANDIDATE_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
@@ -590,9 +555,9 @@ public class ClusteringCommandLineRunnerTest {
 
         List<Long> existingRS = Arrays.asList(rs1.getAccession(), rs2.getAccession(), rs3.getAccession());
         List<ClusteredVariantEntity> newRSIDs = this.mongoTemplate.findAll(ClusteredVariantEntity.class)
-                                                                  .stream()
-                                                                  .filter(e -> !existingRS.contains(e.getAccession()))
-                                                                  .collect(Collectors.toList());
+                .stream()
+                .filter(e -> !existingRS.contains(e.getAccession()))
+                .collect(Collectors.toList());
         assertEquals(1, newRSIDs.size());
         ClusteredVariantEntity rsNew = newRSIDs.get(0);
         assertSSRSAssociation(ss1, rs1, rsLocus1);
@@ -635,18 +600,18 @@ public class ClusteringCommandLineRunnerTest {
         AccessionWrapper<IClusteredVariant, String, Long> newRS1Wrapper =
                 clusteredVariantAccessioningService.getByAccession(
                         submittedVariantAccessioningService.getByAccession(evaSS3.getAccession()).getData()
-                                                           .getClusteredVariantAccession());
+                                .getClusteredVariantAccession());
         ClusteredVariantEntity newRS1 = new ClusteredVariantEntity(newRS1Wrapper.getAccession(),
-                                                                   newRS1Wrapper.getHash(),
-                                                                   newRS1Wrapper.getData());
+                newRS1Wrapper.getHash(),
+                newRS1Wrapper.getData());
         Long newRS2Accession = submittedVariantAccessioningService.getAllActiveByAssemblyAndAccessionIn(
                 ASM2, Collections.singletonList(evaSS8.getAccession())).get(0).getData().getClusteredVariantAccession();
         AccessionWrapper<IClusteredVariant, String, Long> newRS2Wrapper =
                 clusteredVariantAccessioningService
                         .getAllActiveByAssemblyAndAccessionIn(ASM2, Collections.singletonList(newRS2Accession)).get(0);
         ClusteredVariantEntity newRS2 = new ClusteredVariantEntity(newRS2Wrapper.getAccession(),
-                                                                   newRS2Wrapper.getHash(),
-                                                                   newRS2Wrapper.getData());
+                newRS2Wrapper.getHash(),
+                newRS2Wrapper.getData());
         assertRSLocusAssociation(newRS1, rsLocus2);
         assertRSLocusAssociation(newRS2, rsLocus4);
 
@@ -662,7 +627,7 @@ public class ClusteringCommandLineRunnerTest {
         // Ensure that RS is back-propagated to the old SS from which evaSS8 was remapped
         assertEquals(newRS2Accession,
                 submittedVariantAccessioningService.getAllActiveByAssemblyAndAccessionIn(ASM1,
-                Collections.singletonList(evaSS8_old.getAccession())).get(0).getData()
+                                Collections.singletonList(evaSS8_old.getAccession())).get(0).getData()
                         .getBackPropagatedVariantAccession());
         assertSSRSAssociation(evaSS9, dbsnpRS5, rsLocus5);
 
@@ -692,11 +657,11 @@ public class ClusteringCommandLineRunnerTest {
                 collectionToReadFrom = clusteringWriter.getClusteredOperationCollection(mergee.getAccession());
         Query queryForExistingMergeOperations = query(where(ACCESSION_ATTRIBUTE).is(mergee.getAccession()))
                 .addCriteria(where(MERGE_DESTINATION_ATTRIBUTE)
-                                     .is(mergeDestination.getAccession()))
+                        .is(mergeDestination.getAccession()))
                 .addCriteria(where(EVENT_TYPE_ATTRIBUTE)
-                                     .is(EventType.MERGED.toString()))
+                        .is(EventType.MERGED.toString()))
                 .addCriteria(where(INACTIVE_OBJECTS_PREFIX + ".asm")
-                                     .is(mergee.getAssemblyAccession()));
+                        .is(mergee.getAssemblyAccession()));
         List<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
                 existingOperations = this.mongoTemplate.find(queryForExistingMergeOperations, collectionToReadFrom);
         assertEquals(1, existingOperations.size());
@@ -711,12 +676,12 @@ public class ClusteringCommandLineRunnerTest {
         Query queryForExistingMergeOperations = query(
                 where(ACCESSION_ATTRIBUTE).is(ssReceivingMergedRS.getAccession()))
                 .addCriteria(where(EVENT_TYPE_ATTRIBUTE)
-                                     .is(EventType.UPDATED.toString()))
+                        .is(EventType.UPDATED.toString()))
                 .addCriteria(where(INACTIVE_OBJECTS_PREFIX + ".seq")
-                                     .is(ssReceivingMergedRS.getReferenceSequenceAccession()))
+                        .is(ssReceivingMergedRS.getReferenceSequenceAccession()))
                 .addCriteria(where(REASON_ATTRIBUTE)
-                                     .regex(String.format(".+rs%s .+ rs%s\\.", mergeeRS.getAccession(),
-                                                          destinationRS.getAccession())));
+                        .regex(String.format(".+rs%s .+ rs%s\\.", mergeeRS.getAccession(),
+                                destinationRS.getAccession())));
         List<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
                 existingOperations = this.mongoTemplate.find(queryForExistingMergeOperations, collectionToReadFrom);
         assertEquals(1, existingOperations.size());
@@ -731,12 +696,12 @@ public class ClusteringCommandLineRunnerTest {
         Query queryForExistingSplitOperations = query(
                 where(ACCESSION_ATTRIBUTE).is(ssReceivingSplitRS.getAccession()))
                 .addCriteria(where(EVENT_TYPE_ATTRIBUTE)
-                                     .is(EventType.UPDATED.toString()))
+                        .is(EventType.UPDATED.toString()))
                 .addCriteria(where(INACTIVE_OBJECTS_PREFIX + ".seq")
-                                     .is(ssReceivingSplitRS.getReferenceSequenceAccession()))
+                        .is(ssReceivingSplitRS.getReferenceSequenceAccession()))
                 .addCriteria(where(REASON_ATTRIBUTE)
-                                     .regex(String.format(".+ split RS rs%s .+ split from rs%s .+",
-                                                          splitRS.getAccession(), originalRS.getAccession())));
+                        .regex(String.format(".+ split RS rs%s .+ split from rs%s .+",
+                                splitRS.getAccession(), originalRS.getAccession())));
         List<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
                 existingOperations = this.mongoTemplate.find(queryForExistingSplitOperations, collectionToReadFrom);
         assertEquals(1, existingOperations.size());
@@ -751,12 +716,12 @@ public class ClusteringCommandLineRunnerTest {
         Query queryForExistingClusterOperations = query(
                 where(ACCESSION_ATTRIBUTE).is(ssClusteredWithNewRS.getAccession()))
                 .addCriteria(where(EVENT_TYPE_ATTRIBUTE)
-                                     .is(EventType.UPDATED.toString()))
+                        .is(EventType.UPDATED.toString()))
                 .addCriteria(where(INACTIVE_OBJECTS_PREFIX + ".seq")
-                                     .is(ssClusteredWithNewRS.getReferenceSequenceAccession()))
+                        .is(ssClusteredWithNewRS.getReferenceSequenceAccession()))
                 .addCriteria(where(REASON_ATTRIBUTE)
-                                     .regex(String.format("Clustering submitted variant %s with rs%s",
-                                                          ssClusteredWithNewRS.getAccession(), newRS.getAccession())));
+                        .regex(String.format("Clustering submitted variant %s with rs%s",
+                                ssClusteredWithNewRS.getAccession(), newRS.getAccession())));
         List<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
                 existingOperations = this.mongoTemplate.find(queryForExistingClusterOperations, collectionToReadFrom);
         assertEquals(1, existingOperations.size());
@@ -767,11 +732,11 @@ public class ClusteringCommandLineRunnerTest {
                 collectionToReadFrom = clusteringWriter.getClusteredOperationCollection(original.getAccession());
         Query queryForExistingSplitOperations = query(where(ACCESSION_ATTRIBUTE).is(original.getAccession()))
                 .addCriteria(where(SPLIT_INTO_ATTRIBUTE)
-                                     .is(splitInto.getAccession()))
+                        .is(splitInto.getAccession()))
                 .addCriteria(where(EVENT_TYPE_ATTRIBUTE)
-                                     .is(EventType.RS_SPLIT.toString()))
+                        .is(EventType.RS_SPLIT.toString()))
                 .addCriteria(where(INACTIVE_OBJECTS_PREFIX + ".asm")
-                                     .is(original.getAssemblyAccession()));
+                        .is(original.getAssemblyAccession()));
         List<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
                 existingOperations = this.mongoTemplate.find(queryForExistingSplitOperations, collectionToReadFrom);
 
@@ -783,13 +748,13 @@ public class ClusteringCommandLineRunnerTest {
         List<AccessionWrapper<IClusteredVariant, String, Long>> rsEntriesInDB =
                 clusteredVariantAccessioningService
                         .getAllActiveByAssemblyAndAccessionIn(expectedRS.getAssemblyAccession(),
-                                                              Collections.singletonList(expectedRS.getAccession()));
+                                Collections.singletonList(expectedRS.getAccession()));
         assertEquals(1, rsEntriesInDB.size());
         IClusteredVariant rsEntryInDB = rsEntriesInDB.get(0).getData();
-        assertEquals(rsLocus.assembly,  rsEntryInDB.getAssemblyAccession());
-        assertEquals(rsLocus.contig,  rsEntryInDB.getContig());
-        assertEquals(rsLocus.start,  rsEntryInDB.getStart());
-        assertEquals(rsLocus.type,  rsEntryInDB.getType());
+        assertEquals(rsLocus.assembly, rsEntryInDB.getAssemblyAccession());
+        assertEquals(rsLocus.contig, rsEntryInDB.getContig());
+        assertEquals(rsLocus.start, rsEntryInDB.getStart());
+        assertEquals(rsLocus.type, rsEntryInDB.getType());
     }
 
     private void assertSSBackPropRSAssociation(Long ssID, Long expectedBackPropRS, String originalAssembly) {
@@ -814,15 +779,15 @@ public class ClusteringCommandLineRunnerTest {
                         .stream()
                         .filter(entity -> entity.getHash().equals(ss.getHashedMessage())).findFirst().get();
         SubmittedVariantEntity ssInDB = new SubmittedVariantEntity(ssInDBWrapper.getAccession(),
-                                                                   ssInDBWrapper.getHash(),
-                                                                   ssInDBWrapper.getData(),
-                                                                   ssInDBWrapper.getVersion());
+                ssInDBWrapper.getHash(),
+                ssInDBWrapper.getData(),
+                ssInDBWrapper.getVersion());
         assertEquals(rs.getAccession(), ssInDB.getClusteredVariantAccession());
         assertEquals(rsLocus.assembly, ssInDB.getReferenceSequenceAccession());
         assertEquals(rsLocus.contig, ssInDB.getContig());
         assertEquals(rsLocus.start, ssInDB.getStart());
         assertEquals(rsLocus.type, VariantClassifier.getVariantClassification(ssInDB.getReferenceAllele(),
-                                                                              ssInDB.getAlternateAllele()));
+                ssInDB.getAlternateAllele()));
     }
 
     private void setupRSAndSS() throws AccessionCouldNotBeGeneratedException {
@@ -831,7 +796,7 @@ public class ClusteringCommandLineRunnerTest {
         rsLocus3 = new RSLocus(ASM2, "chr1", 102L, VariantType.SNV);
         rsLocus4 = new RSLocus(ASM2, "chr1", 103L, VariantType.SNV);
         rsLocus4_old = new RSLocus(ASM1, "chr1", 113L + 1 + ThreadLocalRandom.current().nextLong(10),
-                                   VariantType.SNV);
+                VariantType.SNV);
         rsLocus5 = new RSLocus(ASM2, "chr1", 104L, VariantType.SNV);
         dbsnpRS1 = createRS(1L, rsLocus1, true);
         evaRS2 = createRS(5L, rsLocus2, false);
@@ -859,16 +824,16 @@ public class ClusteringCommandLineRunnerTest {
 
     private void createEVASS8InASM1WithUnassignedRS() {
         SubmittedVariant evaSS8_old_sv_obj = new SubmittedVariant(evaSS8.getRemappedFrom(),
-                                                                  evaSS8.getTaxonomyAccession(),
-                                                                  evaSS8.getProjectAccession(),
-                                                                  evaSS8.getContig(),
-                                                                  rsLocus4_old.start,
-                                                                  evaSS8.getReferenceAllele(),
-                                                                  evaSS8.getAlternateAllele(), null);
+                evaSS8.getTaxonomyAccession(),
+                evaSS8.getProjectAccession(),
+                evaSS8.getContig(),
+                rsLocus4_old.start,
+                evaSS8.getReferenceAllele(),
+                evaSS8.getAlternateAllele(), null);
         Function<ISubmittedVariant, String> hashingFunction =
                 new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         evaSS8_old = new SubmittedVariantEntity(evaSS8.getAccession(), hashingFunction.apply(evaSS8_old_sv_obj),
-                                                evaSS8_old_sv_obj, 1);
+                evaSS8_old_sv_obj, 1);
         this.mongoTemplate.insert(evaSS8_old, this.mongoTemplate.getCollectionName(SubmittedVariantEntity.class));
     }
 
@@ -876,19 +841,19 @@ public class ClusteringCommandLineRunnerTest {
         setupRSAndSS();
         List<SubmittedVariantEntity> variantsInRemappedAssembly =
                 Arrays.asList(evaSS1, dbsnpSS2, evaSS5, dbsnpSS7, evaSS8, evaSS9);
-        for (SubmittedVariantEntity variantInRemappedAssembly: variantsInRemappedAssembly) {
+        for (SubmittedVariantEntity variantInRemappedAssembly : variantsInRemappedAssembly) {
             // getStart is multiplied by 1000 so as to avoid accidental hash collision across the list of SS above
             // due to the same start positions
             RSLocus rsLocusObj = new RSLocus(ASM1, variantInRemappedAssembly.getContig(),
-                    variantInRemappedAssembly.getStart()*1000
+                    variantInRemappedAssembly.getStart() * 1000
                             + ThreadLocalRandom.current().nextLong(10),
                     VariantType.SNV);
             ClusteredVariantEntity rsObj = createRS(variantInRemappedAssembly.getClusteredVariantAccession(),
-                                                    rsLocusObj, false);
+                    rsLocusObj, false);
             createSS(variantInRemappedAssembly.getAccession(),
-                     variantInRemappedAssembly.getClusteredVariantAccession(), rsLocusObj,
-                     variantInRemappedAssembly.getReferenceAllele(), variantInRemappedAssembly.getAlternateAllele(),
-                     false, ASM1);
+                    variantInRemappedAssembly.getClusteredVariantAccession(), rsLocusObj,
+                    variantInRemappedAssembly.getReferenceAllele(), variantInRemappedAssembly.getAlternateAllele(),
+                    false, ASM1);
         }
     }
 
@@ -900,14 +865,14 @@ public class ClusteringCommandLineRunnerTest {
     private SubmittedVariantEntity createSS(Long ssAccession, Long rsAccession, RSLocus rsLocus, String reference,
                                             String alternate, boolean remappedFromAnotherAssembly,
                                             String sourceAssembly) {
-        Function<ISubmittedVariant, String> hashingFunction =  new SubmittedVariantSummaryFunction().andThen(
+        Function<ISubmittedVariant, String> hashingFunction = new SubmittedVariantSummaryFunction().andThen(
                 new SHA1HashingFunction());
         String assemblyToUse = (sourceAssembly == null) ? ASM2 : sourceAssembly;
         SubmittedVariant submittedVariant = new SubmittedVariant(assemblyToUse, TAXONOMY, PROJECT, rsLocus.contig,
-                                                                 rsLocus.start, reference, alternate, rsAccession);
+                rsLocus.start, reference, alternate, rsAccession);
         String hash = hashingFunction.apply(submittedVariant);
         SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(ssAccession, hash, submittedVariant,
-                                                                                   1);
+                1);
         if (remappedFromAnotherAssembly) {
             submittedVariantEntity.setRemappedFrom(ASM1);
         }
@@ -915,16 +880,16 @@ public class ClusteringCommandLineRunnerTest {
             mongoTemplate.save(submittedVariantEntity, mongoTemplate.getCollectionName(SubmittedVariantEntity.class));
         } else {
             mongoTemplate.save(submittedVariantEntity,
-                               mongoTemplate.getCollectionName(DbsnpSubmittedVariantEntity.class));
+                    mongoTemplate.getCollectionName(DbsnpSubmittedVariantEntity.class));
         }
         return submittedVariantEntity;
     }
 
     private ClusteredVariantEntity createRS(Long rsAccession, RSLocus rsLocus, boolean remappedFromAnotherAssembly) {
-        Function<IClusteredVariant, String> hashingFunction =  new ClusteredVariantSummaryFunction().andThen(
+        Function<IClusteredVariant, String> hashingFunction = new ClusteredVariantSummaryFunction().andThen(
                 new SHA1HashingFunction());
         ClusteredVariant clusteredVariant = new ClusteredVariant(rsLocus.assembly, TAXONOMY, rsLocus.contig,
-                                                                 rsLocus.start, rsLocus.type, false, null);
+                rsLocus.start, rsLocus.type, false, null);
         String hash = hashingFunction.apply(clusteredVariant);
         ClusteredVariantEntity clusteredVariantEntity = new ClusteredVariantEntity(rsAccession, hash, clusteredVariant);
         // Note that only SS ID entries are created post remapping.
@@ -936,16 +901,16 @@ public class ClusteringCommandLineRunnerTest {
                 mongoTemplate.save(clusteredVariantEntity, mongoTemplate.getCollectionName(ClusteredVariantEntity.class));
             } else {
                 mongoTemplate.save(clusteredVariantEntity,
-                                   mongoTemplate.getCollectionName(DbsnpClusteredVariantEntity.class));
+                        mongoTemplate.getCollectionName(DbsnpClusteredVariantEntity.class));
             }
         }
         return clusteredVariantEntity;
     }
 
     @Test
-    @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
     @DirtiesContext
     public void runJobWithNoErrors() throws JobExecutionException {
+        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
@@ -968,8 +933,8 @@ public class ClusteringCommandLineRunnerTest {
 
     @Test
     @DirtiesContext
-    @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
     public void restartCompletedJobThatIsAlreadyInTheRepository() throws Exception {
+        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
 
@@ -978,163 +943,16 @@ public class ClusteringCommandLineRunnerTest {
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
 
-    @Test
-    @DirtiesContext
-    @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
-    public void restartFailedJobThatIsAlreadyInTheRepository() throws Exception {
-        useTempVcfFile();
-        injectErrorIntoTempVcf();
-        JobInstance failingJobInstance = runJobAandCheckResults();
-
-        inputParameters.setForceRestart(true);
-        remediateTempVcfError();
-        runJobBAndCheckRestart(failingJobInstance);
-    }
-
-    private JobInstance runJobAandCheckResults() throws Exception {
-        runner.run();
-        assertEquals(ClusteringCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
-        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_VCF_JOB,
-                                                                                    jobExplorer,
-                                                                                    inputParameters.toJobParameters())
-                                                               .getJobInstance();
-        StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance,
-                                                                         CLUSTERING_FROM_VCF_STEP);
-        //Ensure that only the first batch was written (batch size is 2 and error was at line#4)
-        assertEquals(inputParameters.getChunkSize(), stepExecution.getWriteCount());
-
-        return currentJobInstance;
-    }
-
-    private void runJobBAndCheckRestart(JobInstance failingJobInstance) throws Exception {
-        runner.run();
-        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_VCF_JOB,
-                                                                                    jobExplorer,
-                                                                                    inputParameters.toJobParameters())
-                                                               .getJobInstance();
-        assertNotEquals(failingJobInstance.getInstanceId(), currentJobInstance.getInstanceId());
-    }
 
     @Test
     @DirtiesContext
     public void forceRestartButNoJobInTheRepository() throws Exception {
+        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
         inputParameters.setForceRestart(true);
         assertEquals(Collections.EMPTY_LIST, jobExplorer.getJobNames());
         runner.run();
 
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-    }
-
-    @Test
-    @DirtiesContext
-    @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
-    public void resumeFailingJobFromCorrectChunk() throws Exception {
-        // Jobs A, B, C are run chronological order; A and C have SAME parameters;
-        // A is the job that is run after VCF fault injection (as part of the runTestWithFaultInjection method),
-        // therefore should fail.
-        // B is a job run with the original VCF without any faults (run separately), therefore should succeed.
-        // C is a job with the same parameters as A run after VCF fault remediation (as part of the
-        // runTestWithFaultInjection method), therefore should resume A and succeed.
-
-        useTempVcfFile();
-        injectErrorIntoTempVcf();
-        JobInstance failingJobInstance = runJobAandCheckResults();
-
-        runJobBAndCheckResults();
-
-        remediateTempVcfError();
-        runJobCAndCheckResumption(failingJobInstance);
-    }
-
-    private void runJobBAndCheckResults() throws Exception {
-        useOriginalVcfFile();
-        runner.run();
-        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-
-        //Restore state so that Job C can continue running after fault remediation
-        useTempVcfFile();
-    }
-
-    private void runJobCAndCheckResumption(JobInstance failingJobInstance) throws Exception {
-        runner.run();
-        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_VCF_JOB,
-                                                                                    jobExplorer,
-                                                                                    inputParameters.toJobParameters())
-                                                               .getJobInstance();
-        StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance,
-                                                                         CLUSTERING_FROM_VCF_STEP);
-        // Did we resume the previous failed job instance?
-        assertEquals(failingJobInstance.getInstanceId(), currentJobInstance.getInstanceId());
-
-        int numberOfLinesInVcf = getNumberOfLinesInVcfString(originalVcfContent);
-        // Test resumption point - did we pick up where we left off?
-        // Ensure all the batches other than the first batch were processed
-        assertEquals(numberOfLinesInVcf - inputParameters.getChunkSize(), stepExecution.getWriteCount());
-        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-    }
-
-    private void injectErrorIntoTempVcf() throws Exception {
-        String modifiedVcfContent = originalVcfContent.replace("ss5000000004", "4ss--jibberish");
-        // Inject error in the VCF file to cause processing to stop at variant#4
-        writeToTempVCFFile(modifiedVcfContent);
-    }
-
-    private void remediateTempVcfError() throws Exception {
-        writeToTempVCFFile(originalVcfContent);
-    }
-
-    private void useOriginalVcfFile() throws Exception {
-        inputParameters.setVcf(originalVcfInputFilePath);
-        vcfReader.setResource(FileUtils.getResource(new File(originalVcfInputFilePath)));
-    }
-
-    private void useTempVcfFile() throws Exception {
-        // The following does not actually change the wiring of the vcfReader since the wiring happens before the tests
-        // This setVcf is only to facilitate identifying jobs in the job repo by parameter
-        // (those that use original vs temp VCF)
-        inputParameters.setVcf(tempVcfInputFileToTestFailingJobs.getAbsolutePath());
-        /*
-             * Change the auto-wired VCF for VCFReader at runtime
-             * Rationale:
-             *  1) Why not use two test configurations, one for a VCF that fails validation and another for a VCF
-             *  that won't and test resumption?
-             *     Beginning Spring Boot 2, job resumption can only happen when input parameters to the restarted job
-             *     is the same as the failed job.
-             *     Therefore, a test to check resumption cannot have two different config files with different
-             *     parameters.vcf.
-             *     This test therefore creates a dynamic VCF and injects errors at runtime to the VCF thus preserving
-             *     the VCF parameter but changing the VCF content.
-             *  2) Why not artificially inject a VcfReader exception?
-             *     This will preclude us from verifying job resumption from a precise line in the VCF.
-         */
-        vcfReader.setResource(FileUtils.getResource(tempVcfInputFileToTestFailingJobs));
-    }
-
-    private void writeToTempVCFFile(String modifiedVCFContent) throws IOException {
-        FileOutputStream outputStream = new FileOutputStream(tempVcfInputFileToTestFailingJobs.getAbsolutePath());
-        GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outputStream);
-        gzipOutputStream.write(modifiedVCFContent.getBytes(StandardCharsets.UTF_8));
-        gzipOutputStream.close();
-    }
-
-    private String getOriginalVcfContent(String inputVcfPath) throws Exception {
-        StringBuilder originalVCFContent = new StringBuilder();
-
-        GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(inputVcfPath));
-        BufferedReader reader = new BufferedReader(new InputStreamReader(gzipInputStream));
-
-        String read;
-        while ((read = reader.readLine()) != null) {
-            originalVCFContent.append(read).append(System.lineSeparator());
-        }
-        return originalVCFContent.toString();
-    }
-
-    private int getNumberOfLinesInVcfString(String vcfString) {
-        return (int) Arrays.stream(vcfString.split(System.lineSeparator()))
-                           .filter(line -> !line.startsWith("#"))
-                           .count();
     }
 
     @Test
@@ -1169,14 +987,14 @@ public class ClusteringCommandLineRunnerTest {
         rsMergeCandidatesReader = new RSMergeAndSplitCandidatesReaderConfiguration()
                 .rsMergeCandidatesReader(this.mongoTemplate, this.inputParameters);
         rsMergeCandidatesReader.open(new ExecutionContext());
-        while((tempSVO = rsMergeCandidatesReader.read()) != null) {
+        while ((tempSVO = rsMergeCandidatesReader.read()) != null) {
             mergeCandidates.add(tempSVO);
         }
         rsMergeWriter.write(mergeCandidates);
         rsSplitCandidatesReader = new RSMergeAndSplitCandidatesReaderConfiguration()
                 .rsSplitCandidatesReader(this.mongoTemplate, this.inputParameters);
         rsSplitCandidatesReader.open(new ExecutionContext());
-        while((tempSVO = rsSplitCandidatesReader.read()) != null) {
+        while ((tempSVO = rsSplitCandidatesReader.read()) != null) {
             splitCandidates.add(tempSVO);
         }
         rsSplitWriter.write(splitCandidates);

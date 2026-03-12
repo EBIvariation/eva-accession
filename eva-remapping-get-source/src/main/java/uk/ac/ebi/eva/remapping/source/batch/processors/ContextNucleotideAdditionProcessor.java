@@ -21,7 +21,6 @@ import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
-
 import uk.ac.ebi.eva.accession.core.batch.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.exceptions.PositionOutsideOfContigException;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
@@ -29,8 +28,6 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.Arrays;
 import java.util.regex.Pattern;
-
-import static java.lang.Math.max;
 
 public class ContextNucleotideAdditionProcessor
         implements ItemProcessor<SubmittedVariantEntity, SubmittedVariantEntity> {

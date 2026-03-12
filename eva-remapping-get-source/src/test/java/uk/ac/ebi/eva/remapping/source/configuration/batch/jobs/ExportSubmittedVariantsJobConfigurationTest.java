@@ -100,11 +100,6 @@ public class ExportSubmittedVariantsJobConfigurationTest {
     }
 
     @Test
-    public void contextLoads() {
-
-    }
-
-    @Test
     public void basicJobCompletion() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
 

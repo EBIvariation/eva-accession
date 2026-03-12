@@ -80,11 +80,6 @@ public class DeprecateStudySubmittedVariantsStepConfigurationTest {
     }
 
     @Test
-    public void contextLoads() {
-
-    }
-
-    @Test
     public void variantsDeprecated() {
         JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchStep(BeanNames.DEPRECATE_STUDY_SUBMITTED_VARIANTS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
