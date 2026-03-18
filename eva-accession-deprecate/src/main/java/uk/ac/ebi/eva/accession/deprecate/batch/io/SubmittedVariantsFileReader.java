@@ -64,16 +64,12 @@ public class SubmittedVariantsFileReader implements ItemStreamReader<SubmittedVa
 
     @Override
     public SubmittedVariantEntity read() {
-        if (evaCursor == null || !evaCursor.hasNext()) {
+        while (evaCursor == null || !evaCursor.hasNext()) {
             if (endOfFile) {
                 return null;
             }
 
             loadNextBatchAndQuery();
-
-            if (evaCursor == null || !evaCursor.hasNext()) {
-                return null;
-            }
         }
 
         Document nextElement = evaCursor.next();
@@ -105,7 +101,10 @@ public class SubmittedVariantsFileReader implements ItemStreamReader<SubmittedVa
 
         try {
             while (variantIds.size() < chunkSize && (line = reader.readLine()) != null) {
-                variantIds.add(Long.parseLong(line.trim()));
+                line = line.trim();
+                if (!line.isEmpty()) {
+                    variantIds.add(Long.parseLong(line));
+                }
             }
             if (variantIds.isEmpty()) {
                 endOfFile = true;
