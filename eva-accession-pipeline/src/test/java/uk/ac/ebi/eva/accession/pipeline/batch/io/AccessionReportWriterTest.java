@@ -226,6 +226,7 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(variant),
                                     GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
                                             Collections.singletonList(accessionWrapper)));
+        accessionReportWriter.update(executionContext);
         accessionReportWriter.close();
 
         // second writer
