@@ -23,6 +23,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestControllerAdvice;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.ErrorMessage;
@@ -45,10 +47,11 @@ public class EvaControllerAdvice extends BasicRestControllerAdvice {
     @Value("${eva.api.base-url}")
     private String apiBaseUrl;
 
+    @Override
     @ExceptionHandler(value = AccessionMergedException.class)
-    public ResponseEntity<ErrorMessage> handleMergeExceptions(AccessionMergedException ex,
-                                                              HttpServletRequest request) {
+    public ResponseEntity<ErrorMessage> handleMergeExceptions(AccessionMergedException ex) {
         logger.error(ex.getMessage(), ex);
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         if (HttpMethod.GET.name().equals(request.getMethod())) {
             // Use getRequestURI() (path only, no host) and prepend the configured base URL
             // so that the redirect target cannot be influenced by the incoming Host header.
