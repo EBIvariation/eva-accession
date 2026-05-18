@@ -2,10 +2,10 @@ name: Run tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, java21 ]
   pull_request:
     # Temporarily run tests on the feature branch until merged to master
-    branches: [ master, feature/ws-contig-alias-integration ]
+    branches: [ master,  java21, feature/ws-contig-alias-integration ]
 
 jobs:
   build:
