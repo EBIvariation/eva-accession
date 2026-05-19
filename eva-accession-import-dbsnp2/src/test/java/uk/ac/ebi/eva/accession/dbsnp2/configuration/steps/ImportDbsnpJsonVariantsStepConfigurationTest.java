@@ -15,36 +15,44 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp2.configuration.steps;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.dbsnp2.test.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.test.BatchTestConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp2.test.MongoTestConfiguration;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.IMPORT_DBSNP_JSON_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.dbsnp2.test.BatchTestConfiguration.JOB_IMPORT_DBSNP_JSON_VARIANTS_JOB;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
+        BatchJobRepositoryTestConfiguration.class})
 @TestPropertySource("classpath:application.properties")
-public class ImportDbsnpJsonVariantsStepConfigurationTest {
+public class ImportDbsnpJsonVariantsStepConfigurationTest extends MongoTestContainerHelper {
 
     @Autowired
+    @Qualifier(JOB_IMPORT_DBSNP_JSON_VARIANTS_JOB)
     private JobLauncherTestUtils jobLauncherTestUtils;
+
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
     }

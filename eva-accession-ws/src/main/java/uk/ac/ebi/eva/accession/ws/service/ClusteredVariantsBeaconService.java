@@ -17,7 +17,6 @@
  */
 package uk.ac.ebi.eva.accession.ws.service;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
@@ -167,7 +166,7 @@ public class ClusteredVariantsBeaconService {
             getBeaconDatasetAlleleResponsesHuman = getBeaconDatasetAlleleResponsesHuman(identifier);
         }
         return buildResponse(referenceGenome, chromosome, start, variantType, !variant.isEmpty(),
-                             getBeaconDatasetAlleleResponsesHuman);
+                getBeaconDatasetAlleleResponsesHuman);
     }
 
     private List<BeaconDatasetAlleleResponse> getBeaconDatasetAlleleResponsesHuman(String clusteredVariantAccession) {
@@ -193,13 +192,13 @@ public class ClusteredVariantsBeaconService {
 
         if (response.isExists()) {
             List<BeaconDatasetAlleleResponse> datasetAlleleResponses = new ArrayList<>();
-            if (!CollectionUtils.isEmpty(nonHumanResponse.getDatasetAlleleResponses())) {
+            if (nonHumanResponse.getDatasetAlleleResponses() != null && !nonHumanResponse.getDatasetAlleleResponses().isEmpty()) {
                 datasetAlleleResponses.addAll(nonHumanResponse.getDatasetAlleleResponses());
             }
-            if (!CollectionUtils.isEmpty(humanResponse.getDatasetAlleleResponses())) {
+            if (humanResponse.getDatasetAlleleResponses() != null && !humanResponse.getDatasetAlleleResponses().isEmpty()) {
                 datasetAlleleResponses.addAll(humanResponse.getDatasetAlleleResponses());
             }
-            if (!CollectionUtils.isEmpty(datasetAlleleResponses)) {
+            if (datasetAlleleResponses != null && !datasetAlleleResponses.isEmpty()) {
                 response.setDatasetAlleleResponses(datasetAlleleResponses);
             }
         }
@@ -208,8 +207,8 @@ public class ClusteredVariantsBeaconService {
     }
 
     public BeaconAlleleResponse getBeaconResponseObjectWithError(String reference, long start, String assembly,
-                                                                  VariantType variantType, int errorCode,
-                                                                  String errorMessage) {
+                                                                 VariantType variantType, int errorCode,
+                                                                 String errorMessage) {
         BeaconAlleleRequest request = new BeaconAlleleRequest();
         request.setReferenceName(Chromosome.fromValue(reference));
         request.setStart(start);

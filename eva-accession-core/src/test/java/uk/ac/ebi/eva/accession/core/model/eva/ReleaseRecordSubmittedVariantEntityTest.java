@@ -1,9 +1,9 @@
 package uk.ac.ebi.eva.accession.core.model.eva;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.eva.accession.core.model.ReleaseRecordSubmittedVariantEntity;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ReleaseRecordSubmittedVariantEntityTest {
 

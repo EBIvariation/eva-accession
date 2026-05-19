@@ -16,24 +16,19 @@
 
 package uk.ac.ebi.eva.accession.release.configuration.batch.steps;
 
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.mongodb.MongoClient;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
@@ -41,9 +36,10 @@ import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEn
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.release.test.configuration.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration;
-import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.io.IOException;
@@ -55,17 +51,17 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_ACTIVE_ACCESSIONS_JOB;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB;
 import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration.TEST_DUMP_ACTIVE_ACCESSIONS_JOB;
 import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration.TEST_DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {MongoTestConfiguration.class, ReleaseFromDBTestConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {MongoTestConfiguration.class, ReleaseFromDBTestConfiguration.class,
+        BatchJobRepositoryTestConfiguration.class})
 @TestPropertySource("classpath:dump-rs-accession-test.properties")
-public class DumpRSAccessionsTest {
-    private static final String TEST_DB = "test-db";
+public class DumpRSAccessionsTest extends MongoTestContainerHelper {
     private static final String accDumpFile = "src/test/resources/accDumpFile.csv";
 
     @Autowired
@@ -77,28 +73,17 @@ public class DumpRSAccessionsTest {
     private JobLauncherTestUtils jobLauncherDumpMergedAndDeprecatedAccessions;
 
     @Autowired
-    private MongoClient mongoClient;
-
-    @Autowired
     private MongoTemplate mongoTemplate;
 
-    //Required by nosql-unit
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
-
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
-        this.mongoClient.dropDatabase(TEST_DB);
+        mongoTemplate.getDb().drop();
         Files.deleteIfExists(Paths.get(accDumpFile));
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws IOException {
-        this.mongoClient.dropDatabase(TEST_DB);
+        mongoTemplate.getDb().drop();
         Files.deleteIfExists(Paths.get(accDumpFile));
     }
 

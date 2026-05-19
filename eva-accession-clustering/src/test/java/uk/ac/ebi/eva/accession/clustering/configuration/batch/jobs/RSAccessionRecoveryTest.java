@@ -16,44 +16,63 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs;
  * limitations under the License.
  */
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
+import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchJobRepositoryTestConfiguration;
+import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.RSAccessionRecoveryTestConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.RSAccessionRecoveryTestConfiguration.JOB_LAUNCHER_RS_ACCESSION_RECOVERY;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {RSAccessionRecoveryTestConfiguration.class,})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {RSAccessionRecoveryTestConfiguration.class, MongoTestConfiguration.class, BatchJobRepositoryTestConfiguration.class})
 @TestPropertySource("classpath:rs-accession-recovery.properties")
 @SpringBatchTest
-public class RSAccessionRecoveryTest {
+public class RSAccessionRecoveryTest extends MongoTestContainerHelper {
     @Autowired
     private ContiguousIdBlockRepository blockRepository;
 
     @Autowired
     private ClusteredVariantAccessioningRepository mongoRepository;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    @BeforeEach
+    public void setUp() {
+        mongoTemplate.getDb().drop();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        mongoTemplate.getDb().drop();
+    }
 
     @Autowired
     @Qualifier(JOB_LAUNCHER_RS_ACCESSION_RECOVERY)

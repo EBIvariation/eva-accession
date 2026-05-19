@@ -15,32 +15,30 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc;
 
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.mongodb.MongoClient;
-import gherkin.deps.com.google.gson.Gson;
-import gherkin.deps.com.google.gson.GsonBuilder;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.clustering.batch.io.qc.DuplicateRSAccQCResult;
+import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
@@ -48,6 +46,7 @@ import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.io.IOException;
@@ -61,17 +60,15 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.DUPLICATE_RS_ACC_QC_STEP;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_DUPLICATE_RS_ACC_QC_JOB;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class, BatchJobRepositoryTestConfiguration.class})
 @TestPropertySource("classpath:duplicate-rs-acc-qc-test.properties")
-public class DuplicateRSAccQCStepConfigurationTest {
-
-    private static final String TEST_DB = "test-db";
+public class DuplicateRSAccQCStepConfigurationTest extends MongoTestContainerHelper {
     private static final String duplicateRsAccFile = "src/test/resources/duplicateRSAcc.csv";
 
     @Autowired
@@ -79,30 +76,19 @@ public class DuplicateRSAccQCStepConfigurationTest {
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
-    private MongoClient mongoClient;
-
-    @Autowired
     private MongoTemplate mongoTemplate;
-
-    //Required by nosql-unit
-    @Autowired
-    private ApplicationContext applicationContext;
 
     private final Gson gson = new GsonBuilder().create();
 
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
-
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
-        this.mongoClient.dropDatabase(TEST_DB);
+        mongoTemplate.getDb().drop();
         Files.deleteIfExists(Paths.get(duplicateRsAccFile));
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws IOException {
-        this.mongoClient.dropDatabase(TEST_DB);
+        mongoTemplate.getDb().drop();
         Files.deleteIfExists(Paths.get(duplicateRsAccFile));
     }
 
@@ -303,7 +289,31 @@ public class DuplicateRSAccQCStepConfigurationTest {
             String expectedJsonData = gson.toJson(new DuplicateRSAccQCResult(cveAcc, mapOfCveAccAndCveEntities.get(cveAcc),
                     mapOfSveGroupByCveAccAndThenByAsmLoc.get(cveAcc)));
 
-            assertEquals(expectedJsonData, fileJsonData);
+            assertEquals(normalizeNano(expectedJsonData), normalizeNano(fileJsonData));
+        }
+    }
+
+    private String normalizeNano(String json) {
+        JsonElement element = JsonParser.parseString(json);
+        removeNano(element);
+        return element.toString();
+    }
+
+    private void removeNano(JsonElement element) {
+        if (element.isJsonObject()) {
+            JsonObject obj = element.getAsJsonObject();
+
+            if (obj.has("nano")) {
+                obj.addProperty("nano", 0);
+            }
+
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                removeNano(entry.getValue());
+            }
+        } else if (element.isJsonArray()) {
+            for (JsonElement child : element.getAsJsonArray()) {
+                removeNano(child);
+            }
         }
     }
 

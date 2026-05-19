@@ -15,8 +15,8 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.batch.processors;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -26,15 +26,15 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.ac.ebi.eva.accession.pipeline.batch.processors.ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME;
 
 public class ContigToGenbankReplacerProcessorTest {
 
     private ContigToGenbankReplacerProcessor processor;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         String fileString = ContigToGenbankReplacerProcessorTest.class.getResource(
                 "/input-files/assembly-report/assembly_report.txt").toString();

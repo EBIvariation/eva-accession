@@ -16,12 +16,12 @@
 
 package uk.ac.ebi.eva.accession.pipeline.runner;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.explore.JobExplorer;
@@ -36,26 +36,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.runner.CommandLineRunnerUtils;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.pipeline.test.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 
-import javax.sql.DataSource;
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -70,10 +72,11 @@ import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.useOriginalVcfF
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.useTempVcfFile;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.writeToTempVCFFile;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
+        BatchJobRepositoryTestConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
-public class RestartFailedJobTest {
+public class RestartFailedJobTest extends MongoTestContainerHelper {
 
     @Autowired
     private InputParameters inputParameters;
@@ -83,9 +86,6 @@ public class RestartFailedJobTest {
 
     @Autowired
     private JobExplorer jobExplorer;
-
-    @Autowired
-    private DataSource datasource;
 
     @Autowired
     private EvaAccessionJobLauncherCommandLineRunner runner;
@@ -115,8 +115,6 @@ public class RestartFailedJobTest {
 
     private static String originalVcfInputFilePath;
 
-    private static String originalVcfOutputFilePath;
-
     private static String originalVcfContent;
 
     private boolean originalInputParametersCaptured = false;
@@ -124,28 +122,27 @@ public class RestartFailedJobTest {
     @SpyBean
     private SubmittedVariantAccessioningService accessioningServiceSpy;
 
-    @BeforeClass
+    @BeforeAll
     public static void initializeTempFile() throws Exception {
         tempVcfInputFileToTestFailingJobs = File.createTempFile("resumeFailingJob", ".vcf.gz");
         tempVcfOutputDir = Files.createTempDirectory("contigs_variants_dir");
     }
 
-    @AfterClass
+    @AfterAll
     public static void deleteTempFile() {
         tempVcfInputFileToTestFailingJobs.delete();
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         if (!originalInputParametersCaptured) {
             originalVcfInputFilePath = inputParameters.getVcf();
-            originalVcfOutputFilePath = inputParameters.getOutputVcf();
             originalVcfContent = getOriginalVcfContent(originalVcfInputFilePath);
             writeToTempVCFFile(originalVcfContent, tempVcfInputFileToTestFailingJobs);
             originalInputParametersCaptured = true;
         }
-        jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository, datasource);
-        runner.setJobNames(SUBSNP_ACCESSION_JOB);
+        jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository);
+        runner.setJobName(SUBSNP_ACCESSION_JOB);
         deleteTemporaryContigAndVariantFiles(inputParameters, tempVcfOutputDir);
         useOriginalVcfFile(inputParameters, originalVcfInputFilePath, vcfReader);
 
@@ -160,7 +157,7 @@ public class RestartFailedJobTest {
 
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         jobRepositoryTestUtils.removeJobExecutions();
         inputParameters.setForceRestart(false);

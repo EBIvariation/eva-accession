@@ -16,22 +16,19 @@
  */
 package uk.ac.ebi.eva.accession.clustering.runner;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionException;
 import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.test.JobLauncherTestUtils;
@@ -39,7 +36,7 @@ import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpMethod;
@@ -47,7 +44,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
@@ -65,8 +62,9 @@ import uk.ac.ebi.eva.accession.clustering.batch.io.RSSplitWriter;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
+import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -84,12 +82,13 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessionin
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.mongodb.readers.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 
-import javax.sql.DataSource;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
@@ -101,25 +100,35 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.*;
-import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_NEW_RS_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER_UNCLUSTERED_VARIANTS_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_MERGE_CANDIDATES_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
+        BatchJobRepositoryTestConfiguration.class})
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
-public class ClusteringCommandLineRunnerTest {
+public class ClusteringCommandLineRunnerTest extends MongoTestContainerHelper {
     private static String TEST_APPLICATION_INSTANCE_ID = "test-application-instance-id";
-
-    private static final String TEST_DB = "test-db";
 
     private static final int TAXONOMY = 60711;
 
@@ -157,17 +166,13 @@ public class ClusteringCommandLineRunnerTest {
     private JobExplorer jobExplorer;
 
     @Autowired
-    private DataSource datasource;
-
-    @Autowired
     private ClusteringCommandLineRunner runner;
 
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    //Required by nosql-unit
     @Autowired
-    private ApplicationContext applicationContext;
+    private ResourceLoader resourceLoader;
 
     @Autowired
     private MonotonicAccessionGenerator<IClusteredVariant> clusteredVariantAccessionGenerator;
@@ -183,23 +188,8 @@ public class ClusteringCommandLineRunnerTest {
     private ClusteringWriter clusteringWriter;
 
     @Autowired
-    @Qualifier(JOB_LAUNCHER_FROM_MONGO)
-    private JobLauncherTestUtils jobLauncherTestUtilsFromMongo;
-
-    @Autowired
     @Qualifier(JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP)
     private JobLauncherTestUtils jobLauncherTestUtilsFromMongoOnlyFirstStep;
-
-    // Current clustering sequence is:
-    // generate merge split candidates from clustered variants -> perform merge
-    // -> perform split -> cluster new variants
-    @Autowired
-    @Qualifier(CLUSTERED_CLUSTERING_WRITER)
-    private ClusteringWriter clusteringWriterPreMergeAndSplit;
-
-    @Autowired
-    @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER)
-    private ClusteringWriter clusteringWriterPostMergeAndSplit;
 
     private MongoDbCursorItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader;
 
@@ -215,11 +205,6 @@ public class ClusteringCommandLineRunnerTest {
 
     @MockBean
     private JobExecution jobExecution;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
-
 
     private JobRepositoryTestUtils jobRepositoryTestUtils;
 
@@ -269,17 +254,17 @@ public class ClusteringCommandLineRunnerTest {
 
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
 
-    @BeforeClass
+    @BeforeAll
     public static void initializeTempFile() throws Exception {
         tempVcfInputFileToTestFailingJobs = File.createTempFile("resumeFailingJob", ".vcf.gz");
     }
 
-    @AfterClass
-    public static void deleteTempFile() throws Exception {
+    @AfterAll
+    public static void deleteTempFile() {
         tempVcfInputFileToTestFailingJobs.delete();
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         if (!originalInputParametersCaptured) {
             originalRemappedFrom = inputParameters.getRemappedFrom();
@@ -287,7 +272,7 @@ public class ClusteringCommandLineRunnerTest {
         }
         ASM1 = inputParameters.getRemappedFrom();
         ASM2 = inputParameters.getAssemblyAccession();
-        jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository, datasource);
+        jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository);
         jobRepositoryTestUtils.removeJobExecutions();
         inputParameters.setForceRestart(false);
         inputParameters.setRemappedFrom(originalRemappedFrom);
@@ -302,7 +287,7 @@ public class ClusteringCommandLineRunnerTest {
         rsSplitWriter.setJobExecution(jobExecution);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         jobRepositoryTestUtils.removeJobExecutions();
         inputParameters.setForceRestart(false);
@@ -310,10 +295,11 @@ public class ClusteringCommandLineRunnerTest {
     }
 
     @Test
-    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
     @DirtiesContext
     public void runFullClusteringFromMongoJobWithNoErrors() throws JobExecutionException {
-        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
+        new MongoTestDataLoader(mongoTemplate, resourceLoader).load("/test-data/submittedVariantEntityMongoReader.json");
+
+        runner.setJobName(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
 
@@ -338,13 +324,14 @@ public class ClusteringCommandLineRunnerTest {
     }
 
     @Test
-    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
     @DirtiesContext
     // For a clustering job involving non-remapped variants, only one step i.e.,
     // CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP should be executed
     public void runPartialClusteringFromMongoJobForNonRemappedVariants() throws JobExecutionException {
+        new MongoTestDataLoader(mongoTemplate, resourceLoader).load("/test-data/submittedVariantEntityMongoReader.json");
+
         inputParameters.setRemappedFrom(null);
-        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
+        runner.setJobName(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
 
@@ -368,10 +355,11 @@ public class ClusteringCommandLineRunnerTest {
     }
 
     @Test
-    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
     @DirtiesContext
     public void runProcessRemappedRSJobWithNoErrors() throws JobExecutionException {
-        runner.setJobNames(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
+        new MongoTestDataLoader(mongoTemplate, resourceLoader).load("/test-data/submittedVariantEntityMongoReader.json");
+
+        runner.setJobName(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
@@ -395,7 +383,7 @@ public class ClusteringCommandLineRunnerTest {
         SubmittedVariantEntity ss1 = createSS(1L, 1L, rsLocus1, "A", "T", true);
         SubmittedVariantEntity ss2 = createSS(2L, 2L, rsLocus1, "A", "G", true);
         SubmittedVariantEntity ss3 = createSS(3L, 3L, rsLocus2, "T", "", true);
-        runner.setJobNames(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
+        runner.setJobName(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
         mergeOperations.add(Arrays.asList(ss1, ss2));
@@ -405,7 +393,7 @@ public class ClusteringCommandLineRunnerTest {
         // Second run
         SubmittedVariantEntity ss4 = createSS(4L, 3L, rsLocus3, "", "T", true);
         SubmittedVariantEntity ss5 = createSS(5L, 4L, rsLocus4, "A", "G", true);
-        runner.setJobNames(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
+        runner.setJobName(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
         splitOperations.add(Arrays.asList(ss3, ss4));
@@ -414,7 +402,7 @@ public class ClusteringCommandLineRunnerTest {
 
         // Third run
         SubmittedVariantEntity ss6 = createSS(6L, 5L, rsLocus4, "G", "A", true);
-        runner.setJobNames(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
+        runner.setJobName(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
         mergeOperations.add(Arrays.asList(ss5, ss6));
@@ -422,7 +410,7 @@ public class ClusteringCommandLineRunnerTest {
 
         // Fourth run
         createSS(7L, 6L, rsLocus5, "", "A", true);
-        runner.setJobNames(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
+        runner.setJobName(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
         insertedRSHashes.add(rsLocus5.getHash());
@@ -495,10 +483,11 @@ public class ClusteringCommandLineRunnerTest {
     }
 
     @Test
-    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
     @DirtiesContext
     public void runClusterUnclusteredVariantsJobWithNoErrors() throws JobExecutionException {
-        runner.setJobNames(CLUSTER_UNCLUSTERED_VARIANTS_JOB);
+        new MongoTestDataLoader(mongoTemplate, resourceLoader).load("/test-data/submittedVariantEntityMongoReader.json");
+
+        runner.setJobName(CLUSTER_UNCLUSTERED_VARIANTS_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
@@ -511,7 +500,7 @@ public class ClusteringCommandLineRunnerTest {
     public void runBackPropagateRSJobWithNoErrors() throws JobExecutionException,
             AccessionCouldNotBeGeneratedException {
         setupRSAndSSInNewAndRemappedAssemblies();
-        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
+        runner.setJobName(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
 
@@ -549,7 +538,7 @@ public class ClusteringCommandLineRunnerTest {
         SubmittedVariantEntity ss2_another = createSS(2L, rs3.getAccession(), rsLocus2, "A", "", true);
         SubmittedVariantEntity ss3 = createSS(3L, rs2.getAccession(), rsLocus2, "C", "", true);
 
-        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
+        runner.setJobName(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
 
@@ -577,7 +566,7 @@ public class ClusteringCommandLineRunnerTest {
         setupRSAndSS();
         createEVASS8InASM1WithUnassignedRS();
 
-        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
+        runner.setJobName(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
 
@@ -910,7 +899,7 @@ public class ClusteringCommandLineRunnerTest {
     @Test
     @DirtiesContext
     public void runJobWithNoErrors() throws JobExecutionException {
-        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
+        runner.setJobName(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
@@ -918,7 +907,7 @@ public class ClusteringCommandLineRunnerTest {
     @Test
     @DirtiesContext
     public void runJobWithNoName() throws JobExecutionException {
-        runner.setJobNames(null);
+        runner.setJobName(null);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
     }
@@ -926,7 +915,7 @@ public class ClusteringCommandLineRunnerTest {
     @Test
     @DirtiesContext
     public void runNonExistentJob() throws JobExecutionException {
-        runner.setJobNames("NOT_EXISTENT_JOB");
+        runner.setJobName("NOT_EXISTENT_JOB");
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
     }
@@ -934,7 +923,7 @@ public class ClusteringCommandLineRunnerTest {
     @Test
     @DirtiesContext
     public void restartCompletedJobThatIsAlreadyInTheRepository() throws Exception {
-        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
+        runner.setJobName(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
 
@@ -947,7 +936,7 @@ public class ClusteringCommandLineRunnerTest {
     @Test
     @DirtiesContext
     public void forceRestartButNoJobInTheRepository() throws Exception {
-        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
+        runner.setJobName(CLUSTERING_FROM_MONGO_JOB);
         inputParameters.setForceRestart(true);
         assertEquals(Collections.EMPTY_LIST, jobExplorer.getJobNames());
         runner.run();
@@ -990,13 +979,13 @@ public class ClusteringCommandLineRunnerTest {
         while ((tempSVO = rsMergeCandidatesReader.read()) != null) {
             mergeCandidates.add(tempSVO);
         }
-        rsMergeWriter.write(mergeCandidates);
+        rsMergeWriter.write(new Chunk<>(mergeCandidates));
         rsSplitCandidatesReader = new RSMergeAndSplitCandidatesReaderConfiguration()
                 .rsSplitCandidatesReader(this.mongoTemplate, this.inputParameters);
         rsSplitCandidatesReader.open(new ExecutionContext());
         while ((tempSVO = rsSplitCandidatesReader.read()) != null) {
             splitCandidates.add(tempSVO);
         }
-        rsSplitWriter.write(splitCandidates);
+        rsSplitWriter.write(new Chunk<>(splitCandidates));
     }
 }

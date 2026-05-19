@@ -15,8 +15,8 @@
  */
 package uk.ac.ebi.eva.accession.clustering.batch.processors;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
@@ -28,8 +28,8 @@ import uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter;
 
 import java.util.function.Function;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class VariantToSubmittedVariantEntityProcessorTest {
 
@@ -43,7 +43,7 @@ public class VariantToSubmittedVariantEntityProcessorTest {
 
     private VariantToSubmittedVariantEntityProcessor processor;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         processor = new VariantToSubmittedVariantEntityProcessor(ASSEMBLY_ACCESSION);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());

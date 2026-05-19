@@ -19,6 +19,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Filters;
+import jakarta.annotation.Nonnull;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
@@ -30,8 +31,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
-
-import javax.annotation.Nonnull;
 
 
 public class RSReader implements ItemStreamReader<ClusteredVariantEntity> {
@@ -79,7 +78,7 @@ public class RSReader implements ItemStreamReader<ClusteredVariantEntity> {
 
     public void initializeReader() {
         Bson query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
-                                 Filters.not(Filters.exists(MAPPING_WEIGHT_FIELD)));
+                Filters.not(Filters.exists(MAPPING_WEIGHT_FIELD)));
         logger.info("Issuing find: {}", query);
 
         FindIterable<Document> clusteredVariantsDbsnp =
@@ -94,9 +93,9 @@ public class RSReader implements ItemStreamReader<ClusteredVariantEntity> {
 
     private FindIterable<Document> getClusteredVariants(Bson query, Class<?> entityClass) {
         return mongoTemplate.getCollection(mongoTemplate.getCollectionName(entityClass))
-                            .find(query)
-                            .noCursorTimeout(true)
-                            .batchSize(chunkSize);
+                .find(query)
+                .noCursorTimeout(true)
+                .batchSize(chunkSize);
     }
 
     @Override

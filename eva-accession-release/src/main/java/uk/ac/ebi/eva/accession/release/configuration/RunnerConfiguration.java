@@ -16,12 +16,6 @@
  */
 package uk.ac.ebi.eva.accession.release.configuration;
 
-import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
-import org.springframework.batch.core.configuration.annotation.DefaultBatchConfigurer;
-import org.springframework.batch.core.explore.JobExplorer;
-import org.springframework.batch.core.explore.support.MapJobExplorerFactoryBean;
-import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
@@ -32,20 +26,5 @@ public class RunnerConfiguration {
     @Bean
     public JobExecutionApplicationListener jobExecutionApplicationListener() {
         return new JobExecutionApplicationListener();
-    }
-
-    @Bean
-    public BatchConfigurer configurer() {
-        return new DefaultBatchConfigurer() {
-            @Override
-            protected JobRepository createJobRepository() throws Exception {
-                return new MapJobRepositoryFactoryBean().getObject();
-            }
-
-            @Override
-            protected JobExplorer createJobExplorer() throws Exception {
-                return new MapJobExplorerFactoryBean((MapJobRepositoryFactoryBean) new MapJobRepositoryFactoryBean()).getObject();
-            }
-        };
     }
 }

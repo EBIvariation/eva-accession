@@ -16,10 +16,8 @@
 package uk.ac.ebi.eva.accession.dbsnp2.batch.io;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.file.FlatFileItemReader;
@@ -29,7 +27,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import uk.ac.ebi.eva.accession.dbsnp2.test.BatchTestConfiguration;
 
@@ -37,11 +35,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_VARIANT_READER;
 
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestExecutionListeners({DependencyInjectionTestExecutionListener.class,
         StepScopeTestExecutionListener.class})
@@ -52,13 +51,10 @@ public class DbsnpJsonItemReaderTest {
     @Qualifier(DBSNP_JSON_VARIANT_READER)
     private FlatFileItemReader<JsonNode> reader;
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Test
     public void readExistingSource() throws Exception {
         reader.setResource(new BzipLazyResource(
-            new File("src/test/resources/input-files/test-dbsnp.json.bz2")));
+                new File("src/test/resources/input-files/test-dbsnp.json.bz2")));
         reader.open(new ExecutionContext());
         List<JsonNode> variants = readAll(reader);
         assertEquals(26, variants.size());
@@ -67,8 +63,7 @@ public class DbsnpJsonItemReaderTest {
     @Test
     public void readNonExistingSource() throws Exception {
         reader.setResource(new BzipLazyResource(new File("INVALID_DIRECTORY")));
-        thrown.expect(ItemStreamException.class);
-        reader.open(new ExecutionContext());
+        assertThrows(ItemStreamException.class, () -> reader.open(new ExecutionContext()));
     }
 
     private List<JsonNode> readAll(FlatFileItemReader<JsonNode> reader) throws Exception {

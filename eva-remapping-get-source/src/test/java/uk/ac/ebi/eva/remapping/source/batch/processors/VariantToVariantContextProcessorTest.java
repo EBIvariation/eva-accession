@@ -18,17 +18,16 @@ package uk.ac.ebi.eva.remapping.source.batch.processors;
 
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
-import org.junit.Before;
-import org.junit.Test;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class VariantToVariantContextProcessorTest {
 
@@ -50,7 +49,7 @@ public class VariantToVariantContextProcessorTest {
 
     private SubmittedVariantToVariantContextProcessor variantConverter;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         variantConverter = new SubmittedVariantToVariantContextProcessor();
     }
@@ -65,8 +64,8 @@ public class VariantToVariantContextProcessorTest {
     private SubmittedVariantEntity buildVariant(String chr1, int start, String reference, String alternate,
                                                 String project, int taxonomy) {
         SubmittedVariantEntity variant = new SubmittedVariantEntity(SS_ID, "hash", "assembly", taxonomy, project, chr1,
-                                                                    start, reference, alternate, RS_ID,
-                                                                    false, false, false, false, 1);
+                start, reference, alternate, RS_ID,
+                false, false, false, false, 1);
         variant.setCreatedDate(LocalDateTime.parse(CREATED_DATE));
         return variant;
     }
@@ -78,7 +77,7 @@ public class VariantToVariantContextProcessorTest {
         assertEquals(expectedStart, variantContext.getStart());
         assertEquals(Allele.create(expectedReference, true), variantContext.getReference());
         assertEquals(Collections.singletonList(Allele.create(expectedAlternate, false)),
-                     variantContext.getAlternateAlleles());
+                variantContext.getAlternateAlleles());
         assertEquals("ss" + expectedId, variantContext.getID());
         assertTrue(variantContext.getFilters().isEmpty());
         assertEquals(5, variantContext.getCommonInfo().getAttributes().size());
@@ -88,7 +87,7 @@ public class VariantToVariantContextProcessorTest {
 
         assertTrue(variantContext.getCommonInfo().hasAttribute(TAXONOMY_ID_KEY));
         assertEquals(expectedTaxonomy,
-                     Integer.parseInt(variantContext.getCommonInfo().getAttribute(TAXONOMY_ID_KEY).toString()));
+                Integer.parseInt(variantContext.getCommonInfo().getAttribute(TAXONOMY_ID_KEY).toString()));
 
         assertEquals(0, variantContext.getSampleNames().size());
     }

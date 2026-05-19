@@ -1,8 +1,9 @@
 package uk.ac.ebi.eva.accession.release.test.configuration;
 
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobLauncherTestUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -57,46 +58,45 @@ public class ReleaseFromDBTestConfiguration {
     }
 
     @Bean(TEST_DUMP_ACTIVE_ACCESSIONS_JOB)
-    public JobLauncherTestUtils jobLauncherTestUtilsActiveAccessions() {
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(DUMP_ACTIVE_ACCESSIONS_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
+    public JobLauncherTestUtils jobLauncherTestUtilsActiveAccessions(JobLauncher jobLauncher, JobRepository jobRepository,
+                                                                     @Qualifier(DUMP_ACTIVE_ACCESSIONS_JOB) Job job) {
+        JobLauncherTestUtils utils = new JobLauncherTestUtils();
+        utils.setJobLauncher(jobLauncher);
+        utils.setJobRepository(jobRepository);
+        utils.setJob(job);
+        return utils;
     }
 
     @Bean(TEST_DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB)
-    public JobLauncherTestUtils jobLauncherTestUtilsMergedAccessions() {
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
+    public JobLauncherTestUtils jobLauncherTestUtilsMergedAccessions(JobLauncher jobLauncher, JobRepository jobRepository,
+                                                                     @Qualifier(DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB) Job job) {
+        JobLauncherTestUtils utils = new JobLauncherTestUtils();
+        utils.setJobLauncher(jobLauncher);
+        utils.setJobRepository(jobRepository);
+        utils.setJob(job);
+        return utils;
+
     }
 
     @Bean(TEST_RELEASE_ACTIVE_ACCESSIONS_JOB)
-    public JobLauncherTestUtils jobLauncherTestUtilsReleaseActiveAccessions() {
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(ACTIVE_ACCESSIONS_RELEASE_FROM_DB_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
+    public JobLauncherTestUtils jobLauncherTestUtilsReleaseActiveAccessions(JobLauncher jobLauncher, JobRepository jobRepository,
+                                                                            @Qualifier(ACTIVE_ACCESSIONS_RELEASE_FROM_DB_JOB) Job job) {
+        JobLauncherTestUtils utils = new JobLauncherTestUtils();
+        utils.setJobLauncher(jobLauncher);
+        utils.setJobRepository(jobRepository);
+        utils.setJob(job);
+        return utils;
+
     }
 
     @Bean(TEST_RELEASE_MERGED_AND_DEPRECATED_ACCESSIONS_JOB)
-    public JobLauncherTestUtils jobLauncherTestUtilsReleaseMergedAccessions() {
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(MERGED_AND_DEPRECATED_ACCESSIONS_RELEASE_FROM_DB_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
+    public JobLauncherTestUtils jobLauncherTestUtilsReleaseMergedAccessions(JobLauncher jobLauncher, JobRepository jobRepository,
+                                                                            @Qualifier(MERGED_AND_DEPRECATED_ACCESSIONS_RELEASE_FROM_DB_JOB) Job job) {
+        JobLauncherTestUtils utils = new JobLauncherTestUtils();
+        utils.setJobLauncher(jobLauncher);
+        utils.setJobRepository(jobRepository);
+        utils.setJob(job);
+        return utils;
+
     }
 }

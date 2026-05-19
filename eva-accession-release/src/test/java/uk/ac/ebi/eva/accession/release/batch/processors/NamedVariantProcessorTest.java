@@ -16,7 +16,7 @@
 
 package uk.ac.ebi.eva.accession.release.batch.processors;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -24,8 +24,9 @@ import uk.ac.ebi.eva.commons.core.models.VariantTypeToSOAccessionMap;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader.ASSEMBLY_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader.CLUSTERED_VARIANT_VALIDATED_KEY;
@@ -72,7 +73,7 @@ public class NamedVariantProcessorTest {
     private Variant buildVariant(String chr, int start, String reference, String alternate,
                                  String sequenceOntologyTerm, String... studies) {
         return buildVariant(chr, start, reference, alternate, sequenceOntologyTerm, false, false, true, true, true,
-                            studies);
+                studies);
     }
 
     private Variant buildVariant(String chr, int start, String reference, String alternate,
@@ -109,9 +110,9 @@ public class NamedVariantProcessorTest {
         assertNamedVariant("(1190 BP DEL)", "");
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void throwIfBothAllelesAreNamed() throws Exception {
-        assertNamedVariant("(1190 BP DEL)", "(1190 BP DEL)");
+    @Test
+    public void throwIfBothAllelesAreNamed() {
+        assertThrows(IllegalArgumentException.class, () -> assertNamedVariant("(1190 BP DEL)", "(1190 BP DEL)"));
     }
 
     @Test
@@ -153,7 +154,7 @@ public class NamedVariantProcessorTest {
     }
 
     /**
-     *  Taken from EVA-1220. Some of these won't even go through the release in VCF format, but test them just in case
+     * Taken from EVA-1220. Some of these won't even go through the release in VCF format, but test them just in case
      */
     @Test
     public void handleStrangeAlleles() throws Exception {

@@ -15,11 +15,9 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.batch.tasklets.buildReport;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import uk.ac.ebi.eva.accession.core.utils.PipelineTemporaryFolderUtil;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionReportWriter;
 
 import java.io.BufferedReader;
@@ -32,10 +30,10 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BuildReportTaskletTest {
 
@@ -55,8 +53,7 @@ public class BuildReportTaskletTest {
 
     private static final int CHROMOSOME_COLUMN_VCF = 0;
 
-    @Rule
-    public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
+    public PipelineTemporaryFolderUtil temporaryFolderUtil = new PipelineTemporaryFolderUtil();
 
     private File output;
 
@@ -64,9 +61,9 @@ public class BuildReportTaskletTest {
 
     private File contigsOutput;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        output = temporaryFolderRule.newFile();
+        output = temporaryFolderUtil.newFile();
         variantsOutput = new File(output.getAbsolutePath() + AccessionReportWriter.VARIANTS_FILE_SUFFIX);
         contigsOutput = new File(output.getAbsolutePath() + AccessionReportWriter.CONTIGS_FILE_SUFFIX);
     }
@@ -97,7 +94,7 @@ public class BuildReportTaskletTest {
 
         String variantLine = line;
         do {
-            assertFalse("VCF report has header lines after variant lines", variantLine.startsWith("#"));
+            assertFalse(variantLine.startsWith("#"), "VCF report has header lines after variant lines");
             variantLine = fileInputStream.readLine();
         } while (variantLine != null);
     }
@@ -131,8 +128,8 @@ public class BuildReportTaskletTest {
 
         FileWriter variantsWriter = new FileWriter(variantsOutput);
         variantsWriter.write(String.join("\t",
-                                         Arrays.asList(originalChromosome, START_1.toString(), ACCESSION.toString(),
-                                                       REFERENCE, ALTERNATE, MISSING, MISSING, MISSING)));
+                Arrays.asList(originalChromosome, START_1.toString(), ACCESSION.toString(),
+                        REFERENCE, ALTERNATE, MISSING, MISSING, MISSING)));
         variantsWriter.close();
     }
 

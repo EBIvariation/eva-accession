@@ -15,7 +15,6 @@
  */
 package uk.ac.ebi.eva.accession.clustering.parameters;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.JobParametersInvalidException;
@@ -95,7 +94,7 @@ public class InputParameters {
         if (projects.stream().anyMatch(s -> s.contains(","))) {
             throw new JobParametersInvalidException("Can't have commas in project accessions");
         }
-        String projectsString = CollectionUtils.isEmpty(projects) ? "" : String.join(",", projects);
+        String projectsString = (projects == null || projects.isEmpty()) ? "" : String.join(",", projects);
         if (projectsString.length() > 250) {
             throw new JobParametersInvalidException("Max length of projects parameter is 250 characters");
         }

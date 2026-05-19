@@ -19,7 +19,8 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.steps;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemStreamReader;
@@ -28,38 +29,38 @@ import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
+import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ListOfListItemWriter;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 
 import java.util.List;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_WRITER_JOB_EXECUTION_SETTER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_MONGO_READER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_NEW_BACKPROP_RS;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATED_RS_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_NEW_RS_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_VARIANTS_MONGO_READER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_CLUSTERING_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_VARIANTS_MONGO_READER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_MERGE_CANDIDATES_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROGRESS_LISTENER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_CANDIDATES_READER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_CANDIDATES_READER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_WRITER_JOB_EXECUTION_SETTER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_MONGO_READER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_NEW_BACKPROP_RS;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS;
 
 @Configuration
 @EnableBatchProcessing
@@ -71,10 +72,10 @@ public class ClusteringFromMongoStepConfiguration {
             @Qualifier(CLUSTERED_CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             @Qualifier(CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER) StepExecutionListener clusteredClusteringWriterJobExecutionSetter,
-            StepBuilderFactory stepBuilderFactory,
+            JobRepository jobRepository, PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP)
-                .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
+        TaskletStep step = new StepBuilder(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP, jobRepository)
+                .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
                 .reader(mongoReader)
                 .writer(submittedVariantWriter)
                 .listener(progressListener)
@@ -86,51 +87,49 @@ public class ClusteringFromMongoStepConfiguration {
     @Bean(PROCESS_RS_MERGE_CANDIDATES_STEP)
     public Step processRSMergeCandidatesStep(
             @Qualifier(RS_MERGE_CANDIDATES_READER)
-                    ItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader,
+            ItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader,
             @Qualifier(RS_MERGE_WRITER) ItemWriter<SubmittedVariantOperationEntity> rsMergeWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
-            StepBuilderFactory stepBuilderFactory,
+            JobRepository jobRepository, PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(PROCESS_RS_MERGE_CANDIDATES_STEP)
-                                             .<SubmittedVariantOperationEntity, SubmittedVariantOperationEntity>chunk(
-                                                     chunkSizeCompletionPolicy)
-                                             .reader(rsMergeCandidatesReader)
-                                             .writer(rsMergeWriter)
-                                             .listener(progressListener)
-                                             .build();
+        TaskletStep step = new StepBuilder(PROCESS_RS_MERGE_CANDIDATES_STEP, jobRepository)
+                .<SubmittedVariantOperationEntity, SubmittedVariantOperationEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
+                .reader(rsMergeCandidatesReader)
+                .writer(rsMergeWriter)
+                .listener(progressListener)
+                .build();
         return step;
     }
 
     @Bean(PROCESS_RS_SPLIT_CANDIDATES_STEP)
     public Step processRSSplitCandidatesStep(
             @Qualifier(RS_SPLIT_CANDIDATES_READER)
-                    ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader,
+            ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader,
             @Qualifier(RS_SPLIT_WRITER) ItemWriter<SubmittedVariantOperationEntity> rsSplitWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             @Qualifier(RS_SPLIT_WRITER_JOB_EXECUTION_SETTER) StepExecutionListener rsSplitWriterJobExecutionSetter,
-            StepBuilderFactory stepBuilderFactory,
+            JobRepository jobRepository, PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(PROCESS_RS_SPLIT_CANDIDATES_STEP)
-                                             .<SubmittedVariantOperationEntity, SubmittedVariantOperationEntity>chunk(
-                                                     chunkSizeCompletionPolicy)
-                                             .reader(rsSplitCandidatesReader)
-                                             .writer(rsSplitWriter)
-                                             .listener(progressListener)
-                                             .listener(rsSplitWriterJobExecutionSetter)
-                                             .build();
+        TaskletStep step = new StepBuilder(PROCESS_RS_SPLIT_CANDIDATES_STEP, jobRepository)
+                .<SubmittedVariantOperationEntity, SubmittedVariantOperationEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
+                .reader(rsSplitCandidatesReader)
+                .writer(rsSplitWriter)
+                .listener(progressListener)
+                .listener(rsSplitWriterJobExecutionSetter)
+                .build();
         return step;
     }
 
     @Bean(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP)
     public Step clearRSMergeAndSplitCandidatesStep(
             @Qualifier(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES) ItemWriter clearRSMergeAndSplitCandidates,
-            StepBuilderFactory stepBuilderFactory,
+            JobRepository jobRepository, PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP)
-                                             .chunk(chunkSizeCompletionPolicy)
-                                             .reader(new SingleItemReader())
-                                             .writer(clearRSMergeAndSplitCandidates)
-                                             .build();
+        TaskletStep step = new StepBuilder(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP, jobRepository)
+                .chunk(chunkSizeCompletionPolicy, transactionManager)
+                .reader(new SingleItemReader())
+                .writer(clearRSMergeAndSplitCandidates)
+                .build();
         return step;
     }
 
@@ -139,6 +138,7 @@ public class ClusteringFromMongoStepConfiguration {
     // so that the writer to clear RS merge and split candidate entries can proceed
     public static class SingleItemReader implements ItemReader<Object> {
         static boolean firstTime = true;
+
         @Override
         public Object read() throws Exception {
             if (firstTime) {
@@ -155,10 +155,10 @@ public class ClusteringFromMongoStepConfiguration {
             @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER) StepExecutionListener nonClusteredClusteringWriterJobExecutionSetter,
-            StepBuilderFactory stepBuilderFactory,
+            JobRepository jobRepository, PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP)
-                .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
+        TaskletStep step = new StepBuilder(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP, jobRepository)
+                .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
                 .reader(mongoReader)
                 .writer(submittedVariantWriter)
                 .listener(progressListener)
@@ -170,34 +170,32 @@ public class ClusteringFromMongoStepConfiguration {
     @Bean(BACK_PROPAGATE_NEW_RS_STEP)
     public Step backPropagateNewRSStep(
             @Qualifier(TARGET_SS_READER_FOR_NEW_BACKPROP_RS)
-                    ItemStreamReader<SubmittedVariantEntity> backPropagatedNewRSTargetReader,
+            ItemStreamReader<SubmittedVariantEntity> backPropagatedNewRSTargetReader,
             @Qualifier(BACK_PROPAGATED_RS_WRITER) ItemWriter<SubmittedVariantEntity> backPropagatedRSWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
-            StepBuilderFactory stepBuilderFactory,
+            JobRepository jobRepository, PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(BACK_PROPAGATE_NEW_RS_STEP)
-                                             .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(
-                                                     chunkSizeCompletionPolicy)
-                                             .reader(backPropagatedNewRSTargetReader)
-                                             .writer(backPropagatedRSWriter)
-                                             .listener(progressListener)
-                                             .build();
+        TaskletStep step = new StepBuilder(BACK_PROPAGATE_NEW_RS_STEP, jobRepository)
+                .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
+                .reader(backPropagatedNewRSTargetReader)
+                .writer(backPropagatedRSWriter)
+                .listener(progressListener)
+                .build();
         return step;
     }
 
     @Bean(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP)
     public Step backPropagateSplitAndMergedRSStep(
             @Qualifier(TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS)
-                    ItemStreamReader<List<SubmittedVariantEntity>> splitOrMergedRSReader,
+            ItemStreamReader<List<SubmittedVariantEntity>> splitOrMergedRSReader,
             @Qualifier(BACK_PROPAGATED_RS_WRITER) ItemWriter<SubmittedVariantEntity> backPropagatedRSWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
-            StepBuilderFactory stepBuilderFactory,
+            JobRepository jobRepository, PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP)
-                .<List<SubmittedVariantEntity>, List<SubmittedVariantEntity>>chunk(
-                        chunkSizeCompletionPolicy)
+        TaskletStep step = new StepBuilder(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP, jobRepository)
+                .<List<SubmittedVariantEntity>, List<SubmittedVariantEntity>>chunk(chunkSizeCompletionPolicy, transactionManager)
                 .reader(splitOrMergedRSReader)
-                 // Spring needs this wrapping to flatten the List<List<SubmittedVariantEntity>> from the processor
+                // Spring needs this wrapping to flatten the List<List<SubmittedVariantEntity>> from the processor
                 .writer(new ListOfListItemWriter<>(backPropagatedRSWriter))
                 .listener(progressListener)
                 .build();
@@ -210,15 +208,15 @@ public class ClusteringFromMongoStepConfiguration {
             @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER) StepExecutionListener nonClusteredClusteringWriterJobExecutionSetter,
-            StepBuilderFactory stepBuilderFactory,
+            JobRepository jobRepository, PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(STUDY_CLUSTERING_STEP)
-                                             .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
-                                             .reader(mongoReader)
-                                             .writer(submittedVariantWriter)
-                                             .listener(progressListener)
-                                             .listener(nonClusteredClusteringWriterJobExecutionSetter)
-                                             .build();
+        TaskletStep step = new StepBuilder(STUDY_CLUSTERING_STEP, jobRepository)
+                .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
+                .reader(mongoReader)
+                .writer(submittedVariantWriter)
+                .listener(progressListener)
+                .listener(nonClusteredClusteringWriterJobExecutionSetter)
+                .build();
         return step;
     }
 }

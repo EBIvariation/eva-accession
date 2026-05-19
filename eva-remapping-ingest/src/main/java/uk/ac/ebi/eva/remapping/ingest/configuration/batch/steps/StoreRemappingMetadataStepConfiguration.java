@@ -18,11 +18,13 @@ package uk.ac.ebi.eva.remapping.ingest.configuration.batch.steps;
 
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.eva.remapping.ingest.batch.tasklets.RemappingMetadata;
 import uk.ac.ebi.eva.remapping.ingest.batch.tasklets.StoreRemappingMetadataTasklet;
 
@@ -38,20 +40,17 @@ public class StoreRemappingMetadataStepConfiguration {
 
     private final RemappingMetadata remappingMetadata;
 
-//    @Value("${build.version}")
-//    private String accessionVersion;
-
     public StoreRemappingMetadataStepConfiguration(MongoTemplate mongoTemplate, RemappingMetadata remappingMetadata) {
         this.mongoTemplate = mongoTemplate;
         this.remappingMetadata = remappingMetadata;
     }
 
     @Bean(STORE_REMAPPING_METADATA_STEP)
-    public Step buildReportStep(StepBuilderFactory stepBuilderFactory) throws IOException {
+    public Step buildReportStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) throws IOException {
         StoreRemappingMetadataTasklet tasklet = new StoreRemappingMetadataTasklet(mongoTemplate, remappingMetadata);
-        TaskletStep step = stepBuilderFactory.get(STORE_REMAPPING_METADATA_STEP)
-                                             .tasklet(tasklet)
-                                             .build();
+        TaskletStep step = new StepBuilder(STORE_REMAPPING_METADATA_STEP, jobRepository)
+                .tasklet(tasklet, transactionManager)
+                .build();
         return step;
     }
 }

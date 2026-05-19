@@ -22,8 +22,7 @@ import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.listener.StepListenerSupport;
 import org.springframework.batch.core.scope.context.ChunkContext;
-
-import java.util.List;
+import org.springframework.batch.item.Chunk;
 
 public class GenericProgressListener<I, O> extends StepListenerSupport<I, O> {
 
@@ -64,14 +63,14 @@ public class GenericProgressListener<I, O> extends StepListenerSupport<I, O> {
     }
 
     @Override
-    public void beforeWrite(List<? extends O> items) {
+    public void beforeWrite(Chunk<? extends O> items) {
         logger.debug("About to write chunk");
     }
 
     @Override
-    public void afterWrite(List<? extends O> items) {
+    public void afterWrite(Chunk<? extends O> items) {
         if (items.size() > 0) {
-            O lastItem = items.get(items.size() - 1);
+            O lastItem = items.getItems().get(items.size() - 1);
             logger.debug("Written chunk of {} items. Last item was {}: {}", items.size(), lastItem.toString());
         } else {
             logger.debug("Written chunk of 0 items.");

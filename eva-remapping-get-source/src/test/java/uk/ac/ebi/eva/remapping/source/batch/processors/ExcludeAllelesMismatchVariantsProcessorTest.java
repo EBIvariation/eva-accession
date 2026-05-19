@@ -15,8 +15,8 @@
  */
 package uk.ac.ebi.eva.remapping.source.batch.processors;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -26,8 +26,8 @@ import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
 import java.util.function.Function;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class ExcludeAllelesMismatchVariantsProcessorTest {
 
@@ -36,7 +36,7 @@ public class ExcludeAllelesMismatchVariantsProcessorTest {
 
     private ExcludeAllelesMismatchVariantsProcessor processor;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         processor = new ExcludeAllelesMismatchVariantsProcessor();
     }
@@ -59,6 +59,6 @@ public class ExcludeAllelesMismatchVariantsProcessorTest {
         SubmittedVariant submittedVariant = new SubmittedVariant("asm", 1000, "project", "contig", 100, "A", "T", null);
         String hash = hashingFunction.apply(submittedVariant);
         return new SubmittedVariantEntity(5000000000L, hash, "asm", 1000, "project", "contig", 100, "A", "T", null,
-                                          false, false, allelesMatch, false, 1, null);
+                false, false, allelesMatch, false, 1, null);
     }
 }

@@ -15,16 +15,16 @@
  */
 package uk.ac.ebi.eva.accession.clustering.batch.io.qc;
 
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
-
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -48,9 +48,9 @@ public class MissingCveReporter implements ItemWriter<RSHashPair> {
     }
 
     @Override
-    public void write(@Nonnull List<? extends RSHashPair> rsHashPairs) {
-        Map<String, Long> hashToRs = rsHashPairs.stream()
-                                                .collect(Collectors.toMap(RSHashPair::getHash, RSHashPair::getRsId));
+    public void write(@Nonnull Chunk<? extends RSHashPair> rsHashPairs) {
+        Map<String, Long> hashToRs = rsHashPairs.getItems().stream()
+                .collect(Collectors.toMap(RSHashPair::getHash, RSHashPair::getRsId));
         Map<String, ClusteredVariantEntity> results = findClusteredVariantsInDb(hashToRs);
 
         for (String hash : hashToRs.keySet()) {
@@ -71,7 +71,7 @@ public class MissingCveReporter implements ItemWriter<RSHashPair> {
         List<ClusteredVariantEntity> evaResults = mongoTemplate.find(query, ClusteredVariantEntity.class);
         List<DbsnpClusteredVariantEntity> dbsnpResults = mongoTemplate.find(query, DbsnpClusteredVariantEntity.class);
         return Stream.concat(evaResults.stream(), dbsnpResults.stream())
-                     .collect(Collectors.toMap(ClusteredVariantEntity::getHashedMessage, Function.identity()));
+                .collect(Collectors.toMap(ClusteredVariantEntity::getHashedMessage, Function.identity()));
     }
 
 }

@@ -3,7 +3,8 @@ package uk.ac.ebi.eva.accession.release.configuration.batch.steps;
 import htsjdk.variant.variantcontext.VariantContext;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_ACCESSIONS_RELEASE_FROM_DB_STEP;
@@ -37,10 +39,10 @@ public class ActiveAccessionReleaseFromDBStepConfiguration {
     ItemStreamWriter<VariantContext> accessionWriter;
 
     @Bean(ACTIVE_ACCESSIONS_RELEASE_FROM_DB_STEP)
-    public Step activeAccessionsReleaseFromDBStep(StepBuilderFactory stepBuilderFactory,
+    public Step activeAccessionsReleaseFromDBStep(JobRepository jobRepository, PlatformTransactionManager transactionManager,
                                                   SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(ACTIVE_ACCESSIONS_RELEASE_FROM_DB_STEP)
-                .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy)
+        TaskletStep step = new StepBuilder(ACTIVE_ACCESSIONS_RELEASE_FROM_DB_STEP, jobRepository)
+                .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy, transactionManager)
                 .reader(variantReader)
                 .processor(variantProcessor)
                 .writer(accessionWriter)

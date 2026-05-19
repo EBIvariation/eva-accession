@@ -24,7 +24,6 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersInvalidException;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.batch.core.launch.JobParametersNotFoundException;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRepository;
@@ -32,24 +31,23 @@ import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ExitCodeGenerator;
-import org.springframework.boot.autoconfigure.batch.JobLauncherCommandLineRunner;
+import org.springframework.boot.autoconfigure.batch.JobLauncherApplicationRunner;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.stereotype.Component;
 import org.springframework.util.PatternMatchUtils;
-
 import uk.ac.ebi.eva.accession.core.runner.CommandLineRunnerUtils;
-import uk.ac.ebi.eva.remapping.source.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.exception.NoJobToExecuteException;
 import uk.ac.ebi.eva.commons.batch.exception.NoParametersHaveBeenPassedException;
 import uk.ac.ebi.eva.commons.batch.exception.NoPreviousJobExecutionException;
 import uk.ac.ebi.eva.commons.batch.exception.UnknownJobException;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 import uk.ac.ebi.eva.commons.batch.job.JobStatusManager;
+import uk.ac.ebi.eva.remapping.source.parameters.InputParameters;
 
 import java.util.Collection;
 
 @Component
-public class AccessionRemappingJobLauncherCommandLineRunner extends JobLauncherCommandLineRunner implements
+public class AccessionRemappingJobLauncherCommandLineRunner extends JobLauncherApplicationRunner implements
         ApplicationEventPublisherAware, ExitCodeGenerator {
 
     private static final Logger logger = LoggerFactory.getLogger(AccessionRemappingJobLauncherCommandLineRunner.class);
@@ -92,9 +90,9 @@ public class AccessionRemappingJobLauncherCommandLineRunner extends JobLauncherC
     }
 
     @Override
-    public void setJobNames(String jobName) {
+    public void setJobName(String jobName) {
         this.jobName = jobName;
-        super.setJobNames(jobName);
+        super.setJobName(jobName);
     }
 
     @Override
@@ -119,17 +117,16 @@ public class AccessionRemappingJobLauncherCommandLineRunner extends JobLauncherC
 
             if (inputParameters.isForceRestart()) {
                 JobExecution previousJobExecution = CommandLineRunnerUtils.getLastJobExecution(jobName, jobExplorer,
-                                                                                               jobParameters);
+                        jobParameters);
                 CommandLineRunnerUtils.markPreviousJobAsFailed(jobName, jobRepository,
                         previousJobExecution != null ? previousJobExecution.getJobParameters() : jobParameters);
-            }
-            else {
+            } else {
                 jobParameters = CommandLineRunnerUtils.addRunIDToJobParameters(jobName, jobExplorer, jobParameters);
             }
 
             launchJob(jobParameters);
         } catch (NoJobToExecuteException | NoParametersHaveBeenPassedException | NoPreviousJobExecutionException
-                | UnknownJobException | JobParametersInvalidException | JobExecutionAlreadyRunningException e) {
+                 | UnknownJobException | JobParametersInvalidException | JobExecutionAlreadyRunningException e) {
             logger.error(e.getMessage());
             logger.debug("Error trace", e);
             abnormalExit = true;
@@ -151,8 +148,7 @@ public class AccessionRemappingJobLauncherCommandLineRunner extends JobLauncherC
 
     @Override
     protected void execute(Job job, JobParameters jobParameters) throws JobExecutionAlreadyRunningException,
-            JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException,
-            JobParametersNotFoundException {
+            JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException {
         logger.info("Running job '" + jobName + "' with parameters: " + jobParameters);
         super.execute(job, jobParameters);
     }

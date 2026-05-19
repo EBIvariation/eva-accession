@@ -15,38 +15,37 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.steps;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.bson.Document;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
+import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 
 import java.net.URI;
@@ -55,8 +54,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
@@ -67,14 +66,11 @@ import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestCon
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_STUDY_FROM_MONGO;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
+        BatchJobRepositoryTestConfiguration.class})
 @TestPropertySource("classpath:clustering-issuance-test.properties")
-@UsingDataSet(locations = {"/test-data/submittedVariantEntity.json"})
-public class ClusteringVariantStepConfigurationTest {
-
-    private static final String TEST_DB = "test-db";
-
+public class ClusteringVariantStepConfigurationTest extends MongoTestContainerHelper {
     private static final String CLUSTERED_VARIANT_COLLECTION = "clusteredVariantEntity";
 
     private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
@@ -94,6 +90,9 @@ public class ClusteringVariantStepConfigurationTest {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    @Autowired
+    private ResourceLoader resourceLoader;
+
     private MockRestServiceServer mockServer;
 
     @Autowired
@@ -105,23 +104,17 @@ public class ClusteringVariantStepConfigurationTest {
 
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
 
-    //Required by nosql-unit
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
-
-    @Before
+    @BeforeEach
     public void init() throws Exception {
+        mongoTemplate.getDb().drop();
+
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         mongoTemplate.getDb().drop();
     }
@@ -129,6 +122,8 @@ public class ClusteringVariantStepConfigurationTest {
     @Test
     @DirtiesContext
     public void nonClusteredVariantStepFromMongo() {
+        new MongoTestDataLoader(mongoTemplate, resourceLoader).load("/test-data/submittedVariantEntity.json");
+
         assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
         assertTrue(allSubmittedVariantsNotClustered());
 
@@ -143,8 +138,9 @@ public class ClusteringVariantStepConfigurationTest {
 
     @Test
     @DirtiesContext
-    @UsingDataSet(locations = {"/test-data/submittedVariantEntityStudyReader.json"})
     public void clusteredVariantStepStudyFromMongo() {
+        new MongoTestDataLoader(mongoTemplate, resourceLoader).load("/test-data/submittedVariantEntityStudyReader.json");
+
         assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
         assertEquals(2, getSubmittedVariantsWithRSOrBackPropRS());
 
@@ -158,9 +154,11 @@ public class ClusteringVariantStepConfigurationTest {
 
     @Test
     @DirtiesContext
-    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json",
-            "/test-data/clusteredVariantEntityMongoReader.json"})
     public void clusteredVariantStepFromMongo() throws Exception {
+        MongoTestDataLoader mongoTestDataLoader = new MongoTestDataLoader(mongoTemplate, resourceLoader);
+        mongoTestDataLoader.load("/test-data/submittedVariantEntityMongoReader.json");
+        mongoTestDataLoader.load("/test-data/clusteredVariantEntityMongoReader.json");
+
         assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
         assertEquals(1, getSubmittedVariantsWithRSOrBackPropRS());
 
@@ -168,7 +166,7 @@ public class ClusteringVariantStepConfigurationTest {
         // the following cannot be executed directly, therefore we launch the entire job and ensure that the
         // CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP step was completed
         //JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchStep(
-                //CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
+        //CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
         JobExecution jobExecution = jobLauncherTestUtilsFromMongoOnlyFirstStep.launchJob();
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         assertTrue(jobExecution.getStepExecutions().stream().map(StepExecution::getStepName)

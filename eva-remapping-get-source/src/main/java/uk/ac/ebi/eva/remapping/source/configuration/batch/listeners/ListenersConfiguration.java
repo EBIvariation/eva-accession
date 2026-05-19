@@ -20,12 +20,11 @@ import htsjdk.variant.variantcontext.VariantContext;
 import org.springframework.batch.core.listener.StepListenerSupport;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import uk.ac.ebi.eva.remapping.source.batch.listeners.ExcludeVariantsListener;
 import uk.ac.ebi.eva.accession.core.batch.listeners.GenericProgressListener;
-import uk.ac.ebi.eva.remapping.source.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+import uk.ac.ebi.eva.remapping.source.batch.listeners.ExcludeVariantsListener;
 import uk.ac.ebi.eva.remapping.source.configuration.BeanNames;
+import uk.ac.ebi.eva.remapping.source.parameters.InputParameters;
 
 @Configuration
 public class ListenersConfiguration {

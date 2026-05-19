@@ -17,10 +17,9 @@
  */
 package uk.ac.ebi.eva.remapping.source.batch.processors;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
@@ -31,9 +30,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class ContextNucleotideAdditionProcessorTest {
 
@@ -51,18 +51,18 @@ public class ContextNucleotideAdditionProcessorTest {
 
     private static ContextNucleotideAdditionProcessor contextNucleotideAdditionProcessor;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         Path fastaPath = Paths.get("../eva-accession-core/src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa");
         ContigMapping contigMapping = new ContigMapping(
                 Arrays.asList(new ContigSynonyms(CONTIG, "", "", "", "", "", true),
-                              new ContigSynonyms(SCAFFOLD, "", "", SCAFFOLD_GENBANK_IN_FASTA, "", "", true),
-                              new ContigSynonyms(MISSING_IN_FASTA, "", "", "", "", "", true)));
+                        new ContigSynonyms(SCAFFOLD, "", "", SCAFFOLD_GENBANK_IN_FASTA, "", "", true),
+                        new ContigSynonyms(MISSING_IN_FASTA, "", "", "", "", "", true)));
         fastaSynonymSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
         contextNucleotideAdditionProcessor = new ContextNucleotideAdditionProcessor(fastaSynonymSequenceReader);
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() throws Exception {
         fastaSynonymSequenceReader.close();
     }
@@ -97,8 +97,9 @@ public class ContextNucleotideAdditionProcessorTest {
     private SubmittedVariantEntity createVariant(String chromosome, long start, String reference,
                                                  String alternate) {
         return new SubmittedVariantEntity(1L, "hash", "GCA_x", 9999, "project", chromosome, start, reference, alternate,
-                                          100L, false, false, false, false, 1);
+                100L, false, false, false, false, 1);
     }
+
     @Test
     public void testINDELStartPos1() throws Exception {
         SubmittedVariantEntity variant = createVariant(CONTIG, 1, "", "A");
@@ -179,15 +180,18 @@ public class ContextNucleotideAdditionProcessorTest {
         assertEquals("TA", processedVariant.getAlternateAllele());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void contigNotFound() throws Exception {
+    @Test
+    public void contigNotFound() {
         SubmittedVariantEntity variant1 = createVariant(MISSING_IN_FASTA, 10, "", "A");
-        try {
-            contextNucleotideAdditionProcessor.process(variant1);
-        } catch (PositionOutsideOfContigException wrongException) {
-            fail("The exception (" + wrongException.getClass().getSimpleName()
-                 + ") is wrong because the variant doesn't have a position outside of chromosome. The correct "
-                 + "exception should be that the contig is not present in the fasta");
+
+        Exception exception = assertThrows(Exception.class, () -> contextNucleotideAdditionProcessor.process(variant1));
+
+        if (exception instanceof PositionOutsideOfContigException) {
+            fail("The exception (" + exception.getClass().getSimpleName()
+                    + ") is wrong because the variant doesn't have a position outside of chromosome. The correct "
+                    + "exception should be that the contig is not present in the fasta");
         }
+
+        assertTrue(exception instanceof IllegalArgumentException);
     }
 }

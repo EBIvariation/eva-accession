@@ -19,8 +19,9 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,15 +48,15 @@ public class ClusterUnclusteredVariantsJobConfiguration {
             @Qualifier(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP) Step clusteringNonClusteredVariantsFromMongoStep,
             @Qualifier(ACCESSIONING_SHUTDOWN_STEP) Step accessioningShutdownStep,
             @Qualifier(JOB_EXECUTION_LISTENER) JobExecutionListener jobExecutionListener,
-            JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(CLUSTER_UNCLUSTERED_VARIANTS_JOB)
-                                .incrementer(new RunIdIncrementer())
-                                .start(processRSMergeCandidatesStep)
-                                .next(processRSSplitCandidatesStep)
-                                .next(clearRSMergeAndSplitCandidatesStep)
-                                .next(clusteringNonClusteredVariantsFromMongoStep)
-                                .next(accessioningShutdownStep)
-                                .listener(jobExecutionListener)
-                                .build();
+            JobRepository jobRepository) {
+        return new JobBuilder(CLUSTER_UNCLUSTERED_VARIANTS_JOB, jobRepository)
+                .incrementer(new RunIdIncrementer())
+                .start(processRSMergeCandidatesStep)
+                .next(processRSSplitCandidatesStep)
+                .next(clearRSMergeAndSplitCandidatesStep)
+                .next(clusteringNonClusteredVariantsFromMongoStep)
+                .next(accessioningShutdownStep)
+                .listener(jobExecutionListener)
+                .build();
     }
 }

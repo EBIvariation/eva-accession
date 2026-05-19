@@ -21,14 +21,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.web.client.RestTemplate;
-
 import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetricCompute;
-import uk.ac.ebi.eva.accession.deprecate.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.batch.io.SubmittedVariantDeprecationWriter;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames;
 import uk.ac.ebi.eva.accession.deprecate.batch.listeners.DeprecationStepProgressListener;
+import uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames;
 import uk.ac.ebi.eva.accession.deprecate.configuration.InputParametersConfiguration;
+import uk.ac.ebi.eva.accession.deprecate.parameters.InputParameters;
 import uk.ac.ebi.eva.metrics.configuration.MetricConfiguration;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;

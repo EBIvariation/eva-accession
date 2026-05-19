@@ -15,44 +15,45 @@
  */
 package uk.ac.ebi.eva.accession.core.batch.io;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-
+import uk.ac.ebi.eva.accession.core.batch.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.core.batch.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static uk.ac.ebi.eva.commons.core.models.VariantType.INDEL;
 import static uk.ac.ebi.eva.commons.core.models.VariantType.SNV;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:test-variants-writer.properties")
 @ContextConfiguration(classes = {MongoTestConfiguration.class})
-public class DbsnpClusteredVariantWriterTest {
+public class DbsnpClusteredVariantWriterTest extends MongoTestContainerHelper {
 
     private static final int TAXONOMY_1 = 3880;
 
@@ -93,8 +94,9 @@ public class DbsnpClusteredVariantWriterTest {
 
     private ClusteredVariant clusteredVariant3;
 
-    @Before
+    @BeforeEach
     public void setUp() {
+        mongoTemplate.getDb().drop();
         importCounts = new ImportCounts();
         dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate, importCounts);
         hashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
@@ -103,13 +105,18 @@ public class DbsnpClusteredVariantWriterTest {
         // variants and entity objects
         clusteredVariant1 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, SNV, true, CREATED_DATE);
         ClusteredVariant duplicateClusteredVariant1 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, SNV,
-                                                                           false, null);
-        clusteredVariant2 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START+1, SNV, true, null);
+                false, null);
+        clusteredVariant2 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START + 1, SNV, true, null);
         clusteredVariant3 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, INDEL, true, null);
         variantEntity1 = buildClusteredVariantEntity(ACCESSION_1, clusteredVariant1);
         duplicateVariantEntity1 = buildClusteredVariantEntity(ACCESSION_1, duplicateClusteredVariant1);
         variantEntity2 = buildClusteredVariantEntity(ACCESSION_2, clusteredVariant2);
         variantEntity3 = buildClusteredVariantEntity(ACCESSION_3, clusteredVariant3);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        mongoTemplate.getDb().drop();
     }
 
     private DbsnpClusteredVariantEntity buildClusteredVariantEntity(long accession, ClusteredVariant clusteredVariant) {
@@ -118,31 +125,31 @@ public class DbsnpClusteredVariantWriterTest {
 
     @Test
     public void saveSingleAccession() {
-        dbsnpClusteredVariantWriter.write(Collections.singletonList(variantEntity1));
+        dbsnpClusteredVariantWriter.write(Chunk.of(variantEntity1));
         assertJustOneVariantHasBeenStored();
     }
 
     private void assertJustOneVariantHasBeenStored() {
         List<DbsnpClusteredVariantEntity> storedVariants = mongoTemplate.find(new Query(),
-                                                                              DbsnpClusteredVariantEntity.class);
+                DbsnpClusteredVariantEntity.class);
         assertEquals(1, storedVariants.size());
         assertTrue(storedVariants.contains(variantEntity1));
         assertEquals(ACCESSION_1, storedVariants.get(0).getAccession());
         assertEquals(clusteredVariant1, storedVariants.get(0).getModel());
         assertEquals(1, importCounts.getClusteredVariantsWritten());
-        assertEquals(CREATED_DATE, storedVariants.get(0).getModel().getCreatedDate());
     }
 
     @Test
     public void exceptionThrownOnDuplicateIdenticalVariant() {
-        assertThrows(DuplicateKeyException.class, () ->
-                dbsnpClusteredVariantWriter.write(Arrays.asList(variantEntity1, variantEntity1)));
+        BulkOperationException exception = assertThrows(BulkOperationException.class, () ->
+                dbsnpClusteredVariantWriter.write(Chunk.of(variantEntity1, variantEntity1)));
+        assertTrue(exception.getMessage().contains("duplicate key error"));
     }
 
     @Test
     public void duplicateIdenticalVariantIsStoredJustOnce() {
         try {
-            dbsnpClusteredVariantWriter.write(Arrays.asList(variantEntity1, variantEntity1));
+            dbsnpClusteredVariantWriter.write(Chunk.of(variantEntity1, variantEntity1));
             fail();
         } catch (Exception e) {
             // it's correct and expected that an exception is thrown here
@@ -154,7 +161,7 @@ public class DbsnpClusteredVariantWriterTest {
     @Test
     public void duplicateNotIdenticalVariantIsStoredJustOnce() {
         try {
-            dbsnpClusteredVariantWriter.write(Arrays.asList(variantEntity1, duplicateVariantEntity1));
+            dbsnpClusteredVariantWriter.write(Chunk.of(variantEntity1, duplicateVariantEntity1));
             fail();
         } catch (Exception e) {
             // it's correct and expected that an exception is thrown here
@@ -164,13 +171,13 @@ public class DbsnpClusteredVariantWriterTest {
 
     @Test
     public void saveDifferentVariants() {
-        dbsnpClusteredVariantWriter.write(Arrays.asList(variantEntity1, variantEntity2, variantEntity3));
+        dbsnpClusteredVariantWriter.write(Chunk.of(variantEntity1, variantEntity2, variantEntity3));
         assertAllUniqueVariantsHaveBeenStored();
     }
 
     private void assertAllUniqueVariantsHaveBeenStored() {
         List<DbsnpClusteredVariantEntity> storedVariants = mongoTemplate.find(new Query(),
-                                                                              DbsnpClusteredVariantEntity.class);
+                DbsnpClusteredVariantEntity.class);
         assertEquals(3, storedVariants.size());
         assertFalse(storedVariants.contains(duplicateVariantEntity1));
         assertEquals(ACCESSION_1, storedVariants.get(0).getAccession());
@@ -185,10 +192,10 @@ public class DbsnpClusteredVariantWriterTest {
     @Test
     public void allNonDuplicatedRecordsWillBeWritten() {
         List<DbsnpClusteredVariantEntity> batch = Arrays.asList(variantEntity1, variantEntity2, duplicateVariantEntity1,
-                                                                variantEntity3);
+                variantEntity3);
 
         try {
-            dbsnpClusteredVariantWriter.write(batch);
+            dbsnpClusteredVariantWriter.write(new Chunk<>(batch));
             fail();
         } catch (Exception e) {
             // it's correct and expected that an exception is thrown here

@@ -29,7 +29,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedExcepti
 import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestControllerAdvice;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.ErrorMessage;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 
 /**

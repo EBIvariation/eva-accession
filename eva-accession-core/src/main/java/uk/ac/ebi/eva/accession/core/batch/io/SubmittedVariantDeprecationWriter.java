@@ -18,12 +18,13 @@ package uk.ac.ebi.eva.accession.core.batch.io;
 
 import com.mongodb.ReadPreference;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
-
+import uk.ac.ebi.eva.accession.core.EVAObjectModelUtils;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
@@ -33,9 +34,12 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.EVAObjectModelUtils;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
@@ -64,7 +68,7 @@ public class SubmittedVariantDeprecationWriter implements ItemWriter<SubmittedVa
                                              ClusteredVariantAccessioningService clusteredVariantAccessioningService,
                                              Long accessioningMonotonicInitSs, Long accessioningMonotonicInitRs,
                                              String deprecationIdSuffix, String deprecationReason) {
-        ReadPreference readPreference = mongoTemplate.getMongoDbFactory().getDb().getReadPreference();
+        ReadPreference readPreference = mongoTemplate.getMongoDatabaseFactory().getMongoDatabase().getReadPreference();
         if (!readPreference.equals(ReadPreference.primary())) {
             throw new IllegalStateException("Read preference setting should be primary to deprecate variants!");
         }
@@ -76,25 +80,27 @@ public class SubmittedVariantDeprecationWriter implements ItemWriter<SubmittedVa
         this.deprecationReason = deprecationReason;
         this.clusteredVariantDeprecationWriter =
                 new ClusteredVariantDeprecationWriter(this.assemblyAccession,
-                                                      this.mongoTemplate,
-                                                      submittedVariantAccessioningService,
-                                                      accessioningMonotonicInitRs,
-                                                      this.deprecationIdSuffix,
-                                                      this.deprecationReason);
+                        this.mongoTemplate,
+                        submittedVariantAccessioningService,
+                        accessioningMonotonicInitRs,
+                        this.deprecationIdSuffix,
+                        this.deprecationReason);
     }
 
     @Override
-    public void write(List<? extends SubmittedVariantEntity> svesToDeprecate) {
-        List<? extends SubmittedVariantEntity> svesToDeprecateInSVE = svesToDeprecate.stream().filter(
-                sve -> (sve.getAccession() >= accessioningMonotonicInitSs)).collect(Collectors.toList());
-        List<? extends SubmittedVariantEntity> svesToDeprecateInDbsnpSVE = svesToDeprecate.stream().filter(
-                sve -> (sve.getAccession() < accessioningMonotonicInitSs)).collect(Collectors.toList());
+    public void write(Chunk<? extends SubmittedVariantEntity> svesToDeprecate) {
+        List<? extends SubmittedVariantEntity> svesToDeprecateInSVE = svesToDeprecate.getItems().stream().filter(
+                        sve -> (sve.getAccession() >= accessioningMonotonicInitSs))
+                .collect(Collectors.toList());
+        List<? extends SubmittedVariantEntity> svesToDeprecateInDbsnpSVE = svesToDeprecate.getItems().stream().filter(
+                        sve -> (sve.getAccession() < accessioningMonotonicInitSs))
+                .collect(Collectors.toList());
         deprecateVariants(svesToDeprecateInSVE, SubmittedVariantEntity.class);
         deprecateVariants(svesToDeprecateInDbsnpSVE, DbsnpSubmittedVariantEntity.class);
     }
 
     private void deprecateVariants(List<? extends SubmittedVariantEntity> svesToDeprecate,
-                           Class<? extends SubmittedVariantEntity> sveCollectionToUse) {
+                                   Class<? extends SubmittedVariantEntity> sveCollectionToUse) {
         if (svesToDeprecate.size() > 0) {
             List<String> ssHashesToRemove = svesToDeprecate.stream().map(AccessionedDocument::getId).collect(
                     Collectors.toList());
@@ -111,7 +117,7 @@ public class SubmittedVariantDeprecationWriter implements ItemWriter<SubmittedVa
                             associatedRSHashesAndIDs.contains(
                                     new ImmutablePair<>(result.getHash(), result.getAccession())))
                     .map(result -> new ClusteredVariantEntity(result.getAccession(), result.getHash(),
-                                                              result.getData()))
+                            result.getData()))
                     .collect(Collectors.toList());
             Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
                     svoeCollectionToUse = sveCollectionToUse.equals(SubmittedVariantEntity.class) ?
@@ -120,25 +126,25 @@ public class SubmittedVariantDeprecationWriter implements ItemWriter<SubmittedVa
             List<? extends SubmittedVariantEntity> removedEntities = this.mongoTemplate.findAllAndRemove(
                     query(where("_id").in(ssHashesToRemove)), sveCollectionToUse);
             this.numDeprecatedSubmittedEntities += removedEntities.size();
-            this.clusteredVariantDeprecationWriter.write(cvesToDeprecate);
+            this.clusteredVariantDeprecationWriter.write(new Chunk<>(cvesToDeprecate));
         }
     }
 
     private void writeDeprecationOperation(List<? extends SubmittedVariantEntity> svesToDeprecate,
-                                   Class<? extends EventDocument<ISubmittedVariant, Long,
-                                           ? extends SubmittedVariantInactiveEntity>> svoeCollectionToUse) {
+                                           Class<? extends EventDocument<ISubmittedVariant, Long,
+                                                   ? extends SubmittedVariantInactiveEntity>> svoeCollectionToUse) {
         List<SubmittedVariantOperationEntity> svoesToWrite = svesToDeprecate.stream().map(sve -> {
             SubmittedVariantOperationEntity svoe = new SubmittedVariantOperationEntity();
             svoe.fill(EventType.DEPRECATED, sve.getAccession(), null,
-                      this.deprecationReason,
-                      Collections.singletonList(new SubmittedVariantInactiveEntity(sve)));
+                    this.deprecationReason,
+                    Collections.singletonList(new SubmittedVariantInactiveEntity(sve)));
             svoe.setId(String.join("_", Arrays.asList("SS_DEPRECATED", this.deprecationIdSuffix, sve.getId())));
             return svoe;
         }).collect(Collectors.toList());
         Set<String> operationIds = svoesToWrite.stream().map(EventDocument::getId).collect(Collectors.toSet());
         Set<String> alreadyExistingIds = this.mongoTemplate.find(query(where("_id").in(operationIds)),
-                                                                 svoeCollectionToUse).stream().map(EventDocument::getId)
-                                                           .collect(Collectors.toSet());
+                        svoeCollectionToUse).stream().map(EventDocument::getId)
+                .collect(Collectors.toSet());
         operationIds.removeAll(alreadyExistingIds);
         svoesToWrite = svoesToWrite.stream().filter(svoe -> operationIds.contains(svoe.getId())).collect(
                 Collectors.toList());

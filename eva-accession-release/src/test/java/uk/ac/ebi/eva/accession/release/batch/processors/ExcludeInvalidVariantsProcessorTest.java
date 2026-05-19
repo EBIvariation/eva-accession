@@ -16,16 +16,13 @@
 
 package uk.ac.ebi.eva.accession.release.batch.processors;
 
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class ExcludeInvalidVariantsProcessorTest {
 
@@ -49,10 +46,7 @@ public class ExcludeInvalidVariantsProcessorTest {
 
     private static ExcludeInvalidVariantsProcessor processor;
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         processor = new ExcludeInvalidVariantsProcessor();
     }

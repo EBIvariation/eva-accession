@@ -17,7 +17,6 @@
  */
 package uk.ac.ebi.eva.accession.core.model.dbsnp;
 
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 
 public class DbsnpSubmittedVariantInactiveEntity extends SubmittedVariantInactiveEntity {

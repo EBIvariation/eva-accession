@@ -16,7 +16,7 @@
 
 package uk.ac.ebi.eva.accession.release.batch.io.merged;
 
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Field;
 import com.mongodb.client.model.Filters;
@@ -94,44 +94,44 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
     @Override
     protected List<Bson> buildAggregation() {
         Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD),
-                                                         assemblyAccession));
+                assemblyAccession));
         Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString()));
         Bson sort = Aggregates.sort(orderBy(ascending(getInactiveField(CONTIG_FIELD), getInactiveField(START_FIELD))));
         List<Bson> aggregation = new ArrayList<>(Arrays.asList(matchAssembly, matchMerged, sort));
 
         for (String submittedVariantOperationCollectionName : allSubmittedVariantOperationCollectionNames) {
             Bson lookup = Aggregates.lookup(submittedVariantOperationCollectionName, ACCESSION_FIELD,
-                                            getInactiveField(CLUSTERED_VARIANT_ACCESSION_FIELD),
-                                            submittedVariantOperationCollectionName);
+                    getInactiveField(CLUSTERED_VARIANT_ACCESSION_FIELD),
+                    submittedVariantOperationCollectionName);
             aggregation.add(lookup);
         }
         // Concat entries from all submitted variant operation collections
         Bson ssConcat = Aggregates.addFields(new Field<>(SS_INFO_FIELD,
-                                                         new Document("$concatArrays", allSubmittedVariantOperationCollectionNames
-                                                               .stream().map(v -> "$" + v)
-                                                               .collect(Collectors.toList()))));
+                new Document("$concatArrays", allSubmittedVariantOperationCollectionNames
+                        .stream().map(v -> "$" + v)
+                        .collect(Collectors.toList()))));
         aggregation.add(ssConcat);
         // Ensure that we are only retrieving the variants with the relevant taxonomy
         // and event type in the Submitted operations collections
         Bson matchTaxonomyAndEventType = Aggregates.match(Filters.and(
                 Filters.ne(SS_INFO_FIELD, Collections.emptyList()),
                 Filters.eq(SS_INFO_FIELD + "." +
-                                   getInactiveField(REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS),
-                           this.assemblyAccession),
+                                getInactiveField(REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS),
+                        this.assemblyAccession),
                 Filters.eq(SS_INFO_FIELD + "." + getInactiveField(TAXONOMY_FIELD), this.taxonomyAccession),
-                Filters.eq(SS_INFO_FIELD + "." + EVENT_TYPE_FIELD,EventType.UPDATED.toString())));
+                Filters.eq(SS_INFO_FIELD + "." + EVENT_TYPE_FIELD, EventType.UPDATED.toString())));
         aggregation.add(matchTaxonomyAndEventType);
 
         // Similarly look in both clustered variant collections for active RS
         for (String clusteredVariantCollectionName : allClusteredVariantCollectionNames) {
             Bson lookupClusteredVariants = Aggregates.lookup(clusteredVariantCollectionName, MERGE_INTO_FIELD,
-                                                             ACCESSION_FIELD, clusteredVariantCollectionName);
+                    ACCESSION_FIELD, clusteredVariantCollectionName);
             aggregation.add(lookupClusteredVariants);
         }
         Bson rsConcat = Aggregates.addFields(new Field<>(ACTIVE_RS,
-                                                         new Document("$concatArrays", allClusteredVariantCollectionNames
-                                                                 .stream().map(v -> "$" + v)
-                                                                 .collect(Collectors.toList()))));
+                new Document("$concatArrays", allClusteredVariantCollectionNames
+                        .stream().map(v -> "$" + v)
+                        .collect(Collectors.toList()))));
         aggregation.add(rsConcat);
         Bson matchOnlyNonEmptyActiveRS = Aggregates.match(Filters.ne(ACTIVE_RS, Collections.emptyList()));
         aggregation.add(matchOnlyNonEmptyActiveRS);
@@ -148,9 +148,9 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         Collection<Document> inactiveObjects = (Collection<Document>) mergedVariant.get(INACTIVE_OBJECTS);
         if (inactiveObjects.size() > 1) {
             throw new AssertionError("The class '" + this.getClass().getSimpleName()
-                                     + "' was designed assuming there's only one element in the field "
-                                     + "'" + INACTIVE_OBJECTS + "'. Found " + inactiveObjects.size()
-                                     + " elements in _id=" + mergedVariant.get(ACCESSION_FIELD));
+                    + "' was designed assuming there's only one element in the field "
+                    + "'" + INACTIVE_OBJECTS + "'. Found " + inactiveObjects.size()
+                    + " elements in _id=" + mergedVariant.get(ACCESSION_FIELD));
         }
         Document inactiveEntity = inactiveObjects.iterator().next();
         String contig = inactiveEntity.getString(VariantMongoAggregationReader.CONTIG_FIELD);
@@ -164,9 +164,9 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         Map<String, Variant> mergedVariants = new HashMap<>();
         Collection<Document> submittedVariantOperations = (Collection<Document>) mergedVariant.get(SS_INFO_FIELD);
         boolean remappedRS = submittedVariantOperations.stream()
-                                                       .map(e -> (Collection<Document>) e.get("inactiveObjects"))
-                                                       .flatMap(Collection::stream)
-                                                       .allMatch(sve -> Objects.nonNull(sve.getString("remappedFrom")));
+                .map(e -> (Collection<Document>) e.get("inactiveObjects"))
+                .flatMap(Collection::stream)
+                .allMatch(sve -> Objects.nonNull(sve.getString("remappedFrom")));
 
         Collection<Document> activeClusteredVariant = (Collection<Document>) mergedVariant.get(ACTIVE_RS);
         if (activeClusteredVariant.isEmpty()) {
@@ -183,7 +183,7 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
                 long submittedVariantStart = submittedVariant.getLong(START_FIELD);
                 String submittedVariantContig = submittedVariant.getString(CONTIG_FIELD);
 
-                if (!isSameLocation(contig, start, submittedVariantContig, submittedVariantStart, type)){
+                if (!isSameLocation(contig, start, submittedVariantContig, submittedVariantStart, type)) {
                     continue;
                 }
 
@@ -197,9 +197,9 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
                         .getBoolean(SUPPORTED_BY_EVIDENCE_FIELD, DEFAULT_SUPPORTED_BY_EVIDENCE);
 
                 VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
-                                                                         submittedVariantValidated, allelesMatch,
-                                                                         assemblyMatch, evidence, remappedRS,
-                                                                         mergedInto);
+                        submittedVariantValidated, allelesMatch,
+                        assemblyMatch, evidence, remappedRS,
+                        mergedInto);
 
                 addToVariants(mergedVariants, contig, submittedVariantStart, rs, reference, alternate, sourceEntry);
             }
@@ -212,10 +212,10 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
         if (!hasSubmittedVariantsDeclustered && mergedVariants.isEmpty()) {
             logger.warn("Found merge operation for rs" + rs + " but no SS IDs updates " +
-                                "(merge/update) in the collection containing operations. " +
-                                "This could have possibly happened on a remapped variant " +
-                                "because there was a subsequent split issued for this RS due to loci disagreement " +
-                                "between the RS and the SS.");
+                    "(merge/update) in the collection containing operations. " +
+                    "This could have possibly happened on a remapped variant " +
+                    "because there was a subsequent split issued for this RS due to loci disagreement " +
+                    "between the RS and the SS.");
             return Collections.emptyList();
         }
 

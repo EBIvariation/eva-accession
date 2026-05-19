@@ -16,10 +16,10 @@
 
 package uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
@@ -33,15 +33,18 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionWriter;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.pipeline.test.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
 import java.io.FileInputStream;
@@ -49,15 +52,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration.JOB_LAUNCHER_SUBSNP_ACCESSION_JOB;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
+        MongoTestConfiguration.class, BatchJobRepositoryTestConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
-public class CreateSubsnpAccessionsStepConfigurationTest {
+public class CreateSubsnpAccessionsStepConfigurationTest extends MongoTestContainerHelper {
 
     private static final int EXPECTED_VARIANTS = 22;
 
@@ -85,7 +89,7 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
     @SpyBean
     private ContiguousIdBlockService contiguousIdBlockService;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         // if a new transaction is not created it will fail
         when(contiguousIdBlockService.getBlockParameters("test-pipeline-ss"))
@@ -104,7 +108,7 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
         accessionWriter.setJobExecution(jobExecution);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf()));
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.VARIANTS_FILE_SUFFIX));

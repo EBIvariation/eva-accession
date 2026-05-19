@@ -18,15 +18,15 @@
 package uk.ac.ebi.eva.accession.clustering.test.configuration;
 
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.batch.BatchProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.BackPropagatedRSWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringWriterConfiguration;
@@ -56,8 +56,6 @@ import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.RSAccessionR
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.qc.DuplicateRSAccQCStepConfiguration;
 import uk.ac.ebi.eva.accession.clustering.runner.ClusteringCommandLineRunner;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
-
-import javax.sql.DataSource;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.DUPLICATE_RS_ACC_QC_JOB;
@@ -111,75 +109,62 @@ public class BatchTestConfiguration {
     public static final String JOB_LAUNCHER_DUPLICATE_RS_ACC_QC_JOB = "JOB_LAUNCHER_DUPLICATE_RS_ACC_QC_JOB";
 
     @Autowired
-    private BatchProperties properties;
-
-    @Autowired
     private ResourceLoader resourceLoader;
 
-    @Autowired
-    private DataSource dataSource;
-
-    @Autowired
-    private PlatformTransactionManager platformTransactionManager;
-
     @Bean(JOB_LAUNCHER_FROM_MONGO)
-    public JobLauncherTestUtils jobLauncherTestUtilsFromMongo() {
-
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(CLUSTERING_FROM_MONGO_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
+    public JobLauncherTestUtils jobLauncherTestUtilsFromMongo(JobLauncher jobLauncher, JobRepository jobRepository,
+                                                              @Qualifier(CLUSTERING_FROM_MONGO_JOB) Job job) {
+        JobLauncherTestUtils utils = new JobLauncherTestUtils();
+        utils.setJobLauncher(jobLauncher);
+        utils.setJobRepository(jobRepository);
+        utils.setJob(job);
+        return utils;
     }
 
     @Bean(JOB_LAUNCHER_STUDY_FROM_MONGO)
-    public JobLauncherTestUtils jobLauncherTestUtilsStudyFromMongo() {
+    public JobLauncherTestUtils jobLauncherTestUtilsStudyFromMongo(JobLauncher jobLauncher, JobRepository jobRepository,
+                                                                   @Qualifier(STUDY_CLUSTERING_JOB) Job job) {
 
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(STUDY_CLUSTERING_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
+        JobLauncherTestUtils utils = new JobLauncherTestUtils();
+        utils.setJobLauncher(jobLauncher);
+        utils.setJobRepository(jobRepository);
+        utils.setJob(job);
+        return utils;
     }
 
     @Bean(JOB_LAUNCHER_RS_ACCESSION_RECOVERY)
-    public JobLauncherTestUtils jobLauncherTestUtilsRSAccessionRecoveryJob() {
+    public JobLauncherTestUtils jobLauncherTestUtilsRSAccessionRecoveryJob(JobLauncher jobLauncher, JobRepository jobRepository,
+                                                                           @Qualifier(RS_ACCESSION_RECOVERY_JOB) Job job) {
 
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(RS_ACCESSION_RECOVERY_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
+        JobLauncherTestUtils utils = new JobLauncherTestUtils();
+        utils.setJobLauncher(jobLauncher);
+        utils.setJobRepository(jobRepository);
+        utils.setJob(job);
+        return utils;
     }
 
     @Bean(JOB_LAUNCHER_NEW_CLUSTERED_VARIANTS_QC)
-    public JobLauncherTestUtils jobLauncherTestUtilsNewClusteredVariants() {
+    public JobLauncherTestUtils jobLauncherTestUtilsNewClusteredVariants(JobLauncher jobLauncher, JobRepository jobRepository,
+                                                                         @Qualifier(NEW_CLUSTERED_VARIANTS_QC_JOB) Job job) {
 
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(NEW_CLUSTERED_VARIANTS_QC_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
+        JobLauncherTestUtils utils = new JobLauncherTestUtils();
+        utils.setJobLauncher(jobLauncher);
+        utils.setJobRepository(jobRepository);
+        utils.setJob(job);
+        return utils;
+
     }
 
     @Bean(JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP)
-    public JobLauncherTestUtils jobLauncherTestUtilsFromMongoOnlyFirstStep() {
+    public JobLauncherTestUtils jobLauncherTestUtilsFromMongoOnlyFirstStep(JobLauncher jobLauncher, JobRepository jobRepository,
+                                                                           @Qualifier(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB) Job job) {
 
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
+        JobLauncherTestUtils utils = new JobLauncherTestUtils();
+        utils.setJobLauncher(jobLauncher);
+        utils.setJobRepository(jobRepository);
+        utils.setJob(job);
+        return utils;
+
     }
 
     @Bean
@@ -188,13 +173,13 @@ public class BatchTestConfiguration {
     }
 
     @Bean(JOB_LAUNCHER_DUPLICATE_RS_ACC_QC_JOB)
-    public JobLauncherTestUtils jobLauncherTestUtilsDuplicateRSAccQCJob() {
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(DUPLICATE_RS_ACC_QC_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
+    public JobLauncherTestUtils jobLauncherTestUtilsDuplicateRSAccQCJob(JobLauncher jobLauncher, JobRepository jobRepository,
+                                                                        @Qualifier(DUPLICATE_RS_ACC_QC_JOB) Job job) {
+
+        JobLauncherTestUtils utils = new JobLauncherTestUtils();
+        utils.setJobLauncher(jobLauncher);
+        utils.setJobRepository(jobRepository);
+        utils.setJob(job);
+        return utils;
     }
 }

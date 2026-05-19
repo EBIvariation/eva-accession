@@ -21,14 +21,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-
 import uk.ac.ebi.eva.accession.pipeline.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
+import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfReader;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
+import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.models.Aggregation;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
-import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfReader;
-import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 
 import java.io.File;
 import java.io.IOException;
