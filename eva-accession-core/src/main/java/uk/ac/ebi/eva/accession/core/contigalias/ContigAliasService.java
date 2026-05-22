@@ -18,6 +18,7 @@
 package uk.ac.ebi.eva.accession.core.contigalias;
 
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
@@ -33,6 +34,7 @@ import uk.ac.ebi.eva.commons.core.models.contigalias.ContigAliasResponse;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigAliasTranslator;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -84,10 +86,10 @@ public class ContigAliasService {
      * Query contig alias service to translate the contig to the desired naming convention
      */
     public String translateContigFromInsdc(String genbankContig, ContigNamingConvention contigNamingConvention) {
-        String url = contigAliasUrl + CONTIG_ALIAS_CHROMOSOMES_GENBANK_ENDPOINT + genbankContig;
-        ContigAliasResponse contigAliasResponse = restTemplate.getForObject(url, ContigAliasResponse.class);
+        URI uri = buildUri(CONTIG_ALIAS_CHROMOSOMES_GENBANK_ENDPOINT, genbankContig);
+        ContigAliasResponse contigAliasResponse = restTemplate.getForObject(uri, ContigAliasResponse.class);
         if (contigAliasResponse == null || contigAliasResponse.getEmbedded() == null) {
-            throw new NoSuchElementException("No data returned for " + url + " from the contig alias service");
+            throw new NoSuchElementException("No contig alias data found for Genbank contig: " + genbankContig);
         }
         return ContigAliasTranslator.getTranslatedContig(contigAliasResponse, contigNamingConvention);
     }
@@ -107,22 +109,50 @@ public class ContigAliasService {
     }
 
     private String translateContigRefseqToInsdc(String refseq) {
-        String url = contigAliasUrl + CONTIG_ALIAS_CHROMOSOMES_REFSEQ_ENDPOINT + refseq;
-        ContigAliasResponse contigAliasResponse = restTemplate.getForObject(url, ContigAliasResponse.class);
+        URI uri = buildUri(CONTIG_ALIAS_CHROMOSOMES_REFSEQ_ENDPOINT, refseq);
+        ContigAliasResponse contigAliasResponse = restTemplate.getForObject(uri, ContigAliasResponse.class);
         if (contigAliasResponse == null || contigAliasResponse.getEmbedded() == null) {
-            throw new NoSuchElementException("No data returned for " + url + " from the contig alias service");
+            throw new NoSuchElementException("No contig alias data found for RefSeq: " + refseq);
         }
         return ContigAliasTranslator.getTranslatedContig(contigAliasResponse, ContigNamingConvention.INSDC);
     }
 
     private String translateContigNameToInsdc(String contigName, String assembly, ContigNamingConvention contigNamingConvention) {
-        String url = contigAliasUrl + CONTIG_ALIAS_CHROMOSOMES_NAME_ENDPOINT + contigName
-                + "?accession=" + assembly + "&name=" + getNameParam(contigNamingConvention);
-        ContigAliasResponse contigAliasResponse = restTemplate.getForObject(url, ContigAliasResponse.class);
+        String path = CONTIG_ALIAS_CHROMOSOMES_NAME_ENDPOINT;
+        if (path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        URI uri = UriComponentsBuilder.fromHttpUrl(contigAliasUrl)
+                .path(path)
+                .pathSegment(contigName)
+                .queryParam("accession", assembly)
+                .queryParam("name", getNameParam(contigNamingConvention))
+                .build()
+                .encode()
+                .toUri();
+        ContigAliasResponse contigAliasResponse = restTemplate.getForObject(uri, ContigAliasResponse.class);
         if (contigAliasResponse == null || contigAliasResponse.getEmbedded() == null) {
-            throw new NoSuchElementException("No data returned for " + url + " from the contig alias service");
+            throw new NoSuchElementException("No contig alias data found for contig name: " + contigName);
         }
         return ContigAliasTranslator.getTranslatedContig(contigAliasResponse, ContigNamingConvention.INSDC);
+    }
+
+    /**
+     * Builds a safe URI for the contig alias service by encoding the path variable as a single path segment.
+     * Using pathSegment() causes UriComponentsBuilder to encode path-reserved characters (/, ?, #) within
+     * the variable value, preventing path traversal attacks.
+     */
+    private URI buildUri(String endpoint, String pathVariable) {
+        if (".".equals(pathVariable) || "..".equals(pathVariable)) {
+            throw new IllegalArgumentException("Invalid contig identifier: " + pathVariable);
+        }
+        String path = endpoint.endsWith("/") ? endpoint.substring(0, endpoint.length() - 1) : endpoint;
+        return UriComponentsBuilder.fromHttpUrl(contigAliasUrl)
+                .path(path)
+                .pathSegment(pathVariable)
+                .build()
+                .encode()
+                .toUri();
     }
 
     /**

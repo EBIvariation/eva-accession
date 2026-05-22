@@ -20,6 +20,8 @@ package uk.ac.ebi.eva.accession.ws.rest;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -63,6 +65,8 @@ import java.util.stream.Collectors;
 @RequestMapping(value = "/v1/clustered-variants")
 @Api(tags = {"Clustered variants"})
 public class ClusteredVariantsRestController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ClusteredVariantsRestController.class);
 
     private SubmittedVariantAccessioningService submittedVariantsService;
 
@@ -273,11 +277,13 @@ public class ClusteredVariantsRestController {
             return beaconService.queryBeaconClusteredVariant(assembly, chromosome, start, variantType,
                                                              contigNamingConvention, includeDatasetReponses);
         } catch (Exception ex) {
+            logger.error("Unexpected error in beacon query for chromosome={}, start={}, assembly={}, variantType={}",
+                         chromosome, start, assembly, variantType, ex);
             int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
             response.setStatus(responseStatus);
             return beaconService.getBeaconResponseObjectWithError(chromosome, start, assembly, variantType,
                     responseStatus,
-                    "Unexpected Error: " + ex.getMessage());
+                    "An unexpected error occurred processing the beacon query.");
         }
     }
 }
