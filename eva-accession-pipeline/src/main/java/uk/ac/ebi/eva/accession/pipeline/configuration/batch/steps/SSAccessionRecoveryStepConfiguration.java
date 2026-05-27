@@ -20,7 +20,8 @@ public class SSAccessionRecoveryStepConfiguration {
     private SSAccessionRecoveryService SSAccessionRecoveryService;
 
     @Bean(SS_ACCESSION_RECOVERY_STEP)
-    public Step ssAccessionRecoveryStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+    public Step ssAccessionRecoveryStep(JobRepository jobRepository,
+                                        @Qualifier("transactionManager") PlatformTransactionManager transactionManager) {
         return new StepBuilder(SS_ACCESSION_RECOVERY_STEP, jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     SSAccessionRecoveryService.runRecoveryForCategorySS();
