@@ -25,7 +25,9 @@ import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -37,7 +39,7 @@ import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplit
 import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
@@ -48,12 +50,17 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -70,7 +77,9 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLI
 @ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:merge-split-test.properties")
 @ContextConfiguration(classes = {RSMergeAndSplitCandidatesReaderConfiguration.class,
-        RSMergeAndSplitWriterConfiguration.class, MongoTestConfiguration.class, BatchTestConfiguration.class})
+        RSMergeAndSplitWriterConfiguration.class, MongoTestConfiguration.class, BatchTestConfiguration.class,
+        ContiguousIdBlocksDataSourceConfiguration.class})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class RSSplitWriterTest extends MongoTestContainerHelper {
 
     private static final String ASSEMBLY = "GCA_000000001.1";
@@ -92,6 +101,9 @@ public class RSSplitWriterTest extends MongoTestContainerHelper {
     @MockBean
     private JobExecution jobExecution;
 
+    @Autowired
+    private DataSource dataSource;
+
     private SubmittedVariantEntity ss1, ss2, ss3, ss4, ss5, ss6;
 
     @Autowired
@@ -101,8 +113,16 @@ public class RSSplitWriterTest extends MongoTestContainerHelper {
     private MetricCompute<ClusteringMetric> metricCompute;
 
     @BeforeEach
-    public void setUp() throws IOException {
+    public void setUp() throws IOException, SQLException {
         mongoTemplate.getDb().drop();
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DROP TABLE IF EXISTS contiguous_id_blocks");
+        }
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("test-data/contiguous_id_blocks_schema.sql"));
+        populator.execute(dataSource);
+
         metricCompute.clearCount();
         Files.deleteIfExists(this.rsReportFile.toPath());
 

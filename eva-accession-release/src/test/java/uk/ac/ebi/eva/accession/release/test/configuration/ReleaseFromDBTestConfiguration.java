@@ -5,7 +5,6 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.eva.accession.release.configuration.InputParametersConfiguration;
@@ -29,8 +28,6 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_ACTIV
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_AND_DEPRECATED_ACCESSIONS_RELEASE_FROM_DB_JOB;
 
-
-@EnableAutoConfiguration
 @Import({ChunkSizeCompletionPolicyConfiguration.class,
         IllegalStartSkipPolicyConfiguration.class,
         InputParametersConfiguration.class,

@@ -18,7 +18,6 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
@@ -44,9 +43,9 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROGRESS_LISTENER;
+import static uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration.BATCH_TRANSACTION_MANAGER;
 
 @Configuration
-@EnableBatchProcessing
 // Since this is a QC Job, the configuration is intentionally lightweight and all collected in one-place
 // to reduce overhead
 public class ClusteringQCJobConfiguration {
@@ -97,7 +96,8 @@ public class ClusteringQCJobConfiguration {
             @Qualifier(PENDING_MERGE_AND_SPLIT_REPORTER)
             ItemWriter<SubmittedVariantEntity> pendingMergeSplitReporter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
-            JobRepository jobRepository, PlatformTransactionManager transactionManager,
+            JobRepository jobRepository,
+            @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         return new StepBuilder(REPORT_UNCLUSTERED_SS_AND_PENDING_MERGES_AND_SPLITS_STEP, jobRepository)
                 .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
@@ -115,7 +115,8 @@ public class ClusteringQCJobConfiguration {
             @Qualifier(EXTRANEOUS_RS_REPORTER)
             ItemWriter<ClusteredVariantEntity> extraneousRSReporter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
-            JobRepository jobRepository, PlatformTransactionManager transactionManager,
+            JobRepository jobRepository,
+            @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         return new StepBuilder(REPORT_EXTRANEOUS_RS_STEP, jobRepository)
                 .<ClusteredVariantEntity, ClusteredVariantEntity>chunk(chunkSizeCompletionPolicy, transactionManager)

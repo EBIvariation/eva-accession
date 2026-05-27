@@ -28,10 +28,11 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.commons.mongodb.readers.MongoDbCursorItemReader;
 
@@ -46,10 +47,8 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLI
 @ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
 @ContextConfiguration(classes = {RSMergeAndSplitCandidatesReaderConfiguration.class, MongoTestConfiguration.class,
-        BatchTestConfiguration.class})
+        BatchTestConfiguration.class, ContiguousIdBlocksDataSourceConfiguration.class})
 public class RSMergeAndSplitCandidatesReaderTest extends MongoTestContainerHelper {
-
-    private static final String TEST_DB = "test-db";
 
     private static final String ASSEMBLY = "GCA_000000001.1";
 

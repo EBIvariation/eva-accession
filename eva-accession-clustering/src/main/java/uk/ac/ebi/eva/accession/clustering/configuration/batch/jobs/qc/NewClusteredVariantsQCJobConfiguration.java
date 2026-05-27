@@ -17,7 +17,6 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
@@ -38,8 +37,9 @@ import uk.ac.ebi.eva.accession.clustering.batch.io.qc.RSHashPair;
 
 import java.io.File;
 
+import static uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration.BATCH_TRANSACTION_MANAGER;
+
 @Configuration
-@EnableBatchProcessing
 // Since this is a QC Job, the configuration is intentionally lightweight and all collected in one-place
 // to reduce overhead
 public class NewClusteredVariantsQCJobConfiguration {
@@ -80,7 +80,8 @@ public class NewClusteredVariantsQCJobConfiguration {
     public Step reportMissingCveStep(
             @Qualifier(RS_REPORT_READER) ItemStreamReader<RSHashPair> rsReportReader,
             @Qualifier(MISSING_CVE_REPORTER) ItemWriter<RSHashPair> missingCveReporter,
-            JobRepository jobRepository, PlatformTransactionManager transactionManager,
+            JobRepository jobRepository,
+            @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         return new StepBuilder(REPORT_MISSING_CVE_STEP, jobRepository)
                 .<RSHashPair, RSHashPair>chunk(chunkSizeCompletionPolicy, transactionManager)

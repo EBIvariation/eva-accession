@@ -2,7 +2,6 @@ package uk.ac.ebi.eva.accession.release.configuration.batch.jobs;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
@@ -15,7 +14,6 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_AND
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_AND_DEPRECATED_ACCESSIONS_RELEASE_FROM_DB_STEP;
 
 @Configuration
-@EnableBatchProcessing
 public class MergedAndDeprecatedAccessionReleaseFromDBJobConfiguration {
 
     @Autowired

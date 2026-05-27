@@ -41,9 +41,9 @@ import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEn
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.dbsnp2.test.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.dbsnp2.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.time.LocalDateTime;

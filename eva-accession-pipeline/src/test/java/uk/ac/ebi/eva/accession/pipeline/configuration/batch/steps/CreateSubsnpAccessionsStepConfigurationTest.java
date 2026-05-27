@@ -29,28 +29,33 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionWriter;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
-import uk.ac.ebi.eva.accession.pipeline.test.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
+import javax.sql.DataSource;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.Statement;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
@@ -59,7 +64,7 @@ import static uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration.JOB_L
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
-        MongoTestConfiguration.class, BatchJobRepositoryTestConfiguration.class})
+        MongoTestConfiguration.class, ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 public class CreateSubsnpAccessionsStepConfigurationTest extends MongoTestContainerHelper {
 
@@ -84,6 +89,9 @@ public class CreateSubsnpAccessionsStepConfigurationTest extends MongoTestContai
     private InputParameters inputParameters;
 
     @Autowired
+    private DataSource dataSource;
+
+    @Autowired
     private MongoTemplate mongoTemplate;
 
     @SpyBean
@@ -91,6 +99,14 @@ public class CreateSubsnpAccessionsStepConfigurationTest extends MongoTestContai
 
     @BeforeEach
     public void setUp() throws Exception {
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DROP TABLE IF EXISTS contiguous_id_blocks");
+        }
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("test-data/contiguous_id_blocks_schema.sql"));
+        populator.execute(dataSource);
+
         // if a new transaction is not created it will fail
         when(contiguousIdBlockService.getBlockParameters("test-pipeline-ss"))
                 .thenThrow(RuntimeException.class)

@@ -17,7 +17,6 @@
 package uk.ac.ebi.eva.accession.release.test.configuration;
 
 import org.springframework.batch.test.JobLauncherTestUtils;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
@@ -26,7 +25,6 @@ import uk.ac.ebi.eva.accession.release.configuration.batch.policies.ChunkSizeCom
 import uk.ac.ebi.eva.accession.release.configuration.batch.policies.IllegalStartSkipPolicyConfiguration;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
-@EnableAutoConfiguration
 @Import({MongoConfiguration.class,
         InputParametersConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class,

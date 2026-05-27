@@ -26,19 +26,17 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.remapping.source.parameters.InputParameters;
 import uk.ac.ebi.eva.remapping.source.parameters.ReportPathResolver;
-import uk.ac.ebi.eva.remapping.source.test.configuration.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.remapping.source.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.remapping.source.test.configuration.MongoTestConfiguration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
-        BatchJobRepositoryTestConfiguration.class})
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @TestPropertySource("classpath:application.properties")
 public class AccessionRemappingJobLauncherCommandLineRunnerTest extends MongoTestContainerHelper {
     @Autowired

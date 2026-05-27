@@ -49,6 +49,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
@@ -72,10 +73,10 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessionin
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.ws.rest.ClusteredVariantsRestController;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
-import uk.ac.ebi.eva.accession.ws.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.ws.test.NoContigTranslationArgumentMatcher;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
@@ -112,7 +113,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import({ClusteredVariantAccessioningConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
-        MongoTestConfiguration.class})
+        MongoTestConfiguration.class, ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:accession-ws-test.properties")
 public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelper {
 

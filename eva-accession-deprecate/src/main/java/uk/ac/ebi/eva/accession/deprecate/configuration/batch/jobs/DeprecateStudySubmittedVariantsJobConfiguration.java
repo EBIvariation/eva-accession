@@ -17,7 +17,6 @@ package uk.ac.ebi.eva.accession.deprecate.configuration.batch.jobs;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
@@ -28,7 +27,6 @@ import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames;
 
 @Configuration
-@EnableBatchProcessing
 public class DeprecateStudySubmittedVariantsJobConfiguration {
 
     @Autowired

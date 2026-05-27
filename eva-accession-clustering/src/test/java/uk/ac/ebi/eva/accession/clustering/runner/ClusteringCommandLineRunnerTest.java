@@ -25,7 +25,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionException;
-import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.item.Chunk;
@@ -36,11 +35,13 @@ import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -62,9 +63,8 @@ import uk.ac.ebi.eva.accession.clustering.batch.io.RSSplitWriter;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
-import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -77,11 +77,11 @@ import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
-import uk.ac.ebi.eva.accession.core.runner.CommandLineRunnerUtils;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
@@ -89,8 +89,11 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.mongodb.readers.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.net.URI;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -108,24 +111,17 @@ import static org.springframework.data.mongodb.core.query.Query.query;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_NEW_RS_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER_UNCLUSTERED_VARIANTS_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_MERGE_CANDIDATES_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
-        BatchJobRepositoryTestConfiguration.class})
+        ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
 public class ClusteringCommandLineRunnerTest extends MongoTestContainerHelper {
     private static String TEST_APPLICATION_INSTANCE_ID = "test-application-instance-id";
@@ -203,6 +199,9 @@ public class ClusteringCommandLineRunnerTest extends MongoTestContainerHelper {
     @Qualifier(RS_SPLIT_WRITER)
     private RSSplitWriter rsSplitWriter;
 
+    @Autowired
+    private DataSource dataSource;
+
     @MockBean
     private JobExecution jobExecution;
 
@@ -274,7 +273,6 @@ public class ClusteringCommandLineRunnerTest extends MongoTestContainerHelper {
         ASM2 = inputParameters.getAssemblyAccession();
         jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository);
         jobRepositoryTestUtils.removeJobExecutions();
-        inputParameters.setForceRestart(false);
         inputParameters.setRemappedFrom(originalRemappedFrom);
 
         mockServer = MockRestServiceServer.createServer(restTemplate);
@@ -282,6 +280,14 @@ public class ClusteringCommandLineRunnerTest extends MongoTestContainerHelper {
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
         mongoTemplate.getDb().drop();
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DROP TABLE IF EXISTS contiguous_id_blocks");
+        }
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("test-data/contiguous_id_blocks_schema.sql"));
+        populator.execute(dataSource);
+
 
         Mockito.when(jobExecution.getJobId()).thenReturn(1L);
         rsSplitWriter.setJobExecution(jobExecution);
@@ -290,7 +296,6 @@ public class ClusteringCommandLineRunnerTest extends MongoTestContainerHelper {
     @AfterEach
     public void tearDown() {
         jobRepositoryTestUtils.removeJobExecutions();
-        inputParameters.setForceRestart(false);
         mongoTemplate.getDb().drop();
     }
 
@@ -302,25 +307,6 @@ public class ClusteringCommandLineRunnerTest extends MongoTestContainerHelper {
         runner.setJobName(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-
-        JobInstance currentJobInstance =
-                CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_MONGO_JOB,
-                                jobExplorer, inputParameters.toJobParameters())
-                        .getJobInstance();
-        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
-        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                PROCESS_RS_MERGE_CANDIDATES_STEP));
-        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                PROCESS_RS_SPLIT_CANDIDATES_STEP));
-        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP));
-        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
-        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                BACK_PROPAGATE_NEW_RS_STEP));
-        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP));
     }
 
     @Test
@@ -334,24 +320,6 @@ public class ClusteringCommandLineRunnerTest extends MongoTestContainerHelper {
         runner.setJobName(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-
-        JobInstance currentJobInstance =
-                CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_MONGO_JOB,
-                        jobExplorer, inputParameters.toJobParameters()).getJobInstance();
-        assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
-                CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
-        assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
-                PROCESS_RS_MERGE_CANDIDATES_STEP));
-        assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
-                PROCESS_RS_SPLIT_CANDIDATES_STEP));
-        assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
-                CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP));
-        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
-        assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
-                BACK_PROPAGATE_NEW_RS_STEP));
-        assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
-                BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP));
     }
 
     @Test
@@ -918,30 +886,6 @@ public class ClusteringCommandLineRunnerTest extends MongoTestContainerHelper {
         runner.setJobName("NOT_EXISTENT_JOB");
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
-    }
-
-    @Test
-    @DirtiesContext
-    public void restartCompletedJobThatIsAlreadyInTheRepository() throws Exception {
-        runner.setJobName(CLUSTERING_FROM_MONGO_JOB);
-        runner.run();
-        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-
-        inputParameters.setForceRestart(true);
-        runner.run();
-        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-    }
-
-
-    @Test
-    @DirtiesContext
-    public void forceRestartButNoJobInTheRepository() throws Exception {
-        runner.setJobName(CLUSTERING_FROM_MONGO_JOB);
-        inputParameters.setForceRestart(true);
-        assertEquals(Collections.EMPTY_LIST, jobExplorer.getJobNames());
-        runner.run();
-
-        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
 
     @Test

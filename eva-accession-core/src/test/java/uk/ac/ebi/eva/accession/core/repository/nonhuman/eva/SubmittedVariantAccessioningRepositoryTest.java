@@ -26,10 +26,10 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.AccessionProjection;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.test.configuration.JPATestConfiguration;
 import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 
@@ -47,7 +47,7 @@ import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_VALID
 @ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:ss-accession-test.properties")
 @ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class,
-        JPATestConfiguration.class})
+        ContiguousIdBlocksDataSourceConfiguration.class})
 public class SubmittedVariantAccessioningRepositoryTest extends MongoTestContainerHelper {
 
     private static final Long CLUSTERED_VARIANT = null;

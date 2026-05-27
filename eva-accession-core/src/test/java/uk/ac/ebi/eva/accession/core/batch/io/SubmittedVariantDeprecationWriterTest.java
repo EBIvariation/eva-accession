@@ -22,12 +22,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
@@ -56,12 +56,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:ss-deprecation-test.properties")
-@EnableAutoConfiguration
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class,
-        SubmittedVariantAccessioningConfiguration.class, ClusteredVariantAccessioningConfiguration.class})
+        SubmittedVariantAccessioningConfiguration.class, ClusteredVariantAccessioningConfiguration.class,
+        ContiguousIdBlocksDataSourceConfiguration.class})
 public class SubmittedVariantDeprecationWriterTest extends MongoTestContainerHelper {
-
-    private static final String TEST_DB = "sve-deprecation-test";
 
     private static final String ASSEMBLY = "GCA_000000001.1";
 

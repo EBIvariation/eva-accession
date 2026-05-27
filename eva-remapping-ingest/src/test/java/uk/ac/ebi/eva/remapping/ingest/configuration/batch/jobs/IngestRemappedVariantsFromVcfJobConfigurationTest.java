@@ -34,12 +34,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.remapping.ingest.batch.tasklets.RemappingMetadata;
-import uk.ac.ebi.eva.remapping.ingest.test.configuration.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.remapping.ingest.test.configuration.MongoTestConfiguration;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -53,8 +52,7 @@ import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.STORE_REMAP
 import static uk.ac.ebi.eva.remapping.ingest.test.configuration.BatchTestConfiguration.JOB_INGEST_REMAPPED_VARIANTS_FROM_VCF_JOB;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
-        BatchJobRepositoryTestConfiguration.class})
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @TestPropertySource("classpath:ingest-remapped-variants.properties")
 public class IngestRemappedVariantsFromVcfJobConfigurationTest extends MongoTestContainerHelper {
 

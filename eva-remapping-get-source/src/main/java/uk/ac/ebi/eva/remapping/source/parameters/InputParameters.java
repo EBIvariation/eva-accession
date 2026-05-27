@@ -35,8 +35,6 @@ public class InputParameters {
 
     private int taxonomy;
 
-    private boolean forceRestart;
-
     private int chunkSize;
 
     public JobParameters toJobParameters() {
@@ -80,14 +78,6 @@ public class InputParameters {
 
     public void setOutputFolder(String outputFolder) {
         this.outputFolder = outputFolder;
-    }
-
-    public boolean isForceRestart() {
-        return forceRestart;
-    }
-
-    public void setForceRestart(boolean forceRestart) {
-        this.forceRestart = forceRestart;
     }
 
     public int getChunkSize() {

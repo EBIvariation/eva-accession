@@ -23,10 +23,10 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.BackPropagatedRSWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringWriterConfiguration;
@@ -55,6 +55,7 @@ import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.ClusteringFr
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.RSAccessionRecoveryStepConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.qc.DuplicateRSAccQCStepConfiguration;
 import uk.ac.ebi.eva.accession.clustering.runner.ClusteringCommandLineRunner;
+import uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
@@ -64,8 +65,8 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_ACCE
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.NewClusteredVariantsQCJobConfiguration.NEW_CLUSTERED_VARIANTS_QC_JOB;
 
-@EnableAutoConfiguration
-@Import({ClusteringFromMongoJobConfiguration.class,
+@Import({InMemoryBatchConfiguration.class,
+        ClusteringFromMongoJobConfiguration.class,
         StudyClusteringJobConfiguration.class,
         NewClusteredVariantsQCJobConfiguration.class,
         ProcessRemappedVariantsWithRSJobConfiguration.class,
@@ -182,4 +183,10 @@ public class BatchTestConfiguration {
         utils.setJob(job);
         return utils;
     }
+
+    @Bean(name = "COUNT_STATS_REST_TEMPLATE")
+    public RestTemplate countStatsRestTemplate() {
+        return new RestTemplate();
+    }
+
 }

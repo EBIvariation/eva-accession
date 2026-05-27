@@ -26,9 +26,11 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -37,24 +39,27 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
-import uk.ac.ebi.eva.accession.pipeline.test.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 
+import javax.sql.DataSource;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -72,7 +77,7 @@ import static uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration.JOB_L
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
-        MongoTestConfiguration.class, BatchJobRepositoryTestConfiguration.class})
+        MongoTestConfiguration.class, ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-recover-state-test.properties")
 public class CreateSubsnpAccessionsRecoverStateTest extends MongoTestContainerHelper {
 
@@ -96,6 +101,9 @@ public class CreateSubsnpAccessionsRecoverStateTest extends MongoTestContainerHe
     @Qualifier("COUNT_STATS_REST_TEMPLATE")
     private RestTemplate restTemplate;
 
+    @Autowired
+    private DataSource dataSource;
+
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
 
     @Autowired
@@ -113,6 +121,15 @@ public class CreateSubsnpAccessionsRecoverStateTest extends MongoTestContainerHe
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
+
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DROP TABLE IF EXISTS contiguous_id_blocks");
+        }
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("test-data/contiguous_id_blocks_schema.sql"));
+        populator.addScript(new ClassPathResource("test-data/contiguous_id_blocks_recover_state_data.sql"));
+        populator.execute(dataSource);
     }
 
     @AfterEach
@@ -207,7 +224,7 @@ public class CreateSubsnpAccessionsRecoverStateTest extends MongoTestContainerHe
         assertEquals(5000000000l, block1.getFirstValue());
         assertEquals(5000000029l, block1.getLastCommitted());
         assertEquals(5000000029l, block1.getLastValue());
-        assertEquals("0", block1.getApplicationInstanceId());
+        assertEquals("1", block1.getApplicationInstanceId());
         assertTrue(block1.isNotReserved());
 
         // Block Recovered - (used the 5 unused accessions 5000000035 to 5000000039 and recovered others)
@@ -215,7 +232,7 @@ public class CreateSubsnpAccessionsRecoverStateTest extends MongoTestContainerHe
         assertEquals(5000000030l, block2.getFirstValue());
         assertEquals(5000000059l, block2.getLastCommitted());
         assertEquals(5000000059l, block2.getLastValue());
-        assertEquals("0", block2.getApplicationInstanceId());
+        assertEquals("1", block2.getApplicationInstanceId());
         assertTrue(block2.isNotReserved());
 
         // Block Recovered - (No accession used from this block as entire block was already used)
@@ -223,7 +240,7 @@ public class CreateSubsnpAccessionsRecoverStateTest extends MongoTestContainerHe
         assertEquals(5000000060l, block3.getFirstValue());
         assertEquals(5000000089l, block3.getLastCommitted());
         assertEquals(5000000089l, block3.getLastValue());
-        assertEquals("0", block3.getApplicationInstanceId());
+        assertEquals("1", block3.getApplicationInstanceId());
         assertTrue(block3.isNotReserved());
 
         // used the remaining 17 (22 - 5 (2nd block)) from 4th block
@@ -231,7 +248,7 @@ public class CreateSubsnpAccessionsRecoverStateTest extends MongoTestContainerHe
         assertEquals(5000000090l, block4.getFirstValue());
         assertEquals(5000000106l, block4.getLastCommitted());
         assertEquals(5000000119l, block4.getLastValue());
-        assertEquals("0", block4.getApplicationInstanceId());
+        assertEquals("1", block4.getApplicationInstanceId());
         assertTrue(block4.isNotReserved());
     }
 

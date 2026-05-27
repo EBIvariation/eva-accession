@@ -30,6 +30,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
+import uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
@@ -38,11 +39,10 @@ import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
-import uk.ac.ebi.eva.accession.release.test.configuration.BatchJobRepositoryTestConfiguration;
-import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
@@ -71,8 +71,8 @@ import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTe
 import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration.TEST_RELEASE_MERGED_AND_DEPRECATED_ACCESSIONS_JOB;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {MongoTestConfiguration.class, ReleaseFromDBTestConfiguration.class,
-        BatchJobRepositoryTestConfiguration.class})
+@ContextConfiguration(classes = {InMemoryBatchConfiguration.class, MongoTestConfiguration.class,
+        ReleaseFromDBTestConfiguration.class})
 @TestPropertySource("classpath:dump-rs-accession-test.properties")
 public class RSAccessionsReleaseFromDBTest extends MongoTestContainerHelper {
     private static final String testRunDir = "src/test/resources/release-test-run";

@@ -16,7 +16,6 @@
 package uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.jobs;
 
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
@@ -33,7 +32,6 @@ import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.IMPORT_DBSN
  * Configuration to run a job that imports a dbSNP JSON file.
  */
 @Configuration
-@EnableBatchProcessing
 public class ImportDbsnpJsonVariantsJobConfiguration {
 
     @Autowired

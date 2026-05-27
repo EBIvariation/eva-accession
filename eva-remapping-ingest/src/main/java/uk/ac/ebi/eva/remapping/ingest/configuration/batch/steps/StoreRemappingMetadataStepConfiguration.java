@@ -17,10 +17,10 @@
 package uk.ac.ebi.eva.remapping.ingest.configuration.batch.steps;
 
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -28,12 +28,10 @@ import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.eva.remapping.ingest.batch.tasklets.RemappingMetadata;
 import uk.ac.ebi.eva.remapping.ingest.batch.tasklets.StoreRemappingMetadataTasklet;
 
-import java.io.IOException;
-
+import static uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration.BATCH_TRANSACTION_MANAGER;
 import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.STORE_REMAPPING_METADATA_STEP;
 
 @Configuration
-@EnableBatchProcessing
 public class StoreRemappingMetadataStepConfiguration {
 
     private final MongoTemplate mongoTemplate;
@@ -46,7 +44,8 @@ public class StoreRemappingMetadataStepConfiguration {
     }
 
     @Bean(STORE_REMAPPING_METADATA_STEP)
-    public Step buildReportStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) throws IOException {
+    public Step buildReportStep(JobRepository jobRepository,
+                                @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager) {
         StoreRemappingMetadataTasklet tasklet = new StoreRemappingMetadataTasklet(mongoTemplate, remappingMetadata);
         TaskletStep step = new StepBuilder(STORE_REMAPPING_METADATA_STEP, jobRepository)
                 .tasklet(tasklet, transactionManager)

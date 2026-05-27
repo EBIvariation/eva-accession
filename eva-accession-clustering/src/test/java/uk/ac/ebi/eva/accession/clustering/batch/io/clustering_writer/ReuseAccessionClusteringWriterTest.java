@@ -26,11 +26,12 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -42,7 +43,7 @@ import uk.ac.ebi.eva.accession.clustering.batch.io.RSSplitWriter;
 import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
@@ -57,11 +58,16 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.mongodb.readers.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -88,9 +94,8 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLI
  * Other test classes in this folder take care of other scenarios.
  */
 @ExtendWith(SpringExtension.class)
-@EnableAutoConfiguration
 @ContextConfiguration(classes = {ClusteredVariantAccessioningConfiguration.class, BatchTestConfiguration.class,
-        MongoTestConfiguration.class})
+        MongoTestConfiguration.class, ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:clustering-writer-test.properties")
 public class ReuseAccessionClusteringWriterTest extends MongoTestContainerHelper {
     private static String ASM_1;
@@ -147,6 +152,10 @@ public class ReuseAccessionClusteringWriterTest extends MongoTestContainerHelper
     @MockBean
     private JobExecution jobExecution;
 
+
+    @Autowired
+    private DataSource dataSource;
+
     @Autowired
     @Qualifier(BACK_PROPAGATED_RS_WRITER)
     private ItemWriter<SubmittedVariantEntity> backPropagatedRSWriter;
@@ -156,10 +165,18 @@ public class ReuseAccessionClusteringWriterTest extends MongoTestContainerHelper
     private Function<IClusteredVariant, String> clusteredHashingFunction;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws SQLException {
         ASM_1 = inputParameters.getRemappedFrom();
         ASM_2 = inputParameters.getAssemblyAccession();
         mongoTemplate.getDb().drop();
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DROP TABLE IF EXISTS contiguous_id_blocks");
+        }
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("test-data/contiguous_id_blocks_schema.sql"));
+        populator.execute(dataSource);
+
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         metricCompute.clearCount();

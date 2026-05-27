@@ -40,7 +40,7 @@ import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplit
 import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
@@ -54,6 +54,7 @@ import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantOper
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.mongodb.readers.MongoDbCursorItemReader;
@@ -79,7 +80,7 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLI
 @ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:merge-split-test.properties")
 @ContextConfiguration(classes = {RSMergeAndSplitCandidatesReaderConfiguration.class, RSMergeAndSplitWriterConfiguration.class,
-        MongoTestConfiguration.class, BatchTestConfiguration.class})
+        MongoTestConfiguration.class, BatchTestConfiguration.class, ContiguousIdBlocksDataSourceConfiguration.class})
 public class RSMergeWriterTest extends MongoTestContainerHelper {
 
     private static final String ASSEMBLY = "GCA_000000001.1";

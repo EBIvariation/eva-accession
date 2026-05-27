@@ -18,7 +18,6 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
@@ -32,7 +31,6 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_C
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_STEP;
 
 @Configuration
-@EnableBatchProcessing
 public class StudyClusteringJobConfiguration {
 
     @Bean(STUDY_CLUSTERING_JOB)

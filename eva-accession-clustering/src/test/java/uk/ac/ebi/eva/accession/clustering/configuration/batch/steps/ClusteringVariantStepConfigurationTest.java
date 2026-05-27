@@ -28,10 +28,12 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -40,15 +42,18 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
-import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 
+import javax.sql.DataSource;
 import java.net.URI;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -68,7 +73,7 @@ import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestCon
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
-        BatchJobRepositoryTestConfiguration.class})
+        ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:clustering-issuance-test.properties")
 public class ClusteringVariantStepConfigurationTest extends MongoTestContainerHelper {
     private static final String CLUSTERED_VARIANT_COLLECTION = "clusteredVariantEntity";
@@ -89,6 +94,9 @@ public class ClusteringVariantStepConfigurationTest extends MongoTestContainerHe
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private DataSource dataSource;
 
     @Autowired
     private ResourceLoader resourceLoader;
@@ -112,6 +120,14 @@ public class ClusteringVariantStepConfigurationTest extends MongoTestContainerHe
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
+
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DROP TABLE IF EXISTS contiguous_id_blocks");
+        }
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("test-data/contiguous_id_blocks_schema.sql"));
+        populator.execute(dataSource);
     }
 
     @AfterEach

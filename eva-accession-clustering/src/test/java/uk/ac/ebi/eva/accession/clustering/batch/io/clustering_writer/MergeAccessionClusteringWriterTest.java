@@ -25,7 +25,6 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
@@ -38,7 +37,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocu
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
@@ -57,6 +56,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.mongodb.readers.MongoDbCursorItemReader;
@@ -94,9 +94,9 @@ import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertRe
  * Other test classes in this folder take care of other scenarios.
  */
 @ExtendWith(SpringExtension.class)
-@EnableAutoConfiguration
 @ContextConfiguration(classes = {ClusteredVariantAccessioningConfiguration.class,
-        SubmittedVariantAccessioningConfiguration.class, BatchTestConfiguration.class, MongoTestConfiguration.class})
+        SubmittedVariantAccessioningConfiguration.class, BatchTestConfiguration.class, MongoTestConfiguration.class,
+        ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:clustering-writer-test.properties")
 public class MergeAccessionClusteringWriterTest extends MongoTestContainerHelper {
     private static final String CLUSTERED_VARIANT_COLLECTION = "clusteredVariantEntity";

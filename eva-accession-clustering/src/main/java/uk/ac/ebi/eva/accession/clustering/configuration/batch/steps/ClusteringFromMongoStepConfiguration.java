@@ -18,7 +18,6 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.steps;
 
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
@@ -61,9 +60,9 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_C
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_NEW_BACKPROP_RS;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS;
+import static uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration.BATCH_TRANSACTION_MANAGER;
 
 @Configuration
-@EnableBatchProcessing
 public class ClusteringFromMongoStepConfiguration {
 
     @Bean(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP)
@@ -72,7 +71,8 @@ public class ClusteringFromMongoStepConfiguration {
             @Qualifier(CLUSTERED_CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             @Qualifier(CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER) StepExecutionListener clusteredClusteringWriterJobExecutionSetter,
-            JobRepository jobRepository, PlatformTransactionManager transactionManager,
+            JobRepository jobRepository,
+            @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = new StepBuilder(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP, jobRepository)
                 .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
@@ -90,7 +90,8 @@ public class ClusteringFromMongoStepConfiguration {
             ItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader,
             @Qualifier(RS_MERGE_WRITER) ItemWriter<SubmittedVariantOperationEntity> rsMergeWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
-            JobRepository jobRepository, PlatformTransactionManager transactionManager,
+            JobRepository jobRepository,
+            @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = new StepBuilder(PROCESS_RS_MERGE_CANDIDATES_STEP, jobRepository)
                 .<SubmittedVariantOperationEntity, SubmittedVariantOperationEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
@@ -108,7 +109,8 @@ public class ClusteringFromMongoStepConfiguration {
             @Qualifier(RS_SPLIT_WRITER) ItemWriter<SubmittedVariantOperationEntity> rsSplitWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             @Qualifier(RS_SPLIT_WRITER_JOB_EXECUTION_SETTER) StepExecutionListener rsSplitWriterJobExecutionSetter,
-            JobRepository jobRepository, PlatformTransactionManager transactionManager,
+            JobRepository jobRepository,
+            @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = new StepBuilder(PROCESS_RS_SPLIT_CANDIDATES_STEP, jobRepository)
                 .<SubmittedVariantOperationEntity, SubmittedVariantOperationEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
@@ -123,7 +125,8 @@ public class ClusteringFromMongoStepConfiguration {
     @Bean(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP)
     public Step clearRSMergeAndSplitCandidatesStep(
             @Qualifier(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES) ItemWriter clearRSMergeAndSplitCandidates,
-            JobRepository jobRepository, PlatformTransactionManager transactionManager,
+            JobRepository jobRepository,
+            @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = new StepBuilder(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP, jobRepository)
                 .chunk(chunkSizeCompletionPolicy, transactionManager)
@@ -155,7 +158,8 @@ public class ClusteringFromMongoStepConfiguration {
             @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER) StepExecutionListener nonClusteredClusteringWriterJobExecutionSetter,
-            JobRepository jobRepository, PlatformTransactionManager transactionManager,
+            JobRepository jobRepository,
+            @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = new StepBuilder(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP, jobRepository)
                 .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
@@ -173,7 +177,8 @@ public class ClusteringFromMongoStepConfiguration {
             ItemStreamReader<SubmittedVariantEntity> backPropagatedNewRSTargetReader,
             @Qualifier(BACK_PROPAGATED_RS_WRITER) ItemWriter<SubmittedVariantEntity> backPropagatedRSWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
-            JobRepository jobRepository, PlatformTransactionManager transactionManager,
+            JobRepository jobRepository,
+            @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = new StepBuilder(BACK_PROPAGATE_NEW_RS_STEP, jobRepository)
                 .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
@@ -190,7 +195,8 @@ public class ClusteringFromMongoStepConfiguration {
             ItemStreamReader<List<SubmittedVariantEntity>> splitOrMergedRSReader,
             @Qualifier(BACK_PROPAGATED_RS_WRITER) ItemWriter<SubmittedVariantEntity> backPropagatedRSWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
-            JobRepository jobRepository, PlatformTransactionManager transactionManager,
+            JobRepository jobRepository,
+            @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = new StepBuilder(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP, jobRepository)
                 .<List<SubmittedVariantEntity>, List<SubmittedVariantEntity>>chunk(chunkSizeCompletionPolicy, transactionManager)
@@ -208,7 +214,8 @@ public class ClusteringFromMongoStepConfiguration {
             @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER) StepExecutionListener nonClusteredClusteringWriterJobExecutionSetter,
-            JobRepository jobRepository, PlatformTransactionManager transactionManager,
+            JobRepository jobRepository,
+            @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = new StepBuilder(STUDY_CLUSTERING_STEP, jobRepository)
                 .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
