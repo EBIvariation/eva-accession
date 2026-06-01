@@ -18,9 +18,8 @@ package uk.ac.ebi.eva.accession.release.batch.io.merged;
 import htsjdk.variant.vcf.VCFHeaderLine;
 import htsjdk.variant.vcf.VCFHeaderLineType;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
-
-import uk.ac.ebi.eva.accession.release.batch.io.active.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader;
+import uk.ac.ebi.eva.accession.release.batch.io.active.VariantContextWriter;
 
 import java.nio.file.Path;
 import java.util.Set;

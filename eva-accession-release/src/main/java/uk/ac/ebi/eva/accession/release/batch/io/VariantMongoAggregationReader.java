@@ -16,8 +16,8 @@
 
 package uk.ac.ebi.eva.accession.release.batch.io;
 
-import com.mongodb.MongoClient;
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -131,9 +131,8 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
         logger.info("issuing aggregation on collection {}", collectionName);
         MongoCollection<Document> collection = db.getCollection(collectionName);
         AggregateIterable<Document> clusteredVariants = collection.aggregate(buildAggregation())
-                                                                  .allowDiskUse(true)
-                                                                  .useCursor(true)
-                                                                  .batchSize(chunkSize);
+                .allowDiskUse(true)
+                .batchSize(chunkSize);
         cursor = clusteredVariants.iterator();
     }
 
@@ -151,8 +150,8 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
                                                          boolean assemblyMatch, boolean evidence, boolean remappedRS,
                                                          Long mergedInto) {
         VariantSourceEntry variantSourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
-                                                                        submittedVariantValidated, allelesMatch,
-                                                                        assemblyMatch, evidence, remappedRS);
+                submittedVariantValidated, allelesMatch,
+                assemblyMatch, evidence, remappedRS);
         if (Objects.nonNull(mergedInto)) {
             variantSourceEntry.addAttribute(MERGED_INTO_KEY, buildId(mergedInto));
         }
@@ -223,15 +222,15 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
      * The start is considered to be the same when:
      * - start in clustered and submitted variant match
      * - start in clustered and submitted variant have a difference of 1
-     *
+     * <p>
      * The start position can be different in ambiguous INDELS because the renormalization is only applied to
      * submitted variants. In those cases the start in the clustered and submitted variants will not exactly match but
      * the difference should be 1
-     *
+     * <p>
      * Example:
      * RS (assembly: GCA_000309985.1, accession: 268233057, chromosome: CM001642.1, start: 7356605, type: INS)
      * SS (assembly: GCA_000309985.1, accession: 490570267, chromosome: CM001642.1, start: 7356604, reference: ,
-     *     alternate: AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC)
+     * alternate: AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC)
      */
     private boolean isSameStart(long clusteredVariantStart, long submittedVariantStart, String type) {
         return clusteredVariantStart == submittedVariantStart

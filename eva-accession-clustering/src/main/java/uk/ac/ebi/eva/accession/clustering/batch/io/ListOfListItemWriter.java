@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemStreamWriter;
 import org.springframework.batch.item.ItemWriter;
 
@@ -32,14 +33,14 @@ public class ListOfListItemWriter<T> implements ItemWriter<List<T>> {
     }
 
     @Override
-    public void write(List<? extends List<T>> listOfLists) throws Exception {
+    public void write(Chunk<? extends List<T>> listOfLists) throws Exception {
         if (listOfLists.isEmpty()) {
             return;
         }
 
-        List<T> all = listOfLists.stream().flatMap(Collection::stream).collect(Collectors.toList());
+        List<T> all = listOfLists.getItems().stream().flatMap(Collection::stream).collect(Collectors.toList());
 
-        itemWriter.write(all);
+        itemWriter.write(new Chunk<>(all));
     }
 
     public void setItemWriter(ItemStreamWriter<T> itemWriter) {

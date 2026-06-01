@@ -21,16 +21,16 @@ import com.mongodb.MongoException;
 import com.mongodb.client.MongoCursor;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
@@ -39,8 +39,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -50,7 +50,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReaderRetryable.MAX_RETRIES;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 public class ClusteringMongoReaderRetryTest {
 
     private static final String ASSEMBLY = "GCA_000000001.1";
@@ -62,12 +62,12 @@ public class ClusteringMongoReaderRetryTest {
     @MockBean(answer = Answers.RETURNS_DEEP_STUBS)
     private MongoTemplate mongoTemplate;
 
-    @Before
+    @BeforeEach
     public void setUp(){
         nonClusteredVariantReader = spy(new ClusteringMongoReaderRetryable(mongoTemplate, ASSEMBLY, CHUNK_SIZE, false));
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         nonClusteredVariantReader.close();
     }

@@ -15,10 +15,10 @@
  */
 package uk.ac.ebi.eva.accession.release.batch.io.deprecated;
 
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
-
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.io.File;
@@ -26,7 +26,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -66,8 +65,8 @@ public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<Varian
     }
 
     @Override
-    public void write(List<? extends Variant> variants) throws Exception {
-        for (Variant variant: variants) {
+    public void write(Chunk<? extends Variant> variants) throws Exception {
+        for (Variant variant : variants) {
             if (!Objects.isNull(variant)) {
                 printWriter.println(variant.getMainId());
             }

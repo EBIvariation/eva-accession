@@ -15,26 +15,22 @@
  */
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.mongodb.MongoClient;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
@@ -44,7 +40,6 @@ import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
@@ -53,6 +48,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
@@ -64,9 +60,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
@@ -74,18 +70,13 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.SS_SPLIT_WRITER;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:merge-split-test.properties")
 @ContextConfiguration(classes = {SSSplitWriterConfiguration.class, MongoTestConfiguration.class,
         BatchTestConfiguration.class})
-public class SSSplitWriterTest {
-
-    private static final String TEST_DB = "test-db";
+public class SSSplitWriterTest extends MongoTestContainerHelper {
 
     private static final String ASSEMBLY = "GCA_000000001.1";
-
-    @Autowired
-    private MongoClient mongoClient;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -93,14 +84,6 @@ public class SSSplitWriterTest {
     @Autowired
     @Qualifier(SS_SPLIT_WRITER)
     private SSSplitWriter ssSplitWriter;
-
-    //Required by nosql-unit
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
     private SubmittedVariantEntity ss1, ss2, ss3, ss4, ss5, ss6;
 
@@ -126,26 +109,24 @@ public class SSSplitWriterTest {
 
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        cleanup();
+        mongoTemplate.getDb().drop();
+        metricCompute.clearCount();
+
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServer.expect(ExpectedCount.manyTimes(),
-                          requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
-                  .andExpect(method(HttpMethod.POST))
-                  .andRespond(withStatus(HttpStatus.OK));
+                        requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.OK));
         Mockito.when(jobExecution.getJobId()).thenReturn(1L);
         ssSplitWriter.setJobExecution(jobExecution);
 
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
-        cleanup();
-    }
-
-    private void cleanup() {
-        mongoClient.dropDatabase(TEST_DB);
+        mongoTemplate.getDb().drop();
         metricCompute.clearCount();
     }
 
@@ -154,7 +135,7 @@ public class SSSplitWriterTest {
         Function<ISubmittedVariant, String> hashingFunction = new SubmittedVariantSummaryFunction().andThen(
                 new SHA1HashingFunction());
         SubmittedVariant temp = new SubmittedVariant(ASSEMBLY, 60711, "PRJ1", "chr1", start, reference, alternate,
-                                                     rsAccession);
+                rsAccession);
         temp.setSupportedByEvidence(supportedByEvidence);
         temp.setAllelesMatch(allelesMatch);
         return new SubmittedVariantEntity(ssAccession, hashingFunction.apply(temp), temp, 1);
@@ -177,7 +158,7 @@ public class SSSplitWriterTest {
 
     private void writeSplitWithoutCrashes() throws Exception {
         setupSplitScenario();
-        ssSplitWriter.write(this.svesThatShareSameID);
+        ssSplitWriter.write(new Chunk<>(this.svesThatShareSameID));
     }
 
     @Test
@@ -198,22 +179,22 @@ public class SSSplitWriterTest {
                 DbsnpSubmittedVariantEntity.class);
         assertEquals(3, entriesInDbsnpSVE.size());
         List<String> expectedHashesInDbsnpSVE = Stream.of(ss4, ss5, ss6).map(SubmittedVariantEntity::getId)
-                                                      .collect(Collectors.toList());
+                .collect(Collectors.toList());
         assertTrue(entriesInDbsnpSVE.stream().map(DbsnpSubmittedVariantEntity::getId)
-                                    .allMatch(expectedHashesInDbsnpSVE::contains));
+                .allMatch(expectedHashesInDbsnpSVE::contains));
 
         // other SS besides ss4 should be issued new IDs
         List<SubmittedVariantEntity> entriesInSVE = this.mongoTemplate.findAll(SubmittedVariantEntity.class);
         assertEquals(3, entriesInSVE.size());
         assertNotEquals(ss1.getAccession(),
-                        this.submittedVariantAccessioningService.get(Collections.singletonList(ss1)).get(0)
-                                                                .getAccession());
+                this.submittedVariantAccessioningService.get(Collections.singletonList(ss1)).get(0)
+                        .getAccession());
         assertNotEquals(ss2.getAccession(),
-                        this.submittedVariantAccessioningService.get(Collections.singletonList(ss2)).get(0)
-                                                                .getAccession());
+                this.submittedVariantAccessioningService.get(Collections.singletonList(ss2)).get(0)
+                        .getAccession());
         assertNotEquals(ss3.getAccession(),
-                        this.submittedVariantAccessioningService.get(Collections.singletonList(ss3)).get(0)
-                                                                .getAccession());
+                this.submittedVariantAccessioningService.get(Collections.singletonList(ss3)).get(0)
+                        .getAccession());
 
         // check for creation of 3 new SS IDs
         assertEquals(3, this.metricCompute.getCount(ClusteringMetric.SUBMITTED_VARIANTS_SS_SPLIT));
@@ -232,14 +213,13 @@ public class SSSplitWriterTest {
         doThrow(RuntimeException.class).when(mockSplitWriter).registerSplitCandidates(this.svesThatShareSameID);
         // invoke process - will crash when registering split candidates
         try {
-            mockSplitWriter.write(this.svesThatShareSameID);
-        }
-        catch (RuntimeException ignored) {
+            mockSplitWriter.write(new Chunk<>(this.svesThatShareSameID));
+        } catch (RuntimeException ignored) {
 
         }
         doCallRealMethod().when(mockSplitWriter).registerSplitCandidates(svesThatShareSameID);
         // Restart process
-        mockSplitWriter.write(this.svesThatShareSameID);
+        mockSplitWriter.write(new Chunk<>(this.svesThatShareSameID));
         assertPostSplitStatus();
     }
 
@@ -250,14 +230,13 @@ public class SSSplitWriterTest {
         doThrow(RuntimeException.class).when(mockSplitWriter).processSplitCandidates(Mockito.anyList());
         // invoke process - will crash when processing split candidates
         try {
-            mockSplitWriter.write(this.svesThatShareSameID);
-        }
-        catch (RuntimeException ignored) {
+            mockSplitWriter.write(new Chunk<>(this.svesThatShareSameID));
+        } catch (RuntimeException ignored) {
 
         }
         doCallRealMethod().when(mockSplitWriter).processSplitCandidates(Mockito.anyList());
         // Restart process
-        mockSplitWriter.write(this.svesThatShareSameID);
+        mockSplitWriter.write(new Chunk<>(this.svesThatShareSameID));
         assertPostSplitStatus();
     }
 
@@ -266,17 +245,16 @@ public class SSSplitWriterTest {
         setupSplitScenario();
         SSSplitWriter mockSplitWriter = Mockito.spy((SSSplitWriter) ssSplitWriter);
         doThrow(RuntimeException.class).when(mockSplitWriter)
-                                       .removeCurrentSSEntriesInDBForSplitCandidates(Mockito.anySet());
+                .removeCurrentSSEntriesInDBForSplitCandidates(Mockito.anySet());
         // invoke process - will crash when clearing split candidates
         try {
-            mockSplitWriter.write(this.svesThatShareSameID);
-        }
-        catch (RuntimeException ignored) {
+            mockSplitWriter.write(new Chunk<>(this.svesThatShareSameID));
+        } catch (RuntimeException ignored) {
 
         }
         doCallRealMethod().when(mockSplitWriter).removeCurrentSSEntriesInDBForSplitCandidates(Mockito.anySet());
         // Restart process
-        mockSplitWriter.write(this.svesThatShareSameID);
+        mockSplitWriter.write(new Chunk<>(this.svesThatShareSameID));
         assertPostSplitStatus();
     }
 
@@ -285,7 +263,7 @@ public class SSSplitWriterTest {
         writeSplitWithoutCrashes();
         DatabaseState dbStateAfterFirstSplitWrite = DatabaseState.getCurrentDatabaseState(this.mongoTemplate);
 
-        ssSplitWriter.write(this.svesThatShareSameID);
+        ssSplitWriter.write(new Chunk<>(this.svesThatShareSameID));
         DatabaseState dbStateAfterSecondSplitWrite = DatabaseState.getCurrentDatabaseState(this.mongoTemplate);
         assertEquals(dbStateAfterSecondSplitWrite, dbStateAfterFirstSplitWrite);
     }

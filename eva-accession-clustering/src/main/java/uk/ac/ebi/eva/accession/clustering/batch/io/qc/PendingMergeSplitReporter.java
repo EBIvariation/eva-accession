@@ -16,21 +16,23 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io.qc;
 
 import com.mongodb.MongoBulkWriteException;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
-
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.batch.io.qc.QCMongoCollections.qcRSHashInSS;
 import uk.ac.ebi.eva.accession.clustering.batch.io.qc.QCMongoCollections.qcRSIdInSS;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
-import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
@@ -57,18 +59,18 @@ public class PendingMergeSplitReporter implements ItemWriter<SubmittedVariantEnt
     }
 
     @Override
-    public void write(@Nonnull List<? extends SubmittedVariantEntity> submittedVariantEntities)
+    public void write(@Nonnull Chunk<? extends SubmittedVariantEntity> submittedVariantEntities)
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException {
         if (submittedVariantEntities.size() > 0) {
             reportPendingSplitsAndMerges(submittedVariantEntities);
         }
     }
 
-    private void reportPendingSplitsAndMerges(List<? extends SubmittedVariantEntity> submittedVariantEntities) {
+    private void reportPendingSplitsAndMerges(Chunk<? extends SubmittedVariantEntity> submittedVariantEntities) {
         Map<String, Long> hashAndAssociatedRS = new HashMap<>();
         Map<String, String> rsAndAssociatedHash = new HashMap<>();
         String assemblyAccessionPrefix = QCMongoCollections.getAssemblyAccessionPrefix(this.assemblyAccession);
-        for (SubmittedVariantEntity submittedVariantEntity :submittedVariantEntities) {
+        for (SubmittedVariantEntity submittedVariantEntity : submittedVariantEntities) {
             Long rsID = submittedVariantEntity.getClusteredVariantAccession();
             if (Objects.nonNull(rsID)) {
                 String rsHash = clusteringWriter.toClusteredVariantEntity(submittedVariantEntity).getHashedMessage();
@@ -90,33 +92,32 @@ public class PendingMergeSplitReporter implements ItemWriter<SubmittedVariantEnt
             if (hashAndAssociatedRS.size() > 0) {
                 bulkHashInsert.execute();
             }
-        }
-        catch (DuplicateKeyException duplicateKeyException) {
+        } catch (DuplicateKeyException duplicateKeyException) {
             MongoBulkWriteException writeException = ((MongoBulkWriteException) duplicateKeyException.getCause());
             for (String hashWithAssemblyPrefix : extractUniqueHashesForDuplicateKeyError(writeException).collect(
                     Collectors.toList())) {
                 qcRSHashInSS result = this.mongoTemplate.findOne(query(where(IDAttribute).is(hashWithAssemblyPrefix)),
-                                                                 qcRSHashInSS.class);
-                reportMultipleRSWithSameHash (hashAndAssociatedRS, assemblyAccessionPrefix, result.getRsID(),
-                                              hashWithAssemblyPrefix.replace(assemblyAccessionPrefix, ""));
-            };
+                        qcRSHashInSS.class);
+                reportMultipleRSWithSameHash(hashAndAssociatedRS, assemblyAccessionPrefix, result.getRsID(),
+                        hashWithAssemblyPrefix.replace(assemblyAccessionPrefix, ""));
+            }
+            ;
         }
 
         try {
             if (rsAndAssociatedHash.size() > 0) {
                 bulkIDInsert.execute();
             }
-        }
-        catch (DuplicateKeyException duplicateKeyException) {
+        } catch (DuplicateKeyException duplicateKeyException) {
             MongoBulkWriteException writeException = ((MongoBulkWriteException) duplicateKeyException.getCause());
             for (String idWithAssemblyPrefix : extractUniqueHashesForDuplicateKeyError(writeException).collect(
                     Collectors.toList())) {
                 qcRSIdInSS result = this.mongoTemplate.findOne(query(where(IDAttribute).is(idWithAssemblyPrefix)),
-                                                               qcRSIdInSS.class);
+                        qcRSIdInSS.class);
                 reportSameRSWithMultipleHashes(rsAndAssociatedHash, assemblyAccessionPrefix,
-                                               Long.parseLong(idWithAssemblyPrefix.replace(assemblyAccessionPrefix, "")),
-                                               result.getHash());
-            };
+                        Long.parseLong(idWithAssemblyPrefix.replace(assemblyAccessionPrefix, "")),
+                        result.getHash());
+            }
         }
     }
 

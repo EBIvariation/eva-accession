@@ -15,7 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp2.batch.listeners;
 
-import org.codehaus.jackson.JsonNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
@@ -63,8 +63,8 @@ public class ImportDbsnpJsonVariantsStepProgressListener extends GenericProgress
         String stepName = stepExecution.getStepName();
         long numTotalItemsRead = stepExecution.getReadCount();
         logger.info("Step {} finished: Items read = {}, rs written = {}, operations written = {}",
-            stepName, numTotalItemsRead,
-            importCounts.getClusteredVariantsWritten(), importCounts.getOperationsWritten());
+                stepName, numTotalItemsRead,
+                importCounts.getClusteredVariantsWritten(), importCounts.getOperationsWritten());
         // add import counts to execution context, so they can be retrieved later if the job is restarted
         ExecutionContext executionContext = stepExecution.getExecutionContext();
         addImportCountsToExecutionContext(executionContext);

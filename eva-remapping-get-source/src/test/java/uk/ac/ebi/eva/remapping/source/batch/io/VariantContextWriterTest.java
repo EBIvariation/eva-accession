@@ -18,11 +18,10 @@
 package uk.ac.ebi.eva.remapping.source.batch.io;
 
 import htsjdk.variant.variantcontext.VariantContext;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
+import org.junit.jupiter.api.Test;
+import org.springframework.batch.item.Chunk;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.utils.PipelineTemporaryFolderUtil;
 import uk.ac.ebi.eva.remapping.source.batch.processors.SubmittedVariantToVariantContextProcessor;
 import uk.ac.ebi.eva.remapping.source.parameters.ReportPathResolver;
 
@@ -37,8 +36,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class VariantContextWriterTest {
 
@@ -64,12 +63,11 @@ public class VariantContextWriterTest {
 
     public static final String SS_HASH = "hash1";
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    public PipelineTemporaryFolderUtil temporaryFolderUtil = new PipelineTemporaryFolderUtil();
 
     @Test
     public void basicWrite() throws Exception {
-        File outputFolder = temporaryFolder.newFolder();
+        File outputFolder = temporaryFolderUtil.newFolder();
         assertWriteVcf(outputFolder, buildVariant("1", 1000, "C", "A", 123L));
     }
 
@@ -84,7 +82,7 @@ public class VariantContextWriterTest {
 
         List<VariantContext> variantContexts =
                 Stream.of(variants).map(variantToVariantContextProcessor::process).collect(Collectors.toList());
-        writer.write(variantContexts);
+        writer.write(new Chunk<>(variantContexts));
 
         writer.close();
 
@@ -106,9 +104,9 @@ public class VariantContextWriterTest {
     private SubmittedVariantEntity buildVariant(String chr, long start, String ref, String alt, Long rs,
                                                 Long backpropRs, String project, int taxonomy) {
         SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(1L, SS_HASH, REFERENCE_ASSEMBLY,
-                                                                                   taxonomy, project, chr, start, ref,
-                                                                                   alt, rs, false, false, false, false,
-                                                                                   1);
+                taxonomy, project, chr, start, ref,
+                alt, rs, false, false, false, false,
+                1);
         if (backpropRs != null) {
             submittedVariantEntity.setBackPropagatedVariantAccession(backpropRs);
         }
@@ -118,7 +116,7 @@ public class VariantContextWriterTest {
 
     @Test
     public void writeBasicFields() throws Exception {
-        File outputFolder = temporaryFolder.newFolder();
+        File outputFolder = temporaryFolderUtil.newFolder();
         String chromosome = "1";
         long start = 1000;
         String reference = "C";
@@ -151,7 +149,7 @@ public class VariantContextWriterTest {
 
     @Test
     public void writeRsId() throws Exception {
-        File outputFolder = temporaryFolder.newFolder();
+        File outputFolder = temporaryFolderUtil.newFolder();
         long rsId = 123L;
         File output = assertWriteVcf(outputFolder, buildVariant("1", 1000, "C", "A", rsId));
 
@@ -186,11 +184,11 @@ public class VariantContextWriterTest {
                 assertEquals("RS=rs" + expectedRsId, info);
             } else if (info.startsWith("BACKPROP_RS=")) {
                 assertEquals("BACKPROP_RS=rs" + expectedBackpropRs, info);
-            } else if(info.startsWith("PROJECT=")) {
+            } else if (info.startsWith("PROJECT=")) {
                 assertEquals("PROJECT=" + expectedProject, info);
-            } else if(info.startsWith("TAX=")) {
+            } else if (info.startsWith("TAX=")) {
                 assertEquals("TAX=" + expectedTaxonomy, info);
-            } else if(info.startsWith("CREATED=")) {
+            } else if (info.startsWith("CREATED=")) {
                 assertEquals("CREATED=" + expectedCreatedDate, info);
             }
         }
@@ -198,7 +196,7 @@ public class VariantContextWriterTest {
 
     @Test
     public void writeProjectAndTaxonomy() throws Exception {
-        File outputFolder = temporaryFolder.newFolder();
+        File outputFolder = temporaryFolderUtil.newFolder();
         String project2 = "project2";
         int taxonomy2 = 1000;
         File output = assertWriteVcf(outputFolder, buildVariant("1", 1000, "C", "A", null, project2, taxonomy2));
@@ -212,7 +210,7 @@ public class VariantContextWriterTest {
 
     @Test
     public void writeProjectAndTaxonomyAndRs() throws Exception {
-        File outputFolder = temporaryFolder.newFolder();
+        File outputFolder = temporaryFolderUtil.newFolder();
         String project2 = "project2";
         int taxonomy2 = 1000;
         long rsId = 123L;
@@ -228,16 +226,16 @@ public class VariantContextWriterTest {
 
     @Test
     public void writeSeveralVariants() throws Exception {
-        File outputFolder = temporaryFolder.newFolder();
+        File outputFolder = temporaryFolderUtil.newFolder();
         String project2 = "project2";
         int taxonomy2 = 1000;
         long rsId = 123L;
         long backpropRs = 456L;
         File output = assertWriteVcf(outputFolder,
-                                     buildVariant("1", 1000, "C", "A", rsId, backpropRs, project2, taxonomy2),
-                                     buildVariant("2", 1000, "C", "A", rsId, backpropRs, project2, taxonomy2),
-                                     buildVariant("3", 1000, "C", "A", rsId, backpropRs, project2, taxonomy2),
-                                     buildVariant("4", 1000, "C", "A", rsId, backpropRs, project2, taxonomy2));
+                buildVariant("1", 1000, "C", "A", rsId, backpropRs, project2, taxonomy2),
+                buildVariant("2", 1000, "C", "A", rsId, backpropRs, project2, taxonomy2),
+                buildVariant("3", 1000, "C", "A", rsId, backpropRs, project2, taxonomy2),
+                buildVariant("4", 1000, "C", "A", rsId, backpropRs, project2, taxonomy2));
 
         final Long[] expectedChr = {1L};
         long variantCount = forEachVcfDataLine(output, (String[] columns) -> {
@@ -251,10 +249,10 @@ public class VariantContextWriterTest {
 
     @Test
     public void writeProjectWithSpecialCharacters() throws Exception {
-        File outputFolder = temporaryFolder.newFolder();
+        File outputFolder = temporaryFolderUtil.newFolder();
         String specialProject = "a%weird=project;with,special characters";
         File output = assertWriteVcf(outputFolder, buildVariant("1", 1000, "C", "A", null, specialProject,
-                                                                TAXONOMY_ACCESSION));
+                TAXONOMY_ACCESSION));
 
         long variantCount = forEachVcfDataLine(output, (String[] columns) -> {
             assertEquals(COLUMNS_IN_VCF_WITHOUT_SAMPLES, columns.length);

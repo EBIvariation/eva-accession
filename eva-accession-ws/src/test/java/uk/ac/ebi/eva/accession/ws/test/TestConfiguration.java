@@ -20,13 +20,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessionSaveMode;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-
+import uk.ac.ebi.eva.accession.core.generators.DbsnpMonotonicAccessionGenerator;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningDatabaseService;
-import uk.ac.ebi.eva.accession.core.generators.DbsnpMonotonicAccessionGenerator;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;

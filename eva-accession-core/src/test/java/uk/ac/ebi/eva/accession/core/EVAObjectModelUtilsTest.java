@@ -15,15 +15,18 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
-import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.core.EVAObjectModelUtils.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static uk.ac.ebi.eva.accession.core.EVAObjectModelUtils.getClusteredVariantHash;
+import static uk.ac.ebi.eva.accession.core.EVAObjectModelUtils.toClusteredVariant;
+import static uk.ac.ebi.eva.accession.core.EVAObjectModelUtils.toClusteredVariantEntity;
+import static uk.ac.ebi.eva.accession.core.EVAObjectModelUtils.toSubmittedVariantEntity;
 
 public class EVAObjectModelUtilsTest {
 

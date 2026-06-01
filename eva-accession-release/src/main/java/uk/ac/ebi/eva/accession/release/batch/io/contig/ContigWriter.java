@@ -15,10 +15,10 @@
  */
 package uk.ac.ebi.eva.accession.release.batch.io.contig;
 
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
-
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
@@ -28,7 +28,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Paths;
-import java.util.List;
 
 /**
  * Writes the list of contigs to a flat file
@@ -78,7 +77,7 @@ public class ContigWriter implements ItemStreamWriter<String> {
     }
 
     @Override
-    public void write(List<? extends String> contigs) {
+    public void write(Chunk<? extends String> contigs) {
         for (String contig : contigs) {
             if (contig == null || contig.isEmpty()) {
                 throw new IllegalArgumentException("The contig cannot be null or empty");

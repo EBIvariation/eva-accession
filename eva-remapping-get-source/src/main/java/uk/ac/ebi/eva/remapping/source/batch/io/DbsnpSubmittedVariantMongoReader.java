@@ -15,7 +15,6 @@
  */
 package uk.ac.ebi.eva.remapping.source.batch.io;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Meta;
@@ -39,14 +38,14 @@ public class DbsnpSubmittedVariantMongoReader extends MongoDbCursorItemReader<Db
     public static final String REMAPPEDFROM_KEY = "remappedFrom";
 
     public DbsnpSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate,
-                                          List<String> projects, int taxonomy) {
+                                            List<String> projects, int taxonomy) {
         setMongoTemplate(mongoTemplate);
         setTargetType(DbsnpSubmittedVariantEntity.class);
 
         Criteria criteria = where(REFERENCE_SEQUENCE_FIELD).is(assemblyAccession);
         criteria.and(REMAPPEDFROM_KEY).exists(false);
 
-        if (!CollectionUtils.isEmpty(projects)) {
+        if (projects != null && !projects.isEmpty()) {
             criteria.and(PROJECT_KEY).in(projects);
         }
 

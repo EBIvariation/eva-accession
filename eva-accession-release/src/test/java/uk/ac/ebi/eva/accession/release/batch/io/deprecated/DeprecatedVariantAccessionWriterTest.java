@@ -15,31 +15,28 @@
  */
 package uk.ac.ebi.eva.accession.release.batch.io.deprecated;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.batch.item.Chunk;
+import uk.ac.ebi.eva.accession.core.utils.PipelineTemporaryFolderUtil;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DeprecatedVariantAccessionWriterTest {
 
     private DeprecatedVariantAccessionWriter deprecatedVariantAccessionWriter;
 
-    @Rule
-    public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
+    public PipelineTemporaryFolderUtil temporaryFolderUtil = new PipelineTemporaryFolderUtil();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        File output = temporaryFolderRule.newFile();
+        File output = temporaryFolderUtil.newFile();
         deprecatedVariantAccessionWriter = new DeprecatedVariantAccessionWriter(output.toPath());
     }
 
@@ -53,7 +50,7 @@ public class DeprecatedVariantAccessionWriterTest {
         variant3.setMainId("rs3");
 
         deprecatedVariantAccessionWriter.open(null);
-        deprecatedVariantAccessionWriter.write(Arrays.asList(variant1, variant2, variant3));
+        deprecatedVariantAccessionWriter.write(Chunk.of(variant1, variant2, variant3));
         deprecatedVariantAccessionWriter.close();
 
         assertEquals(3, numberOfLines(deprecatedVariantAccessionWriter.getOutput()));

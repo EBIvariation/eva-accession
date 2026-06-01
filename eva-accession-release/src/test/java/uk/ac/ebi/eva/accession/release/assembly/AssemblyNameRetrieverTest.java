@@ -15,37 +15,32 @@
  */
 package uk.ac.ebi.eva.accession.release.assembly;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import uk.ac.ebi.eva.accession.release.assembly.AssemblyNameRetriever;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Unmarshaller;
+import org.junit.jupiter.api.Test;
+import uk.ac.ebi.eva.accession.core.utils.PipelineTemporaryFolderUtil;
 import uk.ac.ebi.eva.accession.release.assembly.AssemblyNameRetriever.EnaAssemblyXml;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class AssemblyNameRetrieverTest {
-
-    @Rule
-    public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
+    public PipelineTemporaryFolderUtil temporaryFolderUtil = new PipelineTemporaryFolderUtil();
 
     @Test
     public void parseXml() throws IOException, JAXBException {
-        File xml = temporaryFolderRule.newFile();
+        File xml = temporaryFolderUtil.newFile();
         FileWriter fileWriter = new FileWriter(xml);
         fileWriter.write("<ASSEMBLY_SET><ASSEMBLY accession=\"GCA_000001405.28\">\n" +
-                                 "<NAME>GRCh38.p13</NAME>\n" +
-                                 "</ASSEMBLY></ASSEMBLY_SET>");
+                "<NAME>GRCh38.p13</NAME>\n" +
+                "</ASSEMBLY></ASSEMBLY_SET>");
         fileWriter.close();
 
         JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
@@ -56,7 +51,7 @@ public class AssemblyNameRetrieverTest {
 
     @Test
     public void parseMissingName() throws IOException, JAXBException {
-        File xml = temporaryFolderRule.newFile();
+        File xml = temporaryFolderUtil.newFile();
         FileWriter fileWriter = new FileWriter(xml);
         fileWriter.write("<ASSEMBLY_SET><ASSEMBLY></ASSEMBLY></ASSEMBLY_SET>");
         fileWriter.close();
@@ -68,24 +63,24 @@ public class AssemblyNameRetrieverTest {
     }
 
     @Test
-    public void retrieve() throws IOException, JAXBException {
+    public void retrieve() {
         assertEquals("GRCh38.p13", new AssemblyNameRetriever("GCA_000001405.28").getAssemblyName().get());
     }
 
     @Test
-    public void retrieveAssemblyWithWrongFormat() throws IOException, JAXBException {
+    public void retrieveAssemblyWithWrongFormat() {
         assertThrows(RuntimeException.class, () -> new AssemblyNameRetriever("GCA_wrong_format"));
     }
 
     @Test
-    public void retrieveNonExistentAssembly() throws IOException, JAXBException {
+    public void retrieveNonExistentAssembly() {
         assertFalse(new AssemblyNameRetriever("GCA_000000000.1").getAssemblyName().isPresent());
     }
 
     @Test
     public void buildHumanReadableUrl() {
         assertEquals("https://www.ebi.ac.uk/ena/browser/view/GCA_000001405.28",
-                     new AssemblyNameRetriever("GCA_000001405.28").buildAssemblyHumanReadableUrl());
+                new AssemblyNameRetriever("GCA_000001405.28").buildAssemblyHumanReadableUrl());
     }
 
     @Test

@@ -15,7 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.batch.tasklets.reportCheck;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepContribution;
@@ -26,10 +26,9 @@ import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
-
+import uk.ac.ebi.eva.accession.core.batch.io.AccessionedVcfLineMapper;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
-import uk.ac.ebi.eva.accession.core.batch.io.AccessionedVcfLineMapper;
 import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfReader;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
@@ -43,7 +42,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP_ACCESSION_STEP;
 
 public class ReportCheckTaskletTest {

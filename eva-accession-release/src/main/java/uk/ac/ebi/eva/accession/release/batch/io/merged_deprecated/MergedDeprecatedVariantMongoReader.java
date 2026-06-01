@@ -16,8 +16,8 @@
 
 package uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated;
 
-import com.mongodb.MongoClient;
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -31,11 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
-import org.springframework.batch.item.NonTransientResourceException;
-import org.springframework.batch.item.ParseException;
-import org.springframework.batch.item.UnexpectedInputException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
-
 import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
 
 import java.util.ArrayList;
@@ -110,9 +106,8 @@ public abstract class MergedDeprecatedVariantMongoReader<OPERATION_ENTITY>
         MongoDatabase db = mongoClient.getDatabase(database);
         MongoCollection<Document> collection = db.getCollection(collectionName);
         AggregateIterable<Document> clusteredVariants = collection.aggregate(buildAggregation())
-                                                                  .allowDiskUse(true)
-                                                                  .useCursor(true)
-                                                                  .batchSize(chunkSize);
+                .allowDiskUse(true)
+                .batchSize(chunkSize);
         cursor = clusteredVariants.iterator();
     }
 
@@ -121,32 +116,32 @@ public abstract class MergedDeprecatedVariantMongoReader<OPERATION_ENTITY>
         Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(ASSEMBLY_FIELD), assemblyAccession));
         Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString()));
         Bson lookup = Aggregates.lookup(names.getSubmittedVariantEntity(), MERGE_INTO_FIELD,
-                                        CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
+                CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
         Bson matchEmpty = Aggregates.match(Filters.eq(SS_INFO_FIELD, Collections.EMPTY_LIST));
         aggregation.addAll(Arrays.asList(matchAssembly, matchMerged, lookup, matchEmpty));
         for (String submittedVariantOperationCollectionName : allSubmittedVariantOperationCollectionNames) {
             Bson opsLookup = Aggregates.lookup(submittedVariantOperationCollectionName, ACCESSION_FIELD,
-                                            getInactiveField(CLUSTERED_VARIANT_ACCESSION_FIELD),
-                                            submittedVariantOperationCollectionName);
+                    getInactiveField(CLUSTERED_VARIANT_ACCESSION_FIELD),
+                    submittedVariantOperationCollectionName);
             aggregation.add(opsLookup);
         }
         // Concat entries from all submitted variant operation collections
         Bson ssOpsConcat = Aggregates.addFields(new Field<>(SS_OPS_INFO_FIELD,
-                                                            new Document("$concatArrays",
-                                                                         allSubmittedVariantOperationCollectionNames
-                                                                                 .stream().map(v -> "$" + v)
-                                                                                 .collect(Collectors.toList()))));
+                new Document("$concatArrays",
+                        allSubmittedVariantOperationCollectionNames
+                                .stream().map(v -> "$" + v)
+                                .collect(Collectors.toList()))));
         aggregation.add(ssOpsConcat);
         // There should be some evidence that there is at least one operation in the submitted operations
         // referencing the said RS
         Bson matchAtLeastOneSSOp = Aggregates.match(Filters.and(
                 Filters.ne(SS_OPS_INFO_FIELD, Collections.emptyList()),
                 Filters.eq(SS_OPS_INFO_FIELD + "." +
-                                   getInactiveField(TAXONOMY_FIELD),
-                           this.taxonomyAccession),
+                                getInactiveField(TAXONOMY_FIELD),
+                        this.taxonomyAccession),
                 Filters.eq(SS_OPS_INFO_FIELD + "." +
-                                   getInactiveField(REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS),
-                           this.assemblyAccession)));
+                                getInactiveField(REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS),
+                        this.assemblyAccession)));
         aggregation.add(matchAtLeastOneSSOp);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
@@ -157,8 +152,7 @@ public abstract class MergedDeprecatedVariantMongoReader<OPERATION_ENTITY>
     }
 
     @Override
-    public OPERATION_ENTITY read()
-            throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+    public OPERATION_ENTITY read() throws Exception {
         return cursor.hasNext() ? getEntity(cursor.next()) : null;
     }
 

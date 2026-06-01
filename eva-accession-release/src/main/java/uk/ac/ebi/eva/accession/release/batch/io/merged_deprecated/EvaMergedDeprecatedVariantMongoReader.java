@@ -17,7 +17,7 @@
 package uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import org.bson.Document;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
@@ -56,10 +56,10 @@ public class EvaMergedDeprecatedVariantMongoReader
     protected ClusteredVariantOperationEntity getEntity(Document operation) {
         List<Document> objects = (List<Document>) operation.get(INACTIVE_OBJECTS);
         operation.put(INACTIVE_OBJECTS, objects.stream()
-                                               .map(BasicDBObject::new)
-                                               .map(o -> mongoConverter.read(ClusteredVariantInactiveEntity.class,
-                                                                             o))
-                                               .collect(Collectors.toList()));
+                .map(BasicDBObject::new)
+                .map(o -> mongoConverter.read(ClusteredVariantInactiveEntity.class,
+                        o))
+                .collect(Collectors.toList()));
 
         return mongoConverter.read(ClusteredVariantOperationEntity.class, new BasicDBObject(operation));
     }

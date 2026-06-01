@@ -15,28 +15,23 @@
  */
 package uk.ac.ebi.eva.accession.core.service.nonhuman;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
@@ -44,7 +39,8 @@ import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
-import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.Arrays;
@@ -52,26 +48,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @DataJpaTest
 @TestPropertySource("classpath:rs-accession-test.properties")
 @ContextConfiguration(classes = {ClusteredVariantAccessioningConfiguration.class, MongoTestConfiguration.class})
-public class ClusteredVariantAccessioningServiceTest {
+public class ClusteredVariantAccessioningServiceTest extends MongoTestContainerHelper {
 
     private static String TEST_APPLICATION_INSTANCE_ID = "test-application-instance-id";
-
-    //Required by nosql-unit
-    @Autowired
-    private ApplicationContext applicationContext;
 
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName("clustered-variants-test").build());
+    @Autowired
+    private ResourceLoader resourceLoader;
 
     @Autowired
     private ClusteredVariantAccessioningService service;
@@ -79,13 +70,16 @@ public class ClusteredVariantAccessioningServiceTest {
     private Function<IClusteredVariant, String> clusteredHashingFunction =
             new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
 
-    @After
-    public void tearDown() throws Exception {
-        mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
-        mongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
+    @BeforeEach
+    public void setUp() {
+        mongoTemplate.getDb().drop();
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
+    @AfterEach
+    public void tearDown() throws Exception {
+        mongoTemplate.getDb().drop();
+    }
+
     @Test
     public void sameAccessionsAreReturnedForIdenticalVariants() throws Exception {
         List<ClusteredVariant> variants = Arrays.asList(
@@ -121,9 +115,10 @@ public class ClusteredVariantAccessioningServiceTest {
         assertEquals(1, mongoTemplate.count(new Query(), DbsnpClusteredVariantOperationEntity.class));
     }
 
-    @UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantEntity.json"})
     @Test
     public void getAllByAccession() throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        new MongoTestDataLoader(mongoTemplate, resourceLoader).load("/test-data/dbsnpClusteredVariantEntity.json");
+
         assertEquals(2, service.getAllByAccession(1314L).size());
     }
 }

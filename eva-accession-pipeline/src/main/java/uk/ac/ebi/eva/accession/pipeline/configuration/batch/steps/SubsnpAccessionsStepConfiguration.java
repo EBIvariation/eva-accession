@@ -19,7 +19,8 @@ package uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
@@ -29,6 +30,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.backoff.ExponentialBackOffPolicy;
+import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.MissingUnsavedAccessionsException;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionWriter;
 import uk.ac.ebi.eva.accession.pipeline.batch.policies.InvalidVariantSkipPolicy;
@@ -65,10 +67,10 @@ public class SubsnpAccessionsStepConfiguration {
     private InvalidVariantSkipPolicy invalidVariantSkipPolicy;
 
     @Bean(SUBSNP_ACCESSION_STEP)
-    public Step subsnpAccessionStep(StepBuilderFactory stepBuilderFactory,
+    public Step subsnpAccessionStep(JobRepository jobRepository, PlatformTransactionManager transactionManager,
                                     SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(SUBSNP_ACCESSION_STEP)
-                .<IVariant, IVariant>chunk(chunkSizeCompletionPolicy)
+        TaskletStep step = new StepBuilder(SUBSNP_ACCESSION_STEP, jobRepository)
+                .<IVariant, IVariant>chunk(chunkSizeCompletionPolicy, transactionManager)
                 .reader(variantReader)
                 .processor(variantProcessor)
                 .writer(accessionWriter)

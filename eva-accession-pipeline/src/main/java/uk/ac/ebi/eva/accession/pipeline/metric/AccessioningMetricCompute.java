@@ -1,7 +1,8 @@
 package uk.ac.ebi.eva.accession.pipeline.metric;
 
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 import uk.ac.ebi.eva.metrics.metric.BaseMetricCompute;
@@ -11,6 +12,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class AccessioningMetricCompute extends BaseMetricCompute<AccessioningMetric> {
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private static final String PROCESS = "accessioning_warehouse_ingestion";
     private final String assembly;
     private final String study;
@@ -32,12 +35,13 @@ public class AccessioningMetricCompute extends BaseMetricCompute<AccessioningMet
 
     public String getIdentifier() {
         try {
-            JSONObject identifier = new JSONObject();
+            ObjectNode identifier = OBJECT_MAPPER.createObjectNode();
             identifier.put("assembly", assembly);
             identifier.put("study", study);
-            return identifier.toString();
-        } catch (JSONException jsonException) {
-            throw new RuntimeException("Could not create Identifier for Accessioning Counts. Error ", jsonException);
+
+            return OBJECT_MAPPER.writeValueAsString(identifier);
+        } catch (JsonProcessingException ex) {
+            throw new RuntimeException("Could not create Identifier for Accessioning Counts. Error ", ex);
         }
     }
 

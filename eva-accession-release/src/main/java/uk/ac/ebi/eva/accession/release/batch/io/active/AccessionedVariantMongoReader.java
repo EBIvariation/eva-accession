@@ -16,7 +16,7 @@
 
 package uk.ac.ebi.eva.accession.release.batch.io.active;
 
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Field;
 import com.mongodb.client.model.Filters;

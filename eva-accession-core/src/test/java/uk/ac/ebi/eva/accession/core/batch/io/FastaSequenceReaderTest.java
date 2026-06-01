@@ -16,13 +16,11 @@
 package uk.ac.ebi.eva.accession.core.batch.io;
 
 import org.apache.commons.lang3.tuple.ImmutableTriple;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import uk.ac.ebi.eva.accession.core.utils.PipelineTemporaryFolderUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +29,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class FastaSequenceReaderTest {
 
@@ -39,62 +38,54 @@ public class FastaSequenceReaderTest {
 
     private FastaSequenceReader reader;
 
-    @Rule
-    public final ExpectedException thrown = ExpectedException.none();
+    public PipelineTemporaryFolderUtil temporaryFolderUtil = new PipelineTemporaryFolderUtil();
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         reader = new FastaSequenceReader(Paths.get(
                 FastaSequenceReaderTest.class.getResource("/input-files/fasta/Gallus_gallus-5.0.test.fa").toURI()));
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         reader.close();
     }
 
     @Test
-    public void getFirstNucleotideOfContig() throws Exception {
+    public void getFirstNucleotideOfContig() {
         assertEquals("T", reader.getSequence("22", 1, 1));
     }
 
     @Test
-    public void getLastNucleotideOfContig() throws Exception {
+    public void getLastNucleotideOfContig() {
         assertEquals("G", reader.getSequence("22", 4729743, 4729743));
     }
 
     @Test
-    public void getSequence() throws Exception {
+    public void getSequence() {
         // this sequence is split between three lines in the FASTA file
         assertEquals("GTTTCAAGTGGTTGTGACCCCCGCTGCACAGTCAGTTGGGTTAGGGTTAGGGTTAGGGTCAGTCACAGTCAGTTGTCAGACTGGTGTTTA",
-                     reader.getSequence("22", 59986, 60075));
+                reader.getSequence("22", 59986, 60075));
     }
 
     @Test
-    public void endMustBeGreaterOrEqualsThanStart() throws Exception {
-        thrown.expect(IllegalArgumentException.class);
-        reader.getSequence("22", 1000, 999);
+    public void endMustBeGreaterOrEqualsThanStart() {
+        assertThrows(IllegalArgumentException.class, () -> reader.getSequence("22", 1000, 999));
     }
 
     @Test
-    public void onlyPositiveCoordinatesAreAllowed() throws Exception {
-        thrown.expect(IllegalArgumentException.class);
-        reader.getSequence("22", -1, 5);
+    public void onlyPositiveCoordinatesAreAllowed() {
+        assertThrows(IllegalArgumentException.class, () -> reader.getSequence("22", -1, 5));
     }
 
     @Test
-    public void coordinatesGreaterThanEndOfChromosomeAreNotAllowed() throws Exception {
-        thrown.expect(IllegalArgumentException.class);
-        reader.getSequence("22", 4729740, 4729750);
+    public void coordinatesGreaterThanEndOfChromosomeAreNotAllowed() {
+        assertThrows(IllegalArgumentException.class, () -> reader.getSequence("22", 4729740, 4729750));
     }
 
     @Test
-    public void notExistentChromosome() throws Exception {
-        thrown.expect(IllegalArgumentException.class);
-        reader.getSequence("23", 1, 1);
+    public void notExistentChromosome() {
+        assertThrows(IllegalArgumentException.class, () -> reader.getSequence("23", 1, 1));
     }
 
     @Test
@@ -103,7 +94,7 @@ public class FastaSequenceReaderTest {
                 FastaSequenceReaderTest.class.getResource("/input-files/fasta/fastaWithNoDictionary.fa").toURI()));
         // this sequence is split between three lines in the FASTA file
         assertEquals("CAGCCGCAGTCCGGACAGCGCATGCGCCAGCCGCGAGACCGCACAGCGCATGCGCCAGCGCGAGTGACAGCG",
-                     fastaSequenceReader.getSequence("22", 174, 245));
+                fastaSequenceReader.getSequence("22", 174, 245));
     }
 
     @Test
@@ -113,11 +104,11 @@ public class FastaSequenceReaderTest {
 
         // this sequence is split between three lines in the FASTA file
         assertEquals("CAGCCGCAGTCCGGACAGCGCATGCGCCAGCCGCGAGACCGCACAGCGCATGCGCCAGCGCGAGTGACAGCG",
-                     fastaSequenceReader.getSequence("22", 174, 245));
+                fastaSequenceReader.getSequence("22", 174, 245));
     }
 
     private FastaSequenceReader getFastaSequenceReader(String fastaFilename) throws IOException, URISyntaxException {
-        File temporaryFolderRoot = temporaryFolder.getRoot();
+        File temporaryFolderRoot = temporaryFolderUtil.getRoot();
         Path fasta = Files.copy(
                 Paths.get(FastaSequenceReaderTest.class.getResource("/input-files/fasta/" + fastaFilename).toURI()),
                 temporaryFolderRoot.toPath().resolve(fastaFilename));
@@ -132,7 +123,7 @@ public class FastaSequenceReaderTest {
      * forbids compressed fastas. You can comment the requirement by hand and run this test to see if it still applies.
      */
     @Test
-    @Ignore
+    @Disabled
     public void htsDoesNotSupportCompressedFastas() throws URISyntaxException, IOException {
         String fastaFilename = "compressed.fa.gz";
         FastaSequenceReader fastaSequenceReader = getFastaSequenceReader(fastaFilename);
@@ -142,18 +133,17 @@ public class FastaSequenceReaderTest {
 
     /**
      * For the rationale of this test, look at {@link #htsDoesNotSupportCompressedFastas()} and
-     *  {@link FastaSequenceReader#checkFastaIsUncompressed(java.nio.file.Path)}
+     * {@link FastaSequenceReader#checkFastaIsUncompressed(java.nio.file.Path)}
      */
     @Test
     public void shouldThrowOnCompressedFasta() throws URISyntaxException, IOException {
         String fastaFilename = "compressed.fa.gz";
-        File temporaryFolderRoot = temporaryFolder.getRoot();
+        File temporaryFolderRoot = temporaryFolderUtil.getRoot();
         Path fasta = Files.copy(
                 Paths.get(FastaSequenceReaderTest.class.getResource("/input-files/fasta/" + fastaFilename).toURI()),
                 temporaryFolderRoot.toPath().resolve(fastaFilename));
 
-        thrown.expect(IllegalArgumentException.class);
-        new FastaSequenceReader(fasta);
+        assertThrows(IllegalArgumentException.class, () -> new FastaSequenceReader(fasta));
     }
 
     @Test

@@ -1,15 +1,20 @@
 package uk.ac.ebi.eva.accession.core.batch.io;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.eva.commons.core.models.factories.VariantVcfFactory;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 public class AccessionedVcfFactoryTest {
@@ -20,7 +25,7 @@ public class AccessionedVcfFactoryTest {
 
     private static VariantVcfFactory factory;
 
-    @BeforeClass
+    @BeforeAll
     public static void setupClass() {
         factory = new AccessionedVcfFactory();
     }

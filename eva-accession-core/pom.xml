@@ -5,7 +5,7 @@
     <parent>
         <groupId>uk.ac.ebi.eva</groupId>
         <artifactId>eva-accession</artifactId>
-        <version>0.6.57-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>eva-accession-core</artifactId>
@@ -49,8 +49,18 @@
             <artifactId>accession-commons-monotonic-generator-jpa</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.lordofthejars</groupId>
-            <artifactId>nosqlunit-mongodb</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mongodb</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -90,9 +100,5 @@
         </testResources>
 
     </build>
-
-    <properties>
-        <eva.mongo.host.test>localhost</eva.mongo.host.test>
-    </properties>
 
 </project>

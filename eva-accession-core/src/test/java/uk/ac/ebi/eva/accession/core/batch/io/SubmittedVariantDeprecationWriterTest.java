@@ -16,23 +16,18 @@
 
 package uk.ac.ebi.eva.accession.core.batch.io;
 
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.mongodb.MongoClient;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
@@ -50,21 +45,21 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessionin
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
-import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.Arrays;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:ss-deprecation-test.properties")
 @EnableAutoConfiguration
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class,
         SubmittedVariantAccessioningConfiguration.class, ClusteredVariantAccessioningConfiguration.class})
-public class SubmittedVariantDeprecationWriterTest {
+public class SubmittedVariantDeprecationWriterTest extends MongoTestContainerHelper {
 
     private static final String TEST_DB = "sve-deprecation-test";
 
@@ -81,9 +76,6 @@ public class SubmittedVariantDeprecationWriterTest {
     private Long accessioningMonotonicInitRs;
 
     @Autowired
-    private MongoClient mongoClient;
-
-    @Autowired
     private MongoTemplate mongoTemplate;
 
     @Autowired
@@ -95,26 +87,14 @@ public class SubmittedVariantDeprecationWriterTest {
     private SubmittedVariantEntity ss1, ss2, ss3, ss4;
     private ClusteredVariantEntity rs1, rs1AnotherHash, rs2;
 
-    //Required by nosql-unit
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
-
-    private void cleanup() {
-        mongoClient.dropDatabase(TEST_DB);
-    }
-
-    @Before
+    @BeforeEach
     public void setUp() {
-        cleanup();
+        mongoTemplate.getDb().drop();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
-        cleanup();
+        mongoTemplate.getDb().drop();
     }
 
     @Test
@@ -136,16 +116,16 @@ public class SubmittedVariantDeprecationWriterTest {
 
         SubmittedVariantDeprecationWriter sveDeprecationWriter =
                 new SubmittedVariantDeprecationWriter(ASSEMBLY, this.mongoTemplate,
-                                                      this.submittedVariantAccessioningService,
-                                                      this.clusteredVariantAccessioningService,
-                                                      this.accessioningMonotonicInitSs,
-                                                      this.accessioningMonotonicInitRs,
-                                                      "TEST", REASON);
-        sveDeprecationWriter.write(Arrays.asList(ss1, ss2, ss3));
+                        this.submittedVariantAccessioningService,
+                        this.clusteredVariantAccessioningService,
+                        this.accessioningMonotonicInitSs,
+                        this.accessioningMonotonicInitRs,
+                        "TEST", REASON);
+        sveDeprecationWriter.write(Chunk.of(ss1, ss2, ss3));
         assertPostDeprecationDatabaseState();
 
         // Ensure that the second run of deprecation does not do any harm
-        sveDeprecationWriter.write(Arrays.asList(ss1, ss2, ss3));
+        sveDeprecationWriter.write(Chunk.of(ss1, ss2, ss3));
         assertPostDeprecationDatabaseState();
     }
 
@@ -180,7 +160,7 @@ public class SubmittedVariantDeprecationWriterTest {
         assertEquals(0, this.mongoTemplate.findAll(ClusteredVariantOperationEntity.class).size());
         DbsnpClusteredVariantOperationEntity rs1DeprecationOp =
                 this.mongoTemplate.findById("RS_DEPRECATED_TEST_" + rs1.getHashedMessage(),
-                                            DbsnpClusteredVariantOperationEntity.class);
+                        DbsnpClusteredVariantOperationEntity.class);
         assertNotNull(rs1DeprecationOp);
         assertEquals(rs1, rs1DeprecationOp.getInactiveObjects().get(0).toClusteredVariantEntity());
     }
@@ -189,20 +169,20 @@ public class SubmittedVariantDeprecationWriterTest {
                                             String alternate) {
 
         return new SubmittedVariantEntity(ssAccession, "hash" + ssAccession, ASSEMBLY, TAXONOMY,
-                                          "PRJ1", "chr1", start, reference, alternate, rsAccession, false, false, false,
-                                          false, 1);
+                "PRJ1", "chr1", start, reference, alternate, rsAccession, false, false, false,
+                false, 1);
     }
 
     private ClusteredVariantEntity createRS(SubmittedVariantEntity sve) {
-        Function<IClusteredVariant, String> hashingFunction =  new ClusteredVariantSummaryFunction().andThen(
+        Function<IClusteredVariant, String> hashingFunction = new ClusteredVariantSummaryFunction().andThen(
                 new SHA1HashingFunction());
         ClusteredVariant cv = new ClusteredVariant(sve.getReferenceSequenceAccession(), sve.getTaxonomyAccession(),
-                                                   sve.getContig(),
-                                                   sve.getStart(),
-                                                   new Variant(sve.getContig(), sve.getStart(), sve.getStart(),
-                                                               sve.getReferenceAllele(),
-                                                               sve.getAlternateAllele()).getType(),
-                                                   true, null);
+                sve.getContig(),
+                sve.getStart(),
+                new Variant(sve.getContig(), sve.getStart(), sve.getStart(),
+                        sve.getReferenceAllele(),
+                        sve.getAlternateAllele()).getType(),
+                true, null);
         String hash = hashingFunction.apply(cv);
         return new ClusteredVariantEntity(sve.getClusteredVariantAccession(), hash, cv);
     }
@@ -235,11 +215,11 @@ public class SubmittedVariantDeprecationWriterTest {
                         this.accessioningMonotonicInitSs,
                         this.accessioningMonotonicInitRs,
                         "TEST", REASON);
-        sveDeprecationWriter.write(Arrays.asList(ss1, ss2, ss3));
+        sveDeprecationWriter.write(Chunk.of(ss1, ss2, ss3));
         assertPostDeprecationDatabaseStateForSpecificRSHash();
 
         // Ensure that the second run of deprecation does not do any harm
-        sveDeprecationWriter.write(Arrays.asList(ss1, ss2, ss3));
+        sveDeprecationWriter.write(Chunk.of(ss1, ss2, ss3));
         assertPostDeprecationDatabaseStateForSpecificRSHash();
     }
 

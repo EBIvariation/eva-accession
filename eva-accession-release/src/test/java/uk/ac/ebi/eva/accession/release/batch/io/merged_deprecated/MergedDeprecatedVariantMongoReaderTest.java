@@ -16,44 +16,35 @@
 
 package uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.mongodb.MongoClient;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import com.mongodb.client.MongoClient;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
-import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:application.properties")
-@UsingDataSet(locations = {
-        "/test-data/dbsnpClusteredVariantOperationEntity.json",
-        "/test-data/dbsnpSubmittedVariantOperationEntity.json",
-        "/test-data/dbsnpClusteredVariantEntity.json",
-        "/test-data/dbsnpSubmittedVariantEntity.json"
-})
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
-public class MergedDeprecatedVariantMongoReaderTest {
+public class MergedDeprecatedVariantMongoReaderTest extends MongoTestContainerHelper {
 
     private static final String TEST_DB = "test-db";
 
@@ -66,30 +57,35 @@ public class MergedDeprecatedVariantMongoReaderTest {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+
+    @Autowired
+    private ResourceLoader resourceLoader;
+
     @Autowired
     private MongoClient mongoClient;
 
-    //Required by nosql-unit
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
-
     private MergedDeprecatedVariantMongoReader<DbsnpClusteredVariantOperationEntity> reader;
 
-    @Before
+    @BeforeEach
     public void setUp() {
+        mongoTemplate.getDb().drop();
+
+        MongoTestDataLoader mongoTestDataLoader = new MongoTestDataLoader(mongoTemplate, resourceLoader);
+        mongoTestDataLoader.load("/test-data/dbsnpClusteredVariantOperationEntity.json");
+        mongoTestDataLoader.load("/test-data/dbsnpSubmittedVariantOperationEntity.json");
+        mongoTestDataLoader.load("/test-data/dbsnpClusteredVariantEntity.json");
+        mongoTestDataLoader.load("/test-data/dbsnpSubmittedVariantEntity.json");
+
         ExecutionContext executionContext = new ExecutionContext();
         reader = new DbsnpMergedDeprecatedVariantMongoReader(ASSEMBLY, TAXONOMY, mongoClient, TEST_DB,
-                                                             mongoTemplate.getConverter(), CHUNK_SIZE,
-                                                             new DbsnpCollectionNames());
+                mongoTemplate.getConverter(), CHUNK_SIZE,
+                new DbsnpCollectionNames());
         reader.open(executionContext);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
+        mongoTemplate.getDb().drop();
         reader.close();
     }
 

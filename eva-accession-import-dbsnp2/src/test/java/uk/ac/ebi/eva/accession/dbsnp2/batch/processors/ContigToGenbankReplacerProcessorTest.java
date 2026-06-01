@@ -15,15 +15,12 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp2.batch.processors;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.ExpectedException;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -31,7 +28,8 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 import java.time.LocalDateTime;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ContigToGenbankReplacerProcessorTest {
 
@@ -39,11 +37,8 @@ public class ContigToGenbankReplacerProcessorTest {
 
     private Function<IClusteredVariant, String> hashingFunction =
             new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
-    
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         String fileString = ContigToGenbankReplacerProcessorTest.class.getResource(
                 "/input-files/GCF_000001405.38_GRCh38.p12_assembly_report.txt").toString();
@@ -53,19 +48,19 @@ public class ContigToGenbankReplacerProcessorTest {
     }
 
     @Test
-    public void contigGenbank() throws Exception {
+    public void contigGenbank() {
         DbsnpClusteredVariantEntity variant = buildMockVariant("CM000686.2");
         assertEquals("CM000686.2", processor.process(variant).getContig());
     }
 
     @Test
-    public void contigChrToGenbank() throws Exception {
+    public void contigChrToGenbank() {
         DbsnpClusteredVariantEntity variant = buildMockVariant("chrY");
         assertEquals("CM000686.2", processor.process(variant).getContig());
     }
 
     @Test
-    public void contigRefseqToGenbank() throws Exception {
+    public void contigRefseqToGenbank() {
         DbsnpClusteredVariantEntity variant = buildMockVariant("NC_000024.10");
         assertEquals("CM000686.2", processor.process(variant).getContig());
     }
@@ -73,71 +68,69 @@ public class ContigToGenbankReplacerProcessorTest {
     @Test
     public void genbankAndRefseqNotEquivalents() throws Exception {
         DbsnpClusteredVariantEntity variant = buildMockVariant("chr3");
-        thrown.expect(IllegalStateException.class);
-        assertEquals("chr3", processor.process(variant).getContig());
+        assertThrows(IllegalStateException.class, () -> processor.process(variant));
     }
 
     @Test
-    public void genbankAndRefseqNotEquivalentsRefseqNotPresent() throws Exception {
+    public void genbankAndRefseqNotEquivalentsRefseqNotPresent() {
         DbsnpClusteredVariantEntity variant = buildMockVariant("chrUn_KI270752v1");
         assertEquals("KI270752.1", processor.process(variant).getContig());
     }
 
     @Test
-    public void genbankAndRefseqNotEquivalentsGenbankNotPresent() throws Exception {
+    public void genbankAndRefseqNotEquivalentsGenbankNotPresent() {
         DbsnpClusteredVariantEntity variant = buildMockVariant("tstchr2");
         assertEquals("tstchr2", processor.process(variant).getContig());
     }
 
     @Test
-    public void genbankAndRefseqNotEquivalentsNonePresent() throws Exception {
+    public void genbankAndRefseqNotEquivalentsNonePresent() {
         DbsnpClusteredVariantEntity variant = buildMockVariant("tstchr3");
         assertEquals("tstchr3", processor.process(variant).getContig());
     }
 
     @Test
-    public void contigNotFoundInAssemblyReport() throws Exception {
+    public void contigNotFoundInAssemblyReport() {
         DbsnpClusteredVariantEntity variant = buildMockVariant("chr");
-        thrown.expect(IllegalStateException.class);
-        assertEquals("chr", processor.process(variant).getContig());
+        assertThrows(IllegalStateException.class, () -> processor.process(variant));
     }
 
     @Test
-    public void noGenbankDontConvert() throws Exception {
+    public void noGenbankDontConvert() {
         DbsnpClusteredVariantEntity variant = buildMockVariant("tstchr4");
         assertEquals("tstchr4", processor.process(variant).getContig());
     }
 
     @Test
-    public void updatedHashedMessageAfterContigReplacement() throws Exception {
+    public void updatedHashedMessageAfterContigReplacement() {
         DbsnpClusteredVariantEntity processedVariant = processor.process(buildMockVariant("NC_000024.10"));
         assertEquals(new SHA1HashingFunction().apply("1_CM000686.2_1_SNV"),
-                     processedVariant.getHashedMessage());
+                processedVariant.getHashedMessage());
 
         processedVariant = processor.process(buildMockVariant("chrY"));
         assertEquals(new SHA1HashingFunction().apply("1_CM000686.2_1_SNV"),
-                     processedVariant.getHashedMessage());
+                processedVariant.getHashedMessage());
 
         processedVariant = processor.process(buildMockVariant("chrUn_KI270752v1"));
         assertEquals(new SHA1HashingFunction().apply("1_KI270752.1_1_SNV"),
-                     processedVariant.getHashedMessage());
+                processedVariant.getHashedMessage());
 
         processedVariant = processor.process(buildMockVariant("tstchr2"));
         assertEquals(new SHA1HashingFunction().apply("1_tstchr2_1_SNV"),
-                     processedVariant.getHashedMessage());
+                processedVariant.getHashedMessage());
     }
 
     private DbsnpClusteredVariantEntity buildMockVariant(String originalChromosome) {
         ClusteredVariant newVariant = new ClusteredVariant("1",
-                                                           9606,
-                                                           originalChromosome,
-                                                           1,
-                                                           VariantType.SNV,
-                                                           Boolean.FALSE,
-                                                           LocalDateTime.now());
+                9606,
+                originalChromosome,
+                1,
+                VariantType.SNV,
+                Boolean.FALSE,
+                LocalDateTime.now());
         return new DbsnpClusteredVariantEntity(1L,
-                                               hashingFunction.apply(newVariant),
-                                               newVariant,
-                                               1);
+                hashingFunction.apply(newVariant),
+                newVariant,
+                1);
     }
 }

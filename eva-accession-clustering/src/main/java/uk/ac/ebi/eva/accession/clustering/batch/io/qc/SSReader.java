@@ -19,6 +19,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Filters;
+import jakarta.annotation.Nonnull;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
@@ -28,11 +29,8 @@ import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
-
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
-
-import javax.annotation.Nonnull;
 
 
 public class SSReader implements ItemStreamReader<SubmittedVariantEntity> {
@@ -80,7 +78,7 @@ public class SSReader implements ItemStreamReader<SubmittedVariantEntity> {
 
     public void initializeReader() {
         Bson query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
-                                 Filters.not(Filters.exists(MAPPING_WEIGHT_FIELD)));
+                Filters.not(Filters.exists(MAPPING_WEIGHT_FIELD)));
         logger.info("Issuing find: {}", query);
 
         FindIterable<Document> submittedVariantsDbsnp =
@@ -95,9 +93,9 @@ public class SSReader implements ItemStreamReader<SubmittedVariantEntity> {
 
     private FindIterable<Document> getSubmittedVariants(Bson query, Class<?> entityClass) {
         return mongoTemplate.getCollection(mongoTemplate.getCollectionName(entityClass))
-                            .find(query)
-                            .noCursorTimeout(true)
-                            .batchSize(chunkSize);
+                .find(query)
+                .noCursorTimeout(true)
+                .batchSize(chunkSize);
     }
 
     @Override

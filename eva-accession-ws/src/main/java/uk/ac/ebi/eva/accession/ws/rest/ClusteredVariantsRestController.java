@@ -17,9 +17,10 @@
  */
 package uk.ac.ebi.eva.accession.ws.rest;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -39,7 +40,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.HistoryEvent;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.HistoryEventDTO;
-
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -54,7 +54,6 @@ import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -63,7 +62,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/v1/clustered-variants")
-@Api(tags = {"Clustered variants"})
+@Tag(name = "Clustered variants")
 public class ClusteredVariantsRestController {
 
     private static final Logger logger = LoggerFactory.getLogger(ClusteredVariantsRestController.class);
@@ -97,14 +96,14 @@ public class ClusteredVariantsRestController {
      * will be thrown and a redirection to an active RS will be done by {@link EvaControllerAdvice}. Although it is
      * not entirely correct, it was decided to return only one of those merges as redirection, doesn't matter which one.
      */
-    @ApiOperation(value = "Find clustered variants (RS) by identifier", notes = "This endpoint returns the clustered "
+    @Operation(summary = "Find clustered variants (RS) by identifier", description = "This endpoint returns the clustered "
             + "variants (RS) represented by the given identifier. For a description of the response, see "
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp-or-rs")
     @GetMapping(value = "/{identifier}", produces = "application/json")
     public ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> get(
-            @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
+            @PathVariable @Parameter(description = "Numerical identifier of a clustered variant, e.g.: 3000000000",
                     required = true) Long identifier,
-            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired, default is INSDC")
+            @RequestParam(required = false) @Parameter(description = "Contig naming convention desired, default is INSDC")
             ContigNamingConvention contigNamingConvention)
             throws AccessionMergedException, AccessionDoesNotExistException {
         try {
@@ -112,7 +111,7 @@ public class ClusteredVariantsRestController {
                     new ArrayList<>();
             clusteredVariants.addAll(getNonHumanClusteredVariants(identifier, contigNamingConvention));
             clusteredVariants.addAll(humanService.getAllByAccession(identifier, contigNamingConvention).stream().map(this::toDTO)
-                                                 .collect(Collectors.toList()));
+                    .collect(Collectors.toList()));
 
             if (clusteredVariants.isEmpty()) {
                 throw new AccessionDoesNotExistException(identifier);
@@ -127,32 +126,32 @@ public class ClusteredVariantsRestController {
         }
     }
 
-    @ApiOperation(value = "Find clustered variant (RS) history", notes = "This endpoint returns the history of clustered "
+    @Operation(summary = "Find clustered variant (RS) history", description = "This endpoint returns the history of clustered "
             + "variants (RS) represented by the given identifier. ")
     @GetMapping(value = "/{identifier}/history", produces = "application/json")
     public ResponseEntity<VariantHistory<ClusteredVariant, IClusteredVariant, String, Long>> getVariantHistory(
-            @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 43678406",
+            @PathVariable @Parameter(description = "Numerical identifier of a clustered variant, e.g.: 43678406",
                     required = true) Long identifier,
-            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired, default is INSDC")
-                    ContigNamingConvention contigNamingConvention) throws AccessionDoesNotExistException {
+            @RequestParam(required = false) @Parameter(description = "Contig naming convention desired, default is INSDC")
+            ContigNamingConvention contigNamingConvention) throws AccessionDoesNotExistException {
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> allVariants =
                 new ArrayList<>();
         try {
             allVariants.addAll(getNonHumanClusteredVariants(identifier, contigNamingConvention));
             allVariants.addAll(humanService.getAllByAccession(identifier, contigNamingConvention).stream().map(this::toDTO)
-                                           .collect(Collectors.toList()));
+                    .collect(Collectors.toList()));
         } catch (NoSuchElementException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (AccessionDeprecatedException e) {
             allVariants.addAll(getDeprecatedClusteredVariant(identifier));
-        }catch (AccessionMergedException e){
+        } catch (AccessionMergedException e) {
             // if accession has been merged into several other accessions, we are not getting those accessions
             // we will rely on operations to provide info about those rs ids in which the given rs has been merged
         }
 
         List<HistoryEventDTO<Long, ClusteredVariant>> allOperations =
                 clusteredVariantOperationService.getAllOperations(identifier, contigNamingConvention)
-                .stream().map(this::toHistoryEventDTO).collect(Collectors.toList());
+                        .stream().map(this::toHistoryEventDTO).collect(Collectors.toList());
 
         if (allVariants.isEmpty() && allOperations.isEmpty()) {
             throw new AccessionDoesNotExistException(identifier);
@@ -173,7 +172,7 @@ public class ClusteredVariantsRestController {
             Long identifier, ContigNamingConvention contigNamingConvention) throws AccessionDeprecatedException, AccessionMergedException {
         try {
             return nonHumanActiveService.getAllByAccession(identifier, contigNamingConvention).stream().map(this::toDTO)
-                                        .collect(Collectors.toList());
+                    .collect(Collectors.toList());
         } catch (AccessionDoesNotExistException e) {
             return Collections.emptyList();
         }
@@ -191,16 +190,16 @@ public class ClusteredVariantsRestController {
                 ClusteredVariant::new));
     }
 
-    @ApiOperation(value = "Find submitted variants (SS) by clustered variant identifier (RS)", notes = "Given a "
+    @Operation(summary = "Find submitted variants (SS) by clustered variant identifier (RS)", description = "Given a "
             + "clustered variant identifier (RS), this endpoint returns all the submitted variants (SS) linked to"
             + " the former. For a description of the response, see "
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#submitted-variant-subsnp-or-ss")
     @GetMapping(value = "/{identifier}/submitted", produces = "application/json")
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getSubmittedVariants(
-            @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 869808637",
+            @PathVariable @Parameter(description = "Numerical identifier of a clustered variant, e.g.: 869808637",
                     required = true) Long identifier,
-            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired, default is INSDC")
-                    ContigNamingConvention contigNamingConvention)
+            @RequestParam(required = false) @Parameter(description = "Contig naming convention desired, default is INSDC")
+            ContigNamingConvention contigNamingConvention)
             throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
         try {
             // trigger the checks. if the identifier was merged, the EvaControllerAdvice will redirect to the correct
@@ -209,37 +208,37 @@ public class ClusteredVariantsRestController {
 
             List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants =
                     submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(identifier),
-                                                                              contigNamingConvention);
+                            contigNamingConvention);
 
             return submittedVariants.stream()
-                                    .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
-                                    .collect(Collectors.toList());
+                    .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
+                    .collect(Collectors.toList());
         } catch (NoSuchElementException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
 
-    @ApiOperation(value = "Find a clustered variant (RS) by the identifying fields", notes = "This endpoint returns "
+    @Operation(summary = "Find a clustered variant (RS) by the identifying fields", description = "This endpoint returns "
             + "the clustered variant (RS) represented by a given identifier. For a description of the response, see "
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp"
             + "-or-rs")
     @GetMapping(produces = "application/json")
     public ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getByIdFields(
-            @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accession in GCA format, e.g.: GCA_000002305.1")
-                    String assembly,
-            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome name or accession, e.g.: CM000392.2")
-                    String chromosome,
-            @RequestParam(name = "start") @ApiParam(value = "start position, e.g.: 66275332") long start,
+            @RequestParam(name = "assemblyId") @Parameter(description = "assembly accession in GCA format, e.g.: GCA_000002305.1")
+            String assembly,
+            @RequestParam(name = "referenceName") @Parameter(description = "chromosome name or accession, e.g.: CM000392.2")
+            String chromosome,
+            @RequestParam(name = "start") @Parameter(description = "start position, e.g.: 66275332") long start,
             @RequestParam(name = "variantType") VariantType variantType,
-            @RequestParam(required = false) @ApiParam(value = "Chromosome naming convention used, default is INSDC")
-                    ContigNamingConvention contigNamingConvention) {
+            @RequestParam(required = false) @Parameter(description = "Chromosome naming convention used, default is INSDC")
+            ContigNamingConvention contigNamingConvention) {
         try {
             List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                     new ArrayList<>();
 
             List<AccessionWrapper<IClusteredVariant, String, Long>> nonHumanClusteredVariants =
                     nonHumanActiveService.getByIdFields(assembly, chromosome, start, variantType,
-                                                        contigNamingConvention);
+                            contigNamingConvention);
             nonHumanClusteredVariants.stream().map(this::toDTO).forEach(clusteredVariants::add);
 
             List<AccessionWrapper<IClusteredVariant, String, Long>> humanClusteredVariants =
@@ -258,24 +257,24 @@ public class ClusteredVariantsRestController {
         return new AccessionResponseDTO<>(clusteredVariantWrapper, ClusteredVariant::new);
     }
 
-    @ApiOperation(value = "Find if a clustered variant (RS) with the given identifying fields exists in our database",
-            notes = "This endpoint returns true or false to indicate if the RS ID is present. Optionally return the " +
+    @Operation(summary = "Find if a clustered variant (RS) with the given identifying fields exists in our database",
+            description = "This endpoint returns true or false to indicate if the RS ID is present. Optionally return the " +
                     "RS ID.")
     @GetMapping(value = "/beacon/query", produces = "application/json")
     public BeaconAlleleResponse doesVariantExist(
-            @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accession in GCA format, e.g.: GCA_000002305.1")
-                    String assembly,
-            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome name, e.g.: 16")
-                    String chromosome,
-            @RequestParam(name = "start") @ApiParam(value = "start position, e.g.: 66275332") long start,
+            @RequestParam(name = "assemblyId") @Parameter(description = "assembly accession in GCA format, e.g.: GCA_000002305.1")
+            String assembly,
+            @RequestParam(name = "referenceName") @Parameter(description = "chromosome name, e.g.: 16")
+            String chromosome,
+            @RequestParam(name = "start") @Parameter(description = "start position, e.g.: 66275332") long start,
             @RequestParam(name = "variantType") VariantType variantType,
             @RequestParam(name = "includeDatasetReponses", required = false)
-                    boolean includeDatasetReponses,
+            boolean includeDatasetReponses,
             HttpServletResponse response) {
         try {
             ContigNamingConvention contigNamingConvention = ContigNamingConvention.ENA_SEQUENCE_NAME;
             return beaconService.queryBeaconClusteredVariant(assembly, chromosome, start, variantType,
-                                                             contigNamingConvention, includeDatasetReponses);
+                    contigNamingConvention, includeDatasetReponses);
         } catch (Exception ex) {
             logger.error("Unexpected error in beacon query for chromosome={}, start={}, assembly={}, variantType={}",
                          chromosome, start, assembly, variantType, ex);

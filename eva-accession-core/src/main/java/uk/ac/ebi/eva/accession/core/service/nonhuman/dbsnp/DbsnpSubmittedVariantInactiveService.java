@@ -17,9 +17,8 @@
  */
 package uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp;
 
-import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IHistoryRepository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.service.BasicMongoDbInactiveAccessionService;
-
+import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IHistoryRepository;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantInactiveEntity;

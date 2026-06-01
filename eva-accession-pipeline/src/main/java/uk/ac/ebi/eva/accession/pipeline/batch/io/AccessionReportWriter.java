@@ -22,13 +22,12 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
-
-import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.batch.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
-import uk.ac.ebi.eva.accession.core.batch.io.FastaSequenceReader;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.pipeline.batch.processors.ContigToGenbankReplacerProcessor;
 import uk.ac.ebi.eva.accession.pipeline.batch.tasklets.reportCheck.AccessionWrapperComparator;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
@@ -114,6 +113,7 @@ public class AccessionReportWriter {
 
     /**
      * We do not load the variants written in previous failed executions, but there might be duplicates hard to avoid,
+     *
      * @see AccessionReportWriterTest#resumeWritingWithRepeatedVariant
      */
     public void open(ExecutionContext executionContext) throws ItemStreamException {
@@ -132,16 +132,16 @@ public class AccessionReportWriter {
                 } else {
                     throw new IllegalStateException(
                             "Can not resume step safely. All temporary files from the previous execution ("
-                            + contigsOutput.getAbsolutePath() + " and " + variantsOutput.getAbsolutePath()
-                            + ") should exist to resume the step. Please delete those files and start a new job.");
+                                    + contigsOutput.getAbsolutePath() + " and " + variantsOutput.getAbsolutePath()
+                                    + ") should exist to resume the step. Please delete those files and start a new job.");
                 }
             } else {
                 // we started a new job
                 if (contigsOutput.exists() || variantsOutput.exists()) {
                     throw new IllegalStateException(
                             "A new job was started (did not resume a previous job) but temporary files exist ("
-                            + contigsOutput.getAbsolutePath() + " or " + variantsOutput.getAbsolutePath()
-                            + "). Please delete them and start a new job");
+                                    + contigsOutput.getAbsolutePath() + " or " + variantsOutput.getAbsolutePath()
+                                    + "). Please delete them and start a new job");
                 } else {
                     boolean append = false;
                     this.contigsWriter = new BufferedWriter(new FileWriter(this.contigsOutput, append));
@@ -165,8 +165,8 @@ public class AccessionReportWriter {
             String[] contigColumns = line.split("\t");
             if (contigColumns.length != 2) {
                 throw new IllegalStateException("Temporary file " + contigMappingFile.getAbsolutePath()
-                                                + " doesn't have the expected format. Please delete it and "
-                                                + "start a new job.");
+                        + " doesn't have the expected format. Please delete it and "
+                        + "start a new job.");
             }
             String inputContig = contigColumns[0];
             String insdcContigAccession = contigColumns[1];
@@ -186,16 +186,16 @@ public class AccessionReportWriter {
             if (!duplicatedInputContigsToInsdc.isEmpty()) {
                 logger.error(
                         "The same chromosome (in the original input) was replaced by several INSDC contig accessions. "
-                        + "This happened for: " + duplicatedInputContigsToInsdc.toString());
+                                + "This happened for: " + duplicatedInputContigsToInsdc.toString());
             }
             if (!duplicatedInsdcToInputContigs.isEmpty()) {
                 logger.error("The same INSDC contig accessions replaced several input chromosomes. This happened for: "
-                             + duplicatedInsdcToInputContigs.toString());
+                        + duplicatedInsdcToInputContigs.toString());
             }
             if (!duplicatedInputContigsToInsdc.isEmpty() || !duplicatedInsdcToInputContigs.isEmpty()) {
                 throw new IllegalStateException(
                         "Contig replacement was done but the replacements were not unique. See errors above for "
-                        + "details");
+                                + "details");
             }
         } catch (IOException e) {
             throw new ItemStreamException(e);
@@ -206,7 +206,7 @@ public class AccessionReportWriter {
                       List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessionedVariants) throws IOException {
         if (variantsWriter == null) {
             throw new IOException("The file " + variantsOutput + " was not opened properly. Hint: Check that the code "
-                                  + "called " + this.getClass().getSimpleName() + "::open");
+                    + "called " + this.getClass().getSimpleName() + "::open");
         }
         updateChromosomeMappings(originalVariantsWithInsdcContigs);
         List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> denormalizedVariants = denormalizeVariants(
@@ -225,7 +225,7 @@ public class AccessionReportWriter {
             String currentInsdcContig = variantWithContig.getChromosome();
 
             String previousInsdcReplacementForOriginalChromosome = inputContigsToInsdc.put(originalChromosome,
-                                                                                           currentInsdcContig);
+                    currentInsdcContig);
             if (previousInsdcReplacementForOriginalChromosome == null) {
                 // there was no previous entry, so this is not present in the contigs file: write it
                 contigsWriter.write(originalChromosome + "\t" + currentInsdcContig);
@@ -250,17 +250,17 @@ public class AccessionReportWriter {
 
     private String getOriginalChromosome(IVariant variant) {
         Set<String> originalChromosomes = variant.getSourceEntries()
-                                                 .stream()
-                                                 .map(se -> se.getAttributes().get(
-                                                         ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME))
-                                                 .collect(Collectors.toSet());
+                .stream()
+                .map(se -> se.getAttributes().get(
+                        ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME))
+                .collect(Collectors.toSet());
 
         if (originalChromosomes.size() != 1) {
             throw new IllegalStateException(
                     "Bug detected: Multiple original chromosomes were found to be associated with the same variant "
-                    + variant.toString() + ". The attributes had the next list of original chromosomes: ["
-                    + String.join(", ", originalChromosomes) + "]. Contig '" + variant.getChromosome()
-                    + "' was used as replacement.");
+                            + variant.toString() + ". The attributes had the next list of original chromosomes: ["
+                            + String.join(", ", originalChromosomes) + "]. Contig '" + variant.getChromosome()
+                            + "' was used as replacement.");
         }
         return originalChromosomes.iterator().next();
     }
@@ -270,7 +270,7 @@ public class AccessionReportWriter {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> denormalizedAccessions = new ArrayList<>();
         for (AccessionWrapper<ISubmittedVariant, String, Long> accession : accessions) {
             denormalizedAccessions.add(new AccessionWrapper<>(accession.getAccession(), accession.getHash(),
-                                                              denormalizeVariant(accession.getData())));
+                    denormalizeVariant(accession.getData())));
         }
         return denormalizedAccessions;
     }
@@ -281,7 +281,7 @@ public class AccessionReportWriter {
                 return createVariantWithContextBase(normalizedVariant);
             } else {
                 throw new IllegalArgumentException("Contig '" + normalizedVariant.getContig()
-                                                   + "' does not appear in the FASTA file ");
+                        + "' does not appear in the FASTA file ");
             }
         } else {
             return normalizedVariant;
@@ -294,30 +294,30 @@ public class AccessionReportWriter {
         long oldStart = normalizedVariant.getStart();
         ImmutableTriple<Long, String, String> contextNucleotideInfo =
                 fastaSequenceReader.getContextNucleotideAndNewStart(normalizedVariant.getContig(), oldStart,
-                                                                    oldReference, oldAlternate);
+                        oldReference, oldAlternate);
 
         return new SubmittedVariant(normalizedVariant.getReferenceSequenceAccession(),
-                                    normalizedVariant.getTaxonomyAccession(),
-                                    normalizedVariant.getProjectAccession(),
-                                    normalizedVariant.getContig(),
-                                    contextNucleotideInfo.getLeft(),
-                                    contextNucleotideInfo.getMiddle(),
-                                    contextNucleotideInfo.getRight(),
-                                    normalizedVariant.getClusteredVariantAccession(),
-                                    normalizedVariant.isSupportedByEvidence(),
-                                    normalizedVariant.isAssemblyMatch(),
-                                    normalizedVariant.isAllelesMatch(),
-                                    normalizedVariant.isValidated(),
-                                    normalizedVariant.getCreatedDate());
+                normalizedVariant.getTaxonomyAccession(),
+                normalizedVariant.getProjectAccession(),
+                normalizedVariant.getContig(),
+                contextNucleotideInfo.getLeft(),
+                contextNucleotideInfo.getMiddle(),
+                contextNucleotideInfo.getRight(),
+                normalizedVariant.getClusteredVariantAccession(),
+                normalizedVariant.isSupportedByEvidence(),
+                normalizedVariant.isAssemblyMatch(),
+                normalizedVariant.isAllelesMatch(),
+                normalizedVariant.isValidated(),
+                normalizedVariant.getCreatedDate());
 
     }
 
     /**
      * Replace the contig using the requested contig naming and write the variant to the output file.
-     *
+     * <p>
      * Note how this is done after the sorting (using {@link AccessionWrapperComparator}) because the mappings we
      * passed to it are mappings from the input naming to INSDC, not from input naming to requested output naming.
-     *
+     * <p>
      * Also, we have to get the equivalent of the original chromosome (not the INSDC contig) because we will mostly use
      * {@link ContigNaming#NO_REPLACEMENT} and it means "do not replace the submitter's original chromosome".
      */
@@ -327,12 +327,12 @@ public class AccessionReportWriter {
         String contigFromRequestedContigNaming = getEquivalentContig(originalChromosome, contigNaming);
 
         String variantLine = String.join("\t",
-                                         contigFromRequestedContigNaming,
-                                         Long.toString(denormalizedVariant.getData().getStart()),
-                                         accessionPrefix + denormalizedVariant.getAccession(),
-                                         denormalizedVariant.getData().getReferenceAllele(),
-                                         denormalizedVariant.getData().getAlternateAllele(),
-                                         VCF_MISSING_VALUE, VCF_MISSING_VALUE, VCF_MISSING_VALUE);
+                contigFromRequestedContigNaming,
+                Long.toString(denormalizedVariant.getData().getStart()),
+                accessionPrefix + denormalizedVariant.getAccession(),
+                denormalizedVariant.getData().getReferenceAllele(),
+                denormalizedVariant.getData().getAlternateAllele(),
+                VCF_MISSING_VALUE, VCF_MISSING_VALUE, VCF_MISSING_VALUE);
         variantsWriter.write(variantLine);
         variantsWriter.newLine();
     }
@@ -348,8 +348,8 @@ public class AccessionReportWriter {
             if (!loggedUnreplaceableContigs.contains(oldContig)) {
                 loggedUnreplaceableContigs.add(oldContig);
                 logger.warn("Will not replace contig '" + oldContig
-                            + "' (in the current variant or any subsequent one) as requested because there are no "
-                            + "synonyms available. (Hint: Is the assembly report correct and complete?)");
+                        + "' (in the current variant or any subsequent one) as requested because there are no "
+                        + "synonyms available. (Hint: Is the assembly report correct and complete?)");
             }
             return oldContig;
         }
@@ -359,25 +359,25 @@ public class AccessionReportWriter {
             if (!loggedUnreplaceableContigs.contains(oldContig)) {
                 loggedUnreplaceableContigs.add(oldContig);
                 logger.warn("Will not replace contig '" + oldContig
-                            + "' (in the current variant or any subsequent one) as requested because there is no "
-                            + contigNaming + " synonym for it.");
+                        + "' (in the current variant or any subsequent one) as requested because there is no "
+                        + contigNaming + " synonym for it.");
             }
             return oldContig;
         }
 
         boolean genbankReplacedWithRefseq = oldContig.equals(contigSynonyms.getGenBank())
-                                            && contigReplacement.equals(contigSynonyms.getRefSeq());
+                && contigReplacement.equals(contigSynonyms.getRefSeq());
 
         boolean refseqReplacedWithGenbank = oldContig.equals(contigSynonyms.getRefSeq())
-                                            && contigReplacement.equals(contigSynonyms.getGenBank());
+                && contigReplacement.equals(contigSynonyms.getGenBank());
 
         if (!contigSynonyms.isIdenticalGenBankAndRefSeq() && (genbankReplacedWithRefseq || refseqReplacedWithGenbank)) {
             if (!loggedUnreplaceableContigs.contains(oldContig)) {
                 loggedUnreplaceableContigs.add(oldContig);
                 logger.warn(
                         "Will not replace contig '" + oldContig + "' with " + contigNaming + " '" + contigReplacement
-                        + "' (in the current variant or any subsequent one) as requested because those contigs "
-                        + "are not identical according to the assembly report provided.");
+                                + "' (in the current variant or any subsequent one) as requested because those contigs "
+                                + "are not identical according to the assembly report provided.");
             }
             return oldContig;
         }

@@ -23,11 +23,10 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
-import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.batch.processors.ContigToGenbankReplacerProcessor;
 import uk.ac.ebi.eva.accession.pipeline.batch.processors.ExcludeStructuralVariantsProcessor;
+import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 
 import java.util.Arrays;

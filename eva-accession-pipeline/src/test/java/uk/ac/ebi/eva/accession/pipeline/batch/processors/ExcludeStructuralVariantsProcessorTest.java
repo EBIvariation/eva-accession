@@ -17,8 +17,8 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.batch.processors;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -26,9 +26,9 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import java.util.Arrays;
 import java.util.Objects;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ExcludeStructuralVariantsProcessorTest {
 
@@ -57,7 +57,7 @@ public class ExcludeStructuralVariantsProcessorTest {
 
     private static ExcludeStructuralVariantsProcessor processor;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         processor = new ExcludeStructuralVariantsProcessor();
     }

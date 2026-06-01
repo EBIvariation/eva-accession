@@ -20,15 +20,14 @@ import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-
 import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfLineMapper;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.models.Aggregation;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+import uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames;
 import uk.ac.ebi.eva.remapping.ingest.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.parameters.InputParameters;
-import uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames;
 
 import java.io.File;
 import java.io.IOException;
