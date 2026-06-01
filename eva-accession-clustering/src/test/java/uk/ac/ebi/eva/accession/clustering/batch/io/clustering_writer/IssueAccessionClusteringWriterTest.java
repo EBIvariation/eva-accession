@@ -15,41 +15,37 @@
  */
 package uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.bson.Document;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.batch.io.RSSplitWriter;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
@@ -61,6 +57,8 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.mongodb.readers.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
@@ -74,9 +72,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringAssertions.assertClusteringCounts;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
@@ -88,18 +86,16 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLI
 
 /**
  * This class handles the simplest scenarios of ClusteringWriter.
- *
+ * <p>
  * The scenarios tested here are those about issuing new clustered variant accessions (RSs). No reusing existing RSs,
  * no RSs provided with the submitted variant being clustered, no RS merging. Other test classes in this folder take
  * care of those scenarios.
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @EnableAutoConfiguration
-@ContextConfiguration(classes = {ClusteredVariantAccessioningConfiguration.class, BatchTestConfiguration.class})
+@ContextConfiguration(classes = {ClusteredVariantAccessioningConfiguration.class, BatchTestConfiguration.class, MongoTestConfiguration.class})
 @TestPropertySource("classpath:clustering-issuance-test.properties")
-public class IssueAccessionClusteringWriterTest {
-
-    private static final String TEST_DB = "test-db";
+public class IssueAccessionClusteringWriterTest extends MongoTestContainerHelper {
 
     private static final String CLUSTERED_VARIANT_COLLECTION = "clusteredVariantEntity";
 
@@ -119,11 +115,10 @@ public class IssueAccessionClusteringWriterTest {
     private MongoTemplate mongoTemplate;
 
     @Autowired
-    private MetricCompute metricCompute;
+    private ResourceLoader resourceLoader;
 
-    //Required by nosql-unit
     @Autowired
-    private ApplicationContext applicationContext;
+    private MetricCompute metricCompute;
 
     // Current clustering sequence is:
     // generate merge split candidates from clustered variants -> perform merge
@@ -163,12 +158,9 @@ public class IssueAccessionClusteringWriterTest {
 
     private Function<IClusteredVariant, String> clusteredHashingFunction;
 
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
-
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
+        mongoTemplate.getDb().drop();
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         Files.deleteIfExists(this.rsReportFile.toPath());
@@ -179,16 +171,17 @@ public class IssueAccessionClusteringWriterTest {
         clusteringWriterPreMergeAndSplit.setJobExecution(jobExecution);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         mongoTemplate.getDb().drop();
         metricCompute.clearCount();
     }
 
     @Test
-    @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json"})
     @DirtiesContext
     public void writer() throws Exception {
+        new MongoTestDataLoader(mongoTemplate, resourceLoader).load("/test-data/submittedVariantEntity.json");
+
         List<SubmittedVariantEntity> submittedVariantEntities = createSubmittedVariantEntities();
         this.clusterVariants(submittedVariantEntities);
         assertClusteredVariantsCreated();
@@ -206,22 +199,22 @@ public class IssueAccessionClusteringWriterTest {
     private List<SubmittedVariantEntity> createSubmittedVariantEntities() {
         List<SubmittedVariantEntity> submittedVariantEntities = new ArrayList<>();
         SubmittedVariant submittedVariant1 = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000,
-                                                                    PROJECT_ACCESSION, "1", 1000L, "T", "A");
+                PROJECT_ACCESSION, "1", 1000L, "T", "A");
         SubmittedVariantEntity submittedVariantEntity1 = createSubmittedVariantEntity(5000000001L, submittedVariant1);
         //Different alleles
         SubmittedVariant submittedVariant2 = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000,
-                                                                    PROJECT_ACCESSION, "1", 1000L, "T", "G");
+                PROJECT_ACCESSION, "1", 1000L, "T", "G");
         SubmittedVariantEntity submittedVariantEntity2 = createSubmittedVariantEntity(5000000002L, submittedVariant2);
         //Same assembly, contig, start but different type
         SubmittedVariant submittedVariantINS = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000,
-                                                                      PROJECT_ACCESSION, "1", 1000L, "", "A");
+                PROJECT_ACCESSION, "1", 1000L, "", "A");
         SubmittedVariantEntity submittedVariantEntityINS = createSubmittedVariantEntity(5000000003L, submittedVariantINS);
         SubmittedVariant submittedVariantDEL = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000,
-                                                                      PROJECT_ACCESSION, "1", 1000L, "T", "");
+                PROJECT_ACCESSION, "1", 1000L, "T", "");
         SubmittedVariantEntity submittedVariantEntityDEL = createSubmittedVariantEntity(5000000004L, submittedVariantDEL);
         //Different assembly, contig and start
         SubmittedVariant submittedVariant3 = createSubmittedVariant(inputParameters.getAssemblyAccession(), 3000,
-                                                                    PROJECT_ACCESSION, "1", 3000L, "C", "G");
+                PROJECT_ACCESSION, "1", 3000L, "C", "G");
         SubmittedVariantEntity submittedVariantEntity3 = createSubmittedVariantEntity(5000000005L, submittedVariant3);
         submittedVariantEntities.add(submittedVariantEntity1);
         submittedVariantEntities.add(submittedVariantEntity2);
@@ -245,7 +238,7 @@ public class IssueAccessionClusteringWriterTest {
                                                     String projectAccession, String contig, long start,
                                                     String referenceAllele, String alternateAllele) {
         return new SubmittedVariant(referenceSequenceAccession, taxonomyAccession, projectAccession, contig, start,
-                                    referenceAllele, alternateAllele, null);
+                referenceAllele, alternateAllele, null);
     }
 
     private void assertClusteredVariantsCreated() {
@@ -278,14 +271,14 @@ public class IssueAccessionClusteringWriterTest {
         MongoCollection<Document> collection = mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION);
         FindIterable<Document> documents = collection.find();
         for (Document document : documents) {
-            if (document.get("rs") == null){
+            if (document.get("rs") == null) {
                 return false;
             }
         }
         return true;
     }
 
-    private void assertSubmittedVariantsOperationInserted(){
+    private void assertSubmittedVariantsOperationInserted() {
         MongoCollection<Document> collection = mongoTemplate.getCollection(SUBMITTED_VARIANT_OPERATION_COLLECTION);
         assertEquals(5, collection.countDocuments());
         List<Long> expectedAccessions = Arrays.asList(5000000001L, 5000000002L, 5000000003L, 5000000004L, 5000000005L);
@@ -300,11 +293,11 @@ public class IssueAccessionClusteringWriterTest {
         // given
         Long rsAccession = 30L;
         ClusteredVariantEntity rs1 = createClusteredVariantEntity(rsAccession, inputParameters.getAssemblyAccession(),
-                                                                  "chr1", null);
+                "chr1", null);
 
         SubmittedVariantEntity ssToCluster = createSubmittedVariantEntity(5200000000L,
-                                                                          inputParameters.getAssemblyAccession(),
-                                                                          "chr1", "project2", null);
+                inputParameters.getAssemblyAccession(),
+                "chr1", "project2", null);
 
         mongoTemplate.insert(Arrays.asList(rs1), DbsnpClusteredVariantEntity.class);
         mongoTemplate.insert(Arrays.asList(ssToCluster), SubmittedVariantEntity.class);
@@ -328,27 +321,27 @@ public class IssueAccessionClusteringWriterTest {
             throws Exception {
         // given
         ClusteredVariantEntity rs1Locus1 = createClusteredVariantEntity(30L, inputParameters.getAssemblyAccession(),
-                                                                        "chr1", 3);
+                "chr1", 3);
         ClusteredVariantEntity rs1Locus2 = createClusteredVariantEntity(30L, inputParameters.getAssemblyAccession(),
-                                                                        "chr2", null);
+                "chr2", null);
         SubmittedVariantEntity ssToCluster = createSubmittedVariantEntity(5200000000L,
-                                                                          inputParameters.getAssemblyAccession(),
-                                                                          "chr1", "project2",
-                                                                          null);
+                inputParameters.getAssemblyAccession(),
+                "chr1", "project2",
+                null);
 
         mongoTemplate.insert(Arrays.asList(rs1Locus1, rs1Locus2), DbsnpClusteredVariantEntity.class);
         mongoTemplate.insert(Arrays.asList(ssToCluster), SubmittedVariantEntity.class);
 
         Query querySsToCluster = new Query(new Criteria("accession").is(ssToCluster.getAccession()));
         assertNull(mongoTemplate.find(querySsToCluster, SubmittedVariantEntity.class).get(0)
-                                .getClusteredVariantAccession());
+                .getClusteredVariantAccession());
 
         // when
         this.clusterVariants(Collections.singletonList(ssToCluster));
 
         // then
         assertNull(mongoTemplate.find(querySsToCluster, SubmittedVariantEntity.class).get(0)
-                                .getClusteredVariantAccession());
+                .getClusteredVariantAccession());
         assertClusteringCounts(metricCompute, 0, 0, 0, 1, 0, 0, 0);
     }
 
@@ -357,11 +350,11 @@ public class IssueAccessionClusteringWriterTest {
     public void do_not_cluster_eva_submitted_variant_into_a_dbsnp_multimap_clustered_variant() throws Exception {
         // given
         ClusteredVariantEntity rs1 = createClusteredVariantEntity(30L, inputParameters.getAssemblyAccession(), "chr1",
-                                                                  3);
+                3);
         SubmittedVariantEntity ssToCluster = createSubmittedVariantEntity(5200000000L,
-                                                                          inputParameters.getAssemblyAccession(),
-                                                                          "chr1", "project2",
-                                                                          null);
+                inputParameters.getAssemblyAccession(),
+                "chr1", "project2",
+                null);
 
         mongoTemplate.insert(Arrays.asList(rs1), DbsnpClusteredVariantEntity.class);
         mongoTemplate.insert(Arrays.asList(ssToCluster), SubmittedVariantEntity.class);
@@ -388,8 +381,8 @@ public class IssueAccessionClusteringWriterTest {
         ClusteredVariant variant = createClusteredVariant(assemblyAccession, contig);
         String hash = clusteredHashingFunction.apply(variant);
         ClusteredVariantEntity variantEntity = new ClusteredVariantEntity(accession, hash, assemblyAccession, 1000,
-                                                                          contig, 100, VariantType.SNV, false, null, 1,
-                                                                          mapWeight);
+                contig, 100, VariantType.SNV, false, null, 1,
+                mapWeight);
         return variantEntity;
     }
 
@@ -405,38 +398,38 @@ public class IssueAccessionClusteringWriterTest {
 
     private void clusterVariants(List<SubmittedVariantEntity> submittedVariantEntities)
             throws Exception {
-        clusteringWriterPreMergeAndSplit.write(submittedVariantEntities);
+        clusteringWriterPreMergeAndSplit.write(new Chunk<>(submittedVariantEntities));
         List<SubmittedVariantOperationEntity> mergeCandidates = new ArrayList<>();
         List<SubmittedVariantOperationEntity> splitCandidates = new ArrayList<>();
         SubmittedVariantOperationEntity tempSVO;
         rsMergeCandidatesReader.open(new ExecutionContext());
-        while((tempSVO = rsMergeCandidatesReader.read()) != null) {
+        while ((tempSVO = rsMergeCandidatesReader.read()) != null) {
             mergeCandidates.add(tempSVO);
         }
         rsSplitCandidatesReader.open(new ExecutionContext());
-        while((tempSVO = rsSplitCandidatesReader.read()) != null) {
+        while ((tempSVO = rsSplitCandidatesReader.read()) != null) {
             splitCandidates.add(tempSVO);
         }
-        rsMergeWriter.write(mergeCandidates);
-        rsSplitWriter.write(splitCandidates);
+        rsMergeWriter.write(new Chunk<>(mergeCandidates));
+        rsSplitWriter.write(new Chunk<>(splitCandidates));
 
         ClusteringMongoReader unclusteredVariantsReader =
                 new ClusteringMongoReader(this.mongoTemplate,
-                                          inputParameters.getAssemblyAccession(),
-                                          100,
-                                          false);
+                        inputParameters.getAssemblyAccession(),
+                        100,
+                        false);
         unclusteredVariantsReader.initializeReader();
         List<SubmittedVariantEntity> unclusteredVariants = new ArrayList<>();
         SubmittedVariantEntity tempSV;
-        while((tempSV = unclusteredVariantsReader.read()) != null) {
+        while ((tempSV = unclusteredVariantsReader.read()) != null) {
             unclusteredVariants.add(tempSV);
         }
         unclusteredVariantsReader.close();
         // Cluster non-clustered variants
-        clusteringWriterPostMergeAndSplit.write(unclusteredVariants);
+        clusteringWriterPostMergeAndSplit.write(new Chunk<>(unclusteredVariants));
         // Spring has a mandatory requirement of even small functionality being writers.
         // To satisfy that, we pass in a dummy object to invoke the writer
         // which basically clears the merge and split operations after they were processed above
-        clearRSMergeAndSplitCandidates.write(Collections.singletonList(new Object()));
+        clearRSMergeAndSplitCandidates.write(Chunk.of(new Object()));
     }
 }

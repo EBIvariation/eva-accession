@@ -16,33 +16,37 @@ package uk.ac.ebi.eva.accession.pipeline.runner;
  * limitations under the License.
  */
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.pipeline.test.BatchJobRepositoryTestConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.SSAccessionRecoveryTestConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SS_ACCESSION_RECOVERY_JOB;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {SSAccessionRecoveryTestConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {SSAccessionRecoveryTestConfiguration.class, MongoTestConfiguration.class,
+        BatchJobRepositoryTestConfiguration.class})
 @TestPropertySource("classpath:ss-accession-recovery.properties")
 @SpringBatchTest
-public class SSAccessionRecoveryTest {
+public class SSAccessionRecoveryTest extends MongoTestContainerHelper {
     @Autowired
     private EvaAccessionJobLauncherCommandLineRunner runner;
 
@@ -59,7 +63,7 @@ public class SSAccessionRecoveryTest {
         verifyInitialDBState();
 
         // recovery cut off time is -14 days (provided in ss-accession-recovery.properties)
-        runner.setJobNames(SS_ACCESSION_RECOVERY_JOB);
+        runner.setJobName(SS_ACCESSION_RECOVERY_JOB);
         runner.run();
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
 

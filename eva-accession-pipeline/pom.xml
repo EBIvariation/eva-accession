@@ -7,7 +7,7 @@
     <parent>
         <artifactId>eva-accession</artifactId>
         <groupId>uk.ac.ebi.eva</groupId>
-        <version>0.6.58-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>eva-accession-pipeline</artifactId>
@@ -33,13 +33,36 @@
         </dependency>
 
         <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>uk.ac.ebi.eva</groupId>
+            <artifactId>eva-accession-core</artifactId>
+            <version>${revision}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.batch</groupId>
             <artifactId>spring-batch-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.lordofthejars</groupId>
-            <artifactId>nosqlunit-mongodb</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mongodb</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -90,9 +113,5 @@
         </resources>
 
     </build>
-
-    <properties>
-        <eva.mongo.host.test>localhost</eva.mongo.host.test>
-    </properties>
 
 </project>

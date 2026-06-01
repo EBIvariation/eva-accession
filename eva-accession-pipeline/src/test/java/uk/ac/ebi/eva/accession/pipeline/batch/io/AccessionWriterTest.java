@@ -16,15 +16,13 @@
 package uk.ac.ebi.eva.accession.pipeline.batch.io;
 
 import org.hamcrest.Matchers;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -33,7 +31,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.eva.accession.core.batch.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
@@ -45,10 +43,13 @@ import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.service.GetOrCreateAccessionWrapperCreator;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.core.utils.PipelineTemporaryFolderUtil;
 import uk.ac.ebi.eva.accession.pipeline.batch.processors.VariantConverter;
 import uk.ac.ebi.eva.accession.pipeline.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners.ListenersConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.metric.AccessioningMetric;
+import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
@@ -68,18 +69,19 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.ac.ebi.eva.accession.pipeline.batch.processors.ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @EnableAutoConfiguration
 @ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, ListenersConfiguration.class,
-        InputParametersConfiguration.class})
+        InputParametersConfiguration.class, MongoTestConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
-public class AccessionWriterTest {
+public class AccessionWriterTest extends MongoTestContainerHelper {
 
     private static final int TAXONOMY = 3880;
 
@@ -139,11 +141,7 @@ public class AccessionWriterTest {
     @MockBean
     private JobExecution jobExecution;
 
-    @Rule
-    public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
+    public PipelineTemporaryFolderUtil temporaryFolderUtil = new PipelineTemporaryFolderUtil();
 
     private AccessionWriter accessionWriter;
 
@@ -153,18 +151,18 @@ public class AccessionWriterTest {
 
     private VariantConverter variantConverter;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(CHROMOSOME_1, "assembled-molecule", "1", CONTIG_1, "refseq_1", "chr1", true),
                 new ContigSynonyms(CHROMOSOME_2, "assembled-molecule", "2", CONTIG_2, "refseq_2", "chr2", true)));
-        output = temporaryFolderRule.newFile();
+        output = temporaryFolderUtil.newFile();
         variantOutput = new File(output.getAbsolutePath() + AccessionReportWriter.VARIANTS_FILE_SUFFIX);
         Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").toURI());
         AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output,
-                                                                                new FastaSequenceReader(fastaPath),
-                                                                                contigMapping,
-                                                                                ContigNaming.SEQUENCE_NAME);
+                new FastaSequenceReader(fastaPath),
+                contigMapping,
+                ContigNaming.SEQUENCE_NAME);
         variantConverter = new VariantConverter("assembly", TAXONOMY, "project");
         accessionWriter = new AccessionWriter(service, accessionReportWriter, variantConverter, metricCompute);
         accessionReportWriter.open(new ExecutionContext());
@@ -173,8 +171,8 @@ public class AccessionWriterTest {
         accessionWriter.setJobExecution(jobExecution);
     }
 
-    @After
-    public void tearDown(){
+    @AfterEach
+    public void tearDown() {
         metricCompute.clearCount();
     }
 
@@ -183,7 +181,7 @@ public class AccessionWriterTest {
     public void saveSingleAccession() throws Exception {
         Variant variant = buildMockVariant("contig", START_1);
 
-        accessionWriter.write(Collections.singletonList(variant));
+        accessionWriter.write(Chunk.of(variant));
 
         ISubmittedVariant submittedVariant = variantConverter.convert(variant);
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service
@@ -204,7 +202,7 @@ public class AccessionWriterTest {
         Variant secondVariant = buildMockVariant("contig", START_2);
 
         List<Variant> variants = Arrays.asList(firstVariant, secondVariant);
-        accessionWriter.write(variants);
+        accessionWriter.write(new Chunk<>(variants));
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(convert(variants));
         assertEquals(2, accessions.size());
@@ -233,7 +231,7 @@ public class AccessionWriterTest {
         Variant secondVariant = buildMockVariant(CONTIG_1, START_1, "", "A");
 
         List<Variant> variants = Arrays.asList(firstVariant, secondVariant);
-        accessionWriter.write(variants);
+        accessionWriter.write(new Chunk<>(variants));
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(convert(variants));
         assertEquals(2, accessions.size());
@@ -241,7 +239,7 @@ public class AccessionWriterTest {
         int firstVariantLineNumber = getVariantLineNumberByPosition(variantOutput, CHROMOSOME_1 + "\t" + START_1);
         //secondVariant position is START_1 - 1 because it is an insertion and the context base is added
         int secondVariantLineNumber = getVariantLineNumberByPosition(variantOutput,
-                                                                     CHROMOSOME_1 + "\t" + (START_1 - 1));
+                CHROMOSOME_1 + "\t" + (START_1 - 1));
         assertTrue(firstVariantLineNumber > secondVariantLineNumber);
     }
 
@@ -263,7 +261,7 @@ public class AccessionWriterTest {
     public void saveSameAccessionTwice() throws Exception {
         Variant variant = buildMockVariant("contig", START_1);
 
-        accessionWriter.write(Arrays.asList(variant, variant));
+        accessionWriter.write(Chunk.of(variant, variant));
 
         ISubmittedVariant submittedVariant = variantConverter.convert(variant);
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service
@@ -281,7 +279,7 @@ public class AccessionWriterTest {
     public void testSaveInitializesCreatedDate() throws Exception {
         Variant variant = buildMockVariant("contig", START_1);
         LocalDateTime beforeSave = LocalDateTime.now();
-        accessionWriter.write(Collections.singletonList(variant));
+        accessionWriter.write(Chunk.of(variant));
         LocalDateTime afterSave = LocalDateTime.now();
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service
@@ -297,7 +295,7 @@ public class AccessionWriterTest {
     public void createAccessionAndItAppearsInTheReportVcf() throws Exception {
         Variant variant = buildMockVariant("contig", START_1);
 
-        accessionWriter.write(Arrays.asList(variant, variant));
+        accessionWriter.write(Chunk.of(variant, variant));
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service
                 .get(Collections.singletonList(variantConverter.convert(variant)));
@@ -305,36 +303,33 @@ public class AccessionWriterTest {
 
         String vcfLine = AccessionReportWriterTest.getFirstVariantLine(variantOutput);
         assertEquals(vcfLine.split("\t")[ACCESSION_COLUMN],
-                     ACCESSION_PREFIX + accessions.iterator().next().getAccession());
+                ACCESSION_PREFIX + accessions.iterator().next().getAccession());
     }
 
     @Test
     public void shouldThrowIfSomeVariantsWereNotAccessioned() {
         SubmittedVariant variant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1,
-                                                        REFERENCE_ALLELE, ALTERNATE_ALLELE, CLUSTERED_VARIANT, false,
-                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+                REFERENCE_ALLELE, ALTERNATE_ALLELE, CLUSTERED_VARIANT, false,
+                MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
 
-        thrown.expect(IllegalStateException.class);
-        accessionWriter.checkCountsMatch(Collections.singletonList(variant), new ArrayList<>());
+        assertThrows(IllegalStateException.class, () -> accessionWriter.checkCountsMatch(Collections.singletonList(variant), new ArrayList<>()));
     }
 
     @Test
     public void shouldThrowIfSomeVariantsWereNotAccessionedInAChunkWithRepeatedVariants() {
         SubmittedVariant firstVariant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1,
-                                                             REFERENCE, ALTERNATE, CLUSTERED_VARIANT, false,
-                                                             MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+                REFERENCE, ALTERNATE, CLUSTERED_VARIANT, false,
+                MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         SubmittedVariant secondVariant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_2,
-                                                              REFERENCE, ALTERNATE, CLUSTERED_VARIANT, false,
-                                                              MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+                REFERENCE, ALTERNATE, CLUSTERED_VARIANT, false,
+                MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         List<SubmittedVariant> variants = Arrays.asList(firstVariant, secondVariant, firstVariant, secondVariant);
 
         ArrayList<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = new ArrayList<>();
         accessions.add(new AccessionWrapper<>(EXPECTED_ACCESSION, "hashedMessage", secondVariant));
 
-        thrown.expect(IllegalStateException.class);
-        accessionWriter.checkCountsMatch(variants,
-                                         GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
-                                                 accessions));
+        assertThrows(IllegalStateException.class, () -> accessionWriter.checkCountsMatch(variants,
+                GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(accessions)));
     }
 
     @Test
@@ -343,26 +338,26 @@ public class AccessionWriterTest {
         SubmittedVariant variantWithRs = getSubmittedVariantWithClusteredVariant(NONNULL_CLUSTERED_VARIANT);
         List<SubmittedVariant> variants = Arrays.asList(variant, variant);
         AccessionWrapper<ISubmittedVariant, String, Long> accession = new AccessionWrapper<>(EXPECTED_ACCESSION,
-                                                                                             "hashedMessage",
-                                                                                             variantWithRs);
+                "hashedMessage",
+                variantWithRs);
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = Collections.singletonList(accession);
 
         accessionWriter.checkCountsMatch(variants,
-                                         GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
-                                                 accessions));
+                GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
+                        accessions));
     }
 
     @Test
     public void shouldSortReport() throws Exception {
         // given
         List<Variant> variants = Arrays.asList(buildMockVariant(CONTIG_2, CHROMOSOME_2, START_1),
-                                               buildMockVariant(CONTIG_1, CHROMOSOME_1, START_2),
-                                               buildMockVariant(CONTIG_3, CHROMOSOME_3, START_1),
-                                               buildMockVariant(CONTIG_1, CHROMOSOME_1, START_1),
-                                               buildMockVariant(CONTIG_2, CHROMOSOME_2, START_2));
+                buildMockVariant(CONTIG_1, CHROMOSOME_1, START_2),
+                buildMockVariant(CONTIG_3, CHROMOSOME_3, START_1),
+                buildMockVariant(CONTIG_1, CHROMOSOME_1, START_1),
+                buildMockVariant(CONTIG_2, CHROMOSOME_2, START_2));
 
         // when
-        accessionWriter.write(variants);
+        accessionWriter.write(new Chunk<>(variants));
 
         // then
         BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(variantOutput)));
@@ -383,8 +378,8 @@ public class AccessionWriterTest {
 
     private SubmittedVariant getSubmittedVariantWithClusteredVariant(Long clusteredVariant) {
         return new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1,
-                             REFERENCE, ALTERNATE, clusteredVariant, false,
-                             MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+                REFERENCE, ALTERNATE, clusteredVariant, false,
+                MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
     }
 
     private Variant buildMockVariant(String contig, int start) {

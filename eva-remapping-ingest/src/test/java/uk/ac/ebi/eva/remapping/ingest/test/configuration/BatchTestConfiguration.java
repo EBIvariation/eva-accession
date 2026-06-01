@@ -16,15 +16,16 @@
  */
 package uk.ac.ebi.eva.remapping.ingest.test.configuration;
 
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.batch.BatchProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.transaction.PlatformTransactionManager;
-
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 import uk.ac.ebi.eva.remapping.ingest.configuration.RemappingMetadataConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.io.IngestRemappedSubmittedVariantsWriterConfiguration;
@@ -36,7 +37,7 @@ import uk.ac.ebi.eva.remapping.ingest.configuration.batch.steps.IngestRemappedFr
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.steps.StoreRemappingMetadataStepConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.policies.ChunkSizeCompletionPolicyConfiguration;
 
-import javax.sql.DataSource;
+import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.INGEST_REMAPPED_VARIANTS_FROM_VCF_JOB;
 
 @EnableAutoConfiguration
 @Import({IngestRemappedFromVcfStepConfiguration.class,
@@ -49,22 +50,19 @@ import javax.sql.DataSource;
         ChunkSizeCompletionPolicyConfiguration.class,
         RemappingMetadataConfiguration.class})
 public class BatchTestConfiguration {
-
-    @Autowired
-    private BatchProperties properties;
+    public static final String JOB_INGEST_REMAPPED_VARIANTS_FROM_VCF_JOB = "JOB_INGEST_REMAPPED_VARIANTS_FROM_VCF_JOB";
 
     @Autowired
     private ResourceLoader resourceLoader;
 
-    @Autowired
-    private DataSource dataSource;
-
-    @Autowired
-    private PlatformTransactionManager platformTransactionManager;
-
-    @Bean
-    public JobLauncherTestUtils jobLauncherTestUtils() {
-        return new JobLauncherTestUtils();
+    @Bean(JOB_INGEST_REMAPPED_VARIANTS_FROM_VCF_JOB)
+    public JobLauncherTestUtils jobLauncherTestUtilsFromMongo(JobLauncher jobLauncher, JobRepository jobRepository,
+                                                              @Qualifier(INGEST_REMAPPED_VARIANTS_FROM_VCF_JOB) Job job) {
+        JobLauncherTestUtils utils = new JobLauncherTestUtils();
+        utils.setJobLauncher(jobLauncher);
+        utils.setJobRepository(jobRepository);
+        utils.setJob(job);
+        return utils;
     }
 
     @Bean

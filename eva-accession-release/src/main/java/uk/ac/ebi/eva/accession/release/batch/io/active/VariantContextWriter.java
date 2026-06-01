@@ -25,10 +25,10 @@ import htsjdk.variant.vcf.VCFHeaderLineType;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
-
 import uk.ac.ebi.eva.accession.release.assembly.AssemblyNameRetriever;
 
 import java.io.BufferedReader;
@@ -37,7 +37,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -52,7 +51,7 @@ import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariant
 
 /**
  * Writes a VCF file for the release of RS IDs mapped against a reference assembly
- *
+ * <p>
  * To include the contigs in the meta section it reads the file generated in the previous step
  * {@link ListContigsStepConfiguration}
  */
@@ -96,31 +95,31 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
         addContigs(metaData);
         metaData.add(new VCFHeaderLine("reference", getReferenceAssemblyLine()));
         metaData.add(new VCFInfoHeaderLine(VARIANT_CLASS_KEY, 1, VCFHeaderLineType.String,
-                                           "Variant class according to the Sequence Ontology"));
+                "Variant class according to the Sequence Ontology"));
         metaData.add(new VCFInfoHeaderLine(STUDY_ID_KEY, VCFHeaderLineCount.UNBOUNDED, VCFHeaderLineType.String,
-                                           "Identifiers of studies that report a variant"));
+                "Identifiers of studies that report a variant"));
 
         metaData.add(new VCFInfoHeaderLine(CLUSTERED_VARIANT_VALIDATED_KEY, 0, VCFHeaderLineType.Flag,
-                                           "RS validated flag, present when the RS was validated by any method "
-                                           + "as indicated by the dbSNP validation status"));
+                "RS validated flag, present when the RS was validated by any method "
+                        + "as indicated by the dbSNP validation status"));
         metaData.add(new VCFInfoHeaderLine(SUBMITTED_VARIANT_VALIDATED_KEY, 1, VCFHeaderLineType.Integer,
-                                           "Number of submitted variants clustered in an RS that were validated by any"
-                                           + " method as indicated by the dbSNP validation status"));
+                "Number of submitted variants clustered in an RS that were validated by any"
+                        + " method as indicated by the dbSNP validation status"));
 
         metaData.add(new VCFInfoHeaderLine(ALLELES_MATCH_KEY, 0, VCFHeaderLineType.Flag,
-                                           "Alleles mismatch flag, present when some of the submitted variants have "
-                                           + "inconsistent allele information. See https://github"
-                                           + ".com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP"
-                                           + "#alleles-match"));
+                "Alleles mismatch flag, present when some of the submitted variants have "
+                        + "inconsistent allele information. See https://github"
+                        + ".com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP"
+                        + "#alleles-match"));
         metaData.add(new VCFInfoHeaderLine(ASSEMBLY_MATCH_KEY, 0, VCFHeaderLineType.Flag,
-                                           "Assembly mismatch flag, present when the reference allele doesn't match "
-                                           + "the reference sequence"));
+                "Assembly mismatch flag, present when the reference allele doesn't match "
+                        + "the reference sequence"));
         metaData.add(new VCFInfoHeaderLine(SUPPORTED_BY_EVIDENCE_KEY, 0, VCFHeaderLineType.Flag,
-                                           "Lack of evidence flag, present if no submitted variant includes genotype "
-                                           + "or frequency information"));
+                "Lack of evidence flag, present if no submitted variant includes genotype "
+                        + "or frequency information"));
         metaData.add(new VCFInfoHeaderLine(REMAPPED_KEY, 0, VCFHeaderLineType.Flag,
-                                           "Remapped flag, present if the clustered variant originate only  "
-                                                   + "from submitted variants remapped to this assembly"));
+                "Remapped flag, present if the clustered variant originate only  "
+                        + "from submitted variants remapped to this assembly"));
         return metaData;
     }
 
@@ -152,7 +151,7 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
     }
 
     @Override
-    public void write(List<? extends VariantContext> variantContexts) throws Exception {
+    public void write(Chunk<? extends VariantContext> variantContexts) throws Exception {
         for (VariantContext variantContext : variantContexts) {
             writer.add(variantContext);
         }

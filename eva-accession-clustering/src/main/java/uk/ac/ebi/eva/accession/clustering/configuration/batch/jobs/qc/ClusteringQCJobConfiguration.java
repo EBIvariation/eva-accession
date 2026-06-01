@@ -19,9 +19,10 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.ItemWriter;
@@ -30,6 +31,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.batch.io.qc.ExtraneousRSReporter;
 import uk.ac.ebi.eva.accession.clustering.batch.io.qc.PendingMergeSplitReporter;
@@ -91,14 +93,14 @@ public class ClusteringQCJobConfiguration {
     public Step reportUnclusteredSSAndPendingMergeSplitStep(
             @Qualifier(REMAPPED_SS_READER) ItemStreamReader<SubmittedVariantEntity> remappedSSReader,
             @Qualifier(REPORT_UNCLUSTERED_SS_PROCESSOR)
-                    ItemProcessor<SubmittedVariantEntity, SubmittedVariantEntity> reportUnclusteredSSProcessor,
+            ItemProcessor<SubmittedVariantEntity, SubmittedVariantEntity> reportUnclusteredSSProcessor,
             @Qualifier(PENDING_MERGE_AND_SPLIT_REPORTER)
-                    ItemWriter<SubmittedVariantEntity> pendingMergeSplitReporter,
+            ItemWriter<SubmittedVariantEntity> pendingMergeSplitReporter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
-            StepBuilderFactory stepBuilderFactory,
+            JobRepository jobRepository, PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        return stepBuilderFactory.get(REPORT_UNCLUSTERED_SS_AND_PENDING_MERGES_AND_SPLITS_STEP)
-                .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
+        return new StepBuilder(REPORT_UNCLUSTERED_SS_AND_PENDING_MERGES_AND_SPLITS_STEP, jobRepository)
+                .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
                 .reader(remappedSSReader)
                 .processor(reportUnclusteredSSProcessor)
                 .writer(pendingMergeSplitReporter)
@@ -111,12 +113,12 @@ public class ClusteringQCJobConfiguration {
     public Step reportExtraneousRSStep(
             @Qualifier(REMAPPED_RS_READER) ItemStreamReader<ClusteredVariantEntity> remappedRSReader,
             @Qualifier(EXTRANEOUS_RS_REPORTER)
-                    ItemWriter<ClusteredVariantEntity> extraneousRSReporter,
+            ItemWriter<ClusteredVariantEntity> extraneousRSReporter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
-            StepBuilderFactory stepBuilderFactory,
+            JobRepository jobRepository, PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        return stepBuilderFactory.get(REPORT_EXTRANEOUS_RS_STEP)
-                .<ClusteredVariantEntity, ClusteredVariantEntity>chunk(chunkSizeCompletionPolicy)
+        return new StepBuilder(REPORT_EXTRANEOUS_RS_STEP, jobRepository)
+                .<ClusteredVariantEntity, ClusteredVariantEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
                 .reader(remappedRSReader)
                 .writer(extraneousRSReporter)
                 .listener(progressListener)
@@ -126,11 +128,11 @@ public class ClusteringQCJobConfiguration {
     @Bean(CLUSTERING_QC_JOB)
     public Job ClusteringQCJob(
             @Qualifier(REPORT_UNCLUSTERED_SS_AND_PENDING_MERGES_AND_SPLITS_STEP)
-                    Step reportUnclusteredSSAndPendingMergeSplitStep,
+            Step reportUnclusteredSSAndPendingMergeSplitStep,
             @Qualifier(REPORT_EXTRANEOUS_RS_STEP)
-                    Step reportExtraneousRSStep,
-            JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(CLUSTERING_QC_JOB)
+            Step reportExtraneousRSStep,
+            JobRepository jobRepository) {
+        return new JobBuilder(CLUSTERING_QC_JOB, jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .start(reportUnclusteredSSAndPendingMergeSplitStep)
                 .next(reportExtraneousRSStep)

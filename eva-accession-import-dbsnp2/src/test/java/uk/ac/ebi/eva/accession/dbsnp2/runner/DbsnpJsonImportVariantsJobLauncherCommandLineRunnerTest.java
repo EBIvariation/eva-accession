@@ -16,12 +16,12 @@
 package uk.ac.ebi.eva.accession.dbsnp2.runner;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.explore.JobExplorer;
@@ -33,15 +33,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
-
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.eva.accession.core.runner.CommandLineRunnerUtils;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.dbsnp2.batch.io.BzipLazyResource;
 import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.dbsnp2.test.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.test.BatchTestConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp2.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
-import javax.sql.DataSource;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -52,18 +53,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.IMPORT_DBSNP_JSON_VARIANTS_JOB;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.IMPORT_DBSNP_JSON_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.dbsnp2.runner.DbsnpJsonImportVariantsJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS;
 import static uk.ac.ebi.eva.accession.dbsnp2.runner.DbsnpJsonImportVariantsJobLauncherCommandLineRunner.EXIT_WITH_ERRORS;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
+        BatchJobRepositoryTestConfiguration.class})
 @TestPropertySource("classpath:application.properties")
 @SpringBatchTest
-public class DbsnpJsonImportVariantsJobLauncherCommandLineRunnerTest {
+public class DbsnpJsonImportVariantsJobLauncherCommandLineRunnerTest extends MongoTestContainerHelper {
 
     @Autowired
     private InputParameters inputParameters;
@@ -73,9 +75,6 @@ public class DbsnpJsonImportVariantsJobLauncherCommandLineRunnerTest {
 
     @Autowired
     private JobExplorer jobExplorer;
-
-    @Autowired
-    private DataSource datasource;
 
     @Autowired
     private DbsnpJsonImportVariantsJobLauncherCommandLineRunner runner;
@@ -93,17 +92,17 @@ public class DbsnpJsonImportVariantsJobLauncherCommandLineRunnerTest {
 
     private boolean originalInputParametersCaptured = false;
 
-    @BeforeClass
+    @BeforeAll
     public static void initializeTempFile() throws Exception {
         tempJsonInputFileToTestFailingJobs = File.createTempFile("resumeFailingJob", ".json.bz2");
     }
 
-    @AfterClass
-    public static void deleteTempFile() throws Exception {
+    @AfterAll
+    public static void deleteTempFile() {
         tempJsonInputFileToTestFailingJobs.delete();
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         if (!originalInputParametersCaptured) {
             originalJsonInputFilePath = inputParameters.getInput();
@@ -111,14 +110,14 @@ public class DbsnpJsonImportVariantsJobLauncherCommandLineRunnerTest {
             writeToTempJsonFile(originalJsonContent);
             originalInputParametersCaptured = true;
         }
-        jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository, datasource);
-        runner.setJobNames(IMPORT_DBSNP_JSON_VARIANTS_JOB);
+        jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository);
+        runner.setJobName(IMPORT_DBSNP_JSON_VARIANTS_JOB);
         jobRepositoryTestUtils.removeJobExecutions();
         inputParameters.setForceRestart(false);
         useOriginalJsonFile();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         jobRepositoryTestUtils.removeJobExecutions();
         inputParameters.setForceRestart(false);
@@ -159,11 +158,11 @@ public class DbsnpJsonImportVariantsJobLauncherCommandLineRunnerTest {
         runner.run();
         assertEquals(EXIT_WITH_ERRORS, runner.getExitCode());
         JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(IMPORT_DBSNP_JSON_VARIANTS_JOB,
-                                                                                    jobExplorer,
-                                                                                    inputParameters.toJobParameters())
-                                                               .getJobInstance();
+                        jobExplorer,
+                        inputParameters.toJobParameters())
+                .getJobInstance();
         StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance,
-                                                                         IMPORT_DBSNP_JSON_VARIANTS_STEP);
+                IMPORT_DBSNP_JSON_VARIANTS_STEP);
         //Ensure that only the first batch was written (batch size is 2 and error was at line#4)
         assertEquals(inputParameters.getChunkSize(), stepExecution.getWriteCount());
 
@@ -174,9 +173,9 @@ public class DbsnpJsonImportVariantsJobLauncherCommandLineRunnerTest {
         runner.run();
         assertEquals(EXIT_WITHOUT_ERRORS, runner.getExitCode());
         JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(IMPORT_DBSNP_JSON_VARIANTS_JOB,
-                                                                                    jobExplorer,
-                                                                                    inputParameters.toJobParameters())
-                                                               .getJobInstance();
+                        jobExplorer,
+                        inputParameters.toJobParameters())
+                .getJobInstance();
         assertNotEquals(failingJobInstance.getInstanceId(), currentJobInstance.getInstanceId());
     }
 
@@ -222,11 +221,11 @@ public class DbsnpJsonImportVariantsJobLauncherCommandLineRunnerTest {
     private void runJobCAndCheckResumption(JobInstance failingJobInstance) throws Exception {
         runner.run();
         JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(IMPORT_DBSNP_JSON_VARIANTS_JOB,
-                                                                                    jobExplorer,
-                                                                                    inputParameters.toJobParameters())
-                                                               .getJobInstance();
+                        jobExplorer,
+                        inputParameters.toJobParameters())
+                .getJobInstance();
         StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance,
-                                                                         IMPORT_DBSNP_JSON_VARIANTS_STEP);
+                IMPORT_DBSNP_JSON_VARIANTS_STEP);
         // Did we resume the previous failed job instance?
         assertEquals(failingJobInstance.getInstanceId(), currentJobInstance.getInstanceId());
 
@@ -294,7 +293,7 @@ public class DbsnpJsonImportVariantsJobLauncherCommandLineRunnerTest {
 
     private int getNumberOfLinesInJsonString(String jsonString) {
         return (int) Arrays.stream(jsonString.split(System.lineSeparator()))
-                           .filter(line -> !line.startsWith("#"))
-                           .count();
+                .filter(line -> !line.startsWith("#"))
+                .count();
     }
 }

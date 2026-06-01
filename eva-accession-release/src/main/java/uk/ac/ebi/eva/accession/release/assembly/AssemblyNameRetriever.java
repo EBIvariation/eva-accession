@@ -15,11 +15,12 @@
  */
 package uk.ac.ebi.eva.accession.release.assembly;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Unmarshaller;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
 
 /**
  * Use a curated list and the ENA webservices to return the assembly name associated with an assembly accession.
- *
+ * <p>
  * The ENA webservices for URLs like https://www.ebi.ac.uk/ena/browser/api/xml/GCA_000001405.28
  * can return an xml that starts like this:
  * <pre>
@@ -47,7 +48,7 @@ import java.util.stream.Collectors;
  * ...
  * }
  * </pre>
- *
+ * <p>
  * The schema for these XMLs (and the definition of the NAME element) is here:
  * https://github.com/enasequence/schema/blob/master/src/main/resources/uk/ac/ebi/ena/sra/schema/ENA.assembly.xsd#L44
  */
@@ -96,7 +97,7 @@ public class AssemblyNameRetriever {
                     String errorMessage = new BufferedReader(new InputStreamReader(httpConnection.getErrorStream()))
                             .lines().collect(Collectors.joining("\n"));
                     throw new RuntimeException("Unexpected response (HTTP code " + responseCode + "). Message: "
-                                                       + errorMessage);
+                            + errorMessage);
                 }
             } catch (IOException | JAXBException e) {
                 throw new RuntimeException(e);

@@ -2,7 +2,8 @@ package uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps;
 
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemStreamReader;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.DuplicateSSAccQCResult;
 
 import java.util.List;
@@ -37,11 +39,11 @@ public class DuplicateSSAccQCStepConfiguration {
     private ItemWriter<List<DuplicateSSAccQCResult>> duplicateSSAccQCWriter;
 
     @Bean(DUPLICATE_SS_ACC_QC_STEP)
-    public Step duplicateSSAccQCStep(StepBuilderFactory stepBuilderFactory) {
-        TaskletStep step = stepBuilderFactory.get(DUPLICATE_SS_ACC_QC_STEP)
+    public Step duplicateSSAccQCStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        TaskletStep step = new StepBuilder(DUPLICATE_SS_ACC_QC_STEP, jobRepository)
                 // hardcoded the chunk size as 1, as the reader takes care of accumulating
                 // and sending the chunk size (defined in properties file) elements to the processor
-                .<List<Long>, List<DuplicateSSAccQCResult>>chunk(1)
+                .<List<Long>, List<DuplicateSSAccQCResult>>chunk(1, transactionManager)
                 .reader(ssAccFileReader)
                 .processor(duplicateSSAccQCProcessor)
                 .writer(duplicateSSAccQCWriter)

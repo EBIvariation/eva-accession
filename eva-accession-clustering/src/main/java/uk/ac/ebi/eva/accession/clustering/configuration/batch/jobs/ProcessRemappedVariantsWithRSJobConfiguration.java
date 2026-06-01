@@ -18,8 +18,9 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,10 +36,10 @@ public class ProcessRemappedVariantsWithRSJobConfiguration {
     @Bean(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB)
     public Job processRemappedVariantsWithRSJob(
             @Qualifier(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP) Step clusteringClusteredVariantsFromMongoStep,
-            JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB)
-                                .incrementer(new RunIdIncrementer())
-                                .start(clusteringClusteredVariantsFromMongoStep)
-                                .build();
+            JobRepository jobRepository) {
+        return new JobBuilder(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB, jobRepository)
+                .incrementer(new RunIdIncrementer())
+                .start(clusteringClusteredVariantsFromMongoStep)
+                .build();
     }
 }

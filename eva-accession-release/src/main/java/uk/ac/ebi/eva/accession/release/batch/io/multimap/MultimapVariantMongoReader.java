@@ -15,7 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.release.batch.io.multimap;
 
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
@@ -48,11 +48,11 @@ public class MultimapVariantMongoReader extends AccessionedVariantMongoReader {
     @Override
     protected List<Bson> buildAggregation() {
         Bson match = Aggregates.match(Filters.and(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
-                                                  Filters.eq(TAXONOMY_FIELD, taxonomyAccession),
-                                                  Filters.gte(MAPPING_WEIGHT_FIELD, NON_SINGLE_LOCATION_MAPPING)));
+                Filters.eq(TAXONOMY_FIELD, taxonomyAccession),
+                Filters.gte(MAPPING_WEIGHT_FIELD, NON_SINGLE_LOCATION_MAPPING)));
         Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
         Bson lookup = Aggregates.lookup(names.getSubmittedVariantEntity(), ACCESSION_FIELD,
-                                        CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
+                CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
         List<Bson> aggregation = Arrays.asList(match, sort, lookup);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
@@ -63,7 +63,7 @@ public class MultimapVariantMongoReader extends AccessionedVariantMongoReader {
         List<Variant> variants = super.getVariants(clusteredVariant);
         for (Variant variant : variants) {
             variant.getSourceEntries().iterator().next().addAttribute(MAPPING_WEIGHT_KEY,
-                                                                      clusteredVariant.get(MAPPING_WEIGHT_FIELD).toString());
+                    clusteredVariant.get(MAPPING_WEIGHT_FIELD).toString());
         }
         return variants;
     }

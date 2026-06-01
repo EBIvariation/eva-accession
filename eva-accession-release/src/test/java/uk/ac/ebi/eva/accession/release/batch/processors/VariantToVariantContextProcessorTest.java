@@ -19,11 +19,8 @@ package uk.ac.ebi.eva.accession.release.batch.processors;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
 import org.assertj.core.util.Sets;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
@@ -32,8 +29,9 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
 import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class VariantToVariantContextProcessorTest {
 
@@ -61,10 +59,7 @@ public class VariantToVariantContextProcessorTest {
 
     private VariantToVariantContextProcessor variantConverter;
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         ContigMapping contigMapping = new ContigMapping(Collections.singletonList(
                 new ContigSynonyms(SEQUENCE_NAME_1, "A", "A", GENBANK_ACCESSION_1, "A", "A", true)));
@@ -72,7 +67,7 @@ public class VariantToVariantContextProcessorTest {
     }
 
     @Test
-    public void singleStudySNV() throws Exception {
+    public void singleStudySNV() {
         Variant variant = buildVariant(GENBANK_ACCESSION_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1);
         VariantContext variantContext = variantConverter.process(variant);
         assertVariantContext(variantContext, SEQUENCE_NAME_1, 1000, 1000, ID, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1);
@@ -100,7 +95,7 @@ public class VariantToVariantContextProcessorTest {
         assertEquals(expectedEnd, variantContext.getEnd());
         assertEquals(Allele.create(expectedReference, true), variantContext.getReference());
         assertEquals(Collections.singletonList(Allele.create(expectedAlternate, false)),
-                     variantContext.getAlternateAlleles());
+                variantContext.getAlternateAlleles());
         assertEquals(expectedId, variantContext.getID());
         assertTrue(variantContext.getFilters().isEmpty());
         assertEquals(2, variantContext.getCommonInfo().getAttributes().size());
@@ -115,61 +110,59 @@ public class VariantToVariantContextProcessorTest {
     }
 
     @Test
-    public void throwsIfAllelesAreEmpty() throws Exception {
+    public void throwsIfAllelesAreEmpty() {
         Variant variant = buildVariant(GENBANK_ACCESSION_1, 1100, "", "G", SNP_SEQUENCE_ONTOLOGY, STUDY_1);
-        expectedException.expect(IllegalArgumentException.class);
-        variantConverter.process(variant);
+        assertThrows(IllegalArgumentException.class, () -> variantConverter.process(variant));
     }
 
     @Test
-    public void singleStudySingleNucleotideInsertion() throws Exception {
+    public void singleStudySingleNucleotideInsertion() {
         Variant variant = buildVariant(GENBANK_ACCESSION_1, 1100, "T", "TG", SNP_SEQUENCE_ONTOLOGY, STUDY_1);
         VariantContext variantContext = variantConverter.process(variant);
         assertVariantContext(variantContext, SEQUENCE_NAME_1, 1100, 1100, ID, "T", "TG", SNP_SEQUENCE_ONTOLOGY,
-                             STUDY_1);
+                STUDY_1);
     }
 
     @Test
-    public void singleStudySeveralNucleotidesInsertion() throws Exception {
+    public void singleStudySeveralNucleotidesInsertion() {
         Variant variant = buildVariant(GENBANK_ACCESSION_1, 1100, "T", "TGA", INSERTION_SEQUENCE_ONTOLOGY, STUDY_1);
         VariantContext variantContext = variantConverter.process(variant);
         assertVariantContext(variantContext, SEQUENCE_NAME_1, 1100, 1100, ID, "T", "TGA", INSERTION_SEQUENCE_ONTOLOGY,
-                             STUDY_1);
+                STUDY_1);
     }
 
     @Test
-    public void singleStudySingleNucleotideDeletion() throws Exception {
+    public void singleStudySingleNucleotideDeletion() {
         Variant variant = buildVariant(GENBANK_ACCESSION_1, 1100, "TA", "T", DELETION_SEQUENCE_ONTOLOGY, STUDY_1);
         VariantContext variantContext = variantConverter.process(variant);
         assertVariantContext(variantContext, SEQUENCE_NAME_1, 1100, 1101, ID, "TA", "T", DELETION_SEQUENCE_ONTOLOGY,
-                             STUDY_1);
+                STUDY_1);
     }
 
     @Test
-    public void singleStudySeveralNucleotidesDeletion() throws Exception {
+    public void singleStudySeveralNucleotidesDeletion() {
         Variant variant = buildVariant(GENBANK_ACCESSION_1, 1100, "TAG", "T", DELETION_SEQUENCE_ONTOLOGY, STUDY_1);
         VariantContext variantContext = variantConverter.process(variant);
         assertVariantContext(variantContext, SEQUENCE_NAME_1, 1100, 1102, ID, "TAG", "T", DELETION_SEQUENCE_ONTOLOGY,
-                             STUDY_1);
+                STUDY_1);
     }
 
     @Test
-    public void singleStudyMultiAllelicVariant() throws Exception {
+    public void singleStudyMultiAllelicVariant() {
         Variant variant = buildVariant(GENBANK_ACCESSION_1, 1100, "C", "A,T", SNP_SEQUENCE_ONTOLOGY, STUDY_1);
-        expectedException.expect(IllegalArgumentException.class);
-        variantConverter.process(variant);
+        assertThrows(IllegalArgumentException.class, () -> variantConverter.process(variant));
     }
 
     @Test
-    public void singleNucleotideInsertionInPosition1() throws Exception {
+    public void singleNucleotideInsertionInPosition1() {
         Variant variant = buildVariant(GENBANK_ACCESSION_1, 1, "A", "TA", INSERTION_SEQUENCE_ONTOLOGY, STUDY_1);
         VariantContext variantContext = variantConverter.process(variant);
         assertVariantContext(variantContext, SEQUENCE_NAME_1, 1, 1, ID, "A", "TA", INSERTION_SEQUENCE_ONTOLOGY,
-                             STUDY_1);
+                STUDY_1);
     }
 
     @Test
-    public void singleNucleotideDeletionInPosition1() throws Exception {
+    public void singleNucleotideDeletionInPosition1() {
         Variant variant = buildVariant(GENBANK_ACCESSION_1, 1, "AT", "T", DELETION_SEQUENCE_ONTOLOGY, STUDY_1);
         VariantContext variantContext = variantConverter.process(variant);
         assertVariantContext(variantContext, SEQUENCE_NAME_1, 1, 2, ID, "AT", "T", DELETION_SEQUENCE_ONTOLOGY, STUDY_1);
@@ -177,23 +170,23 @@ public class VariantToVariantContextProcessorTest {
 
 
     @Test
-    public void severalNucleotidesInsertionInPosition1() throws Exception {
+    public void severalNucleotidesInsertionInPosition1() {
         Variant variant = buildVariant(GENBANK_ACCESSION_1, 1, "A", "GGTA", INSERTION_SEQUENCE_ONTOLOGY, STUDY_1);
         VariantContext variantContext = variantConverter.process(variant);
         assertVariantContext(variantContext, SEQUENCE_NAME_1, 1, 1, ID, "A", "GGTA", INSERTION_SEQUENCE_ONTOLOGY,
-                             STUDY_1);
+                STUDY_1);
     }
 
     @Test
-    public void severalNucleotidesDeletionInPosition1() throws Exception {
+    public void severalNucleotidesDeletionInPosition1() {
         Variant variant = buildVariant(GENBANK_ACCESSION_1, 1, "ATTG", "G", DELETION_SEQUENCE_ONTOLOGY, STUDY_1);
         VariantContext variantContext = variantConverter.process(variant);
         assertVariantContext(variantContext, SEQUENCE_NAME_1, 1, 4, ID, "ATTG", "G", DELETION_SEQUENCE_ONTOLOGY,
-                             STUDY_1);
+                STUDY_1);
     }
 
     @Test
-    public void twoStudiesSingleVariant() throws Exception {
+    public void twoStudiesSingleVariant() {
         Variant variant = buildVariant(GENBANK_ACCESSION_1, 1000, "T", "G", SNP_SEQUENCE_ONTOLOGY, STUDY_1, STUDY_2);
 
         // process variant
@@ -201,7 +194,7 @@ public class VariantToVariantContextProcessorTest {
 
         // check processed variant
         assertVariantContext(variantContext, SEQUENCE_NAME_1, 1000, 1000, ID, "T", "G", SNP_SEQUENCE_ONTOLOGY, STUDY_1,
-                             STUDY_2);
+                STUDY_2);
     }
 
 }

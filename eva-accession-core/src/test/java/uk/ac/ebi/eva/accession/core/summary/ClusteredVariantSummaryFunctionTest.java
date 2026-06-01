@@ -17,8 +17,8 @@
  */
 package uk.ac.ebi.eva.accession.core.summary;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
@@ -27,8 +27,8 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 import java.time.LocalDateTime;
 import java.time.Month;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class ClusteredVariantSummaryFunctionTest {
 
@@ -46,7 +46,7 @@ public class ClusteredVariantSummaryFunctionTest {
 
     private ClusteredVariantSummaryFunction summaryFunction;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         summaryFunction = new ClusteredVariantSummaryFunction();
     }

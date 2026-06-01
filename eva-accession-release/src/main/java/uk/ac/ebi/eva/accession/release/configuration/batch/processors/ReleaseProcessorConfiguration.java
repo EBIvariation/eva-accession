@@ -21,14 +21,13 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
-import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.release.batch.processors.ContextNucleotideAdditionProcessor;
 import uk.ac.ebi.eva.accession.release.batch.processors.ExcludeInvalidVariantsProcessor;
 import uk.ac.ebi.eva.accession.release.batch.processors.NamedVariantProcessor;
 import uk.ac.ebi.eva.accession.release.batch.processors.VariantToVariantContextProcessor;
+import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.io.IOException;

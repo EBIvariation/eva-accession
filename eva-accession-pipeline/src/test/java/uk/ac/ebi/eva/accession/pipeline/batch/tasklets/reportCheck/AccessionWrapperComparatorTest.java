@@ -15,12 +15,9 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.batch.tasklets.reportCheck;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
-
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -29,7 +26,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class AccessionWrapperComparatorTest {
 
@@ -51,12 +49,9 @@ public class AccessionWrapperComparatorTest {
 
     private AccessionWrapperComparator accessionWrapperComparator;
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     private Map<String, String> contigMapping;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         List<Variant> variants = Arrays.asList(buildMockVariant(CONTIG_A),
                                                buildMockVariant(CONTIG_B),
@@ -162,8 +157,8 @@ public class AccessionWrapperComparatorTest {
                                                buildMockVariant(CONTIG_A));
         AccessionWrapperComparator comparator = new AccessionWrapperComparator(variants);
 
-        thrown.expect(IllegalStateException.class);
-        comparator.compare(buildMockAccessionWrapper(CONTIG_11, 100),
-                           buildMockAccessionWrapper(CONTIG_2, 100));
+        assertThrows(IllegalStateException.class, () ->
+                comparator.compare(buildMockAccessionWrapper(CONTIG_11, 100),
+                buildMockAccessionWrapper(CONTIG_2, 100)));
     }
 }

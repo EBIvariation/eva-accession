@@ -15,11 +15,10 @@
  */
 package uk.ac.ebi.eva.accession.core.configuration.nonhuman;
 
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
-
+import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.MongoClient;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,21 +28,22 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.core.env.Environment;
-import org.springframework.data.mongodb.MongoDbFactory;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
+import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
 import org.springframework.data.mongodb.core.WriteResultChecking;
 import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
 import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
+import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import uk.ac.ebi.eva.accession.core.configuration.MongoClientCreator;
 
 import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
+import java.util.Collections;
 
 @Configuration
 @EnableMongoRepositories(basePackages = {"uk.ac.ebi.eva.accession.core.repository"})
@@ -66,33 +66,50 @@ public class MongoConfiguration {
 
     @Bean
     @Primary
-    public MongoClient mongoClient(MongoProperties properties, ObjectProvider<MongoClientOptions> options,
-                                   Environment environment) throws UnknownHostException, UnsupportedEncodingException {
-        return MongoClientCreator.getMongoClient(properties, options, environment, readPreference);
+    public MongoClient mongoClient(MongoProperties properties, ObjectProvider<MongoClientSettings> settings)
+            throws UnknownHostException, UnsupportedEncodingException {
+        return MongoClientCreator.getMongoClient(properties, settings, readPreference);
     }
 
     @Bean("primaryFactory")
     @Primary
-    public MongoDbFactory mongoDbFactory(MongoProperties properties,
-                                         ObjectProvider<MongoClientOptions> options,
-                                         Environment environment)
+    public MongoDatabaseFactory mongoDbFactory(MongoProperties properties, ObjectProvider<MongoClientSettings> settings)
             throws UnknownHostException, UnsupportedEncodingException {
-        return new SimpleMongoDbFactory(mongoClient(properties, options, environment), properties.getDatabase());
+        return new SimpleMongoClientDatabaseFactory(mongoClient(properties, settings), properties.getDatabase());
+    }
+
+    @Bean
+    @Primary
+    public MongoCustomConversions mongoCustomConversions() {
+        return new MongoCustomConversions(Collections.emptyList());
+    }
+
+    @Bean
+    @Primary
+    public MongoMappingContext mongoMappingContext(MongoCustomConversions conversions) {
+        MongoMappingContext context = new MongoMappingContext();
+        context.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
+        context.setAutoIndexCreation(false);
+        return context;
     }
 
     @Bean
     @Primary
     public MappingMongoConverter mappingMongoConverter(MongoProperties properties,
-                                                       ObjectProvider<MongoClientOptions> options,
-                                                       Environment environment)
+                                                       ObjectProvider<MongoClientSettings> settings,
+                                                       MongoMappingContext mongoMappingContext,
+                                                       MongoCustomConversions conversions)
             throws UnknownHostException, UnsupportedEncodingException {
-        return new MappingMongoConverter(new DefaultDbRefResolver(mongoDbFactory(properties, options, environment)),
-                                         new MongoMappingContext());
+        MappingMongoConverter converter = new MappingMongoConverter(new DefaultDbRefResolver(mongoDbFactory(properties, settings)),
+                mongoMappingContext);
+        converter.setCustomConversions(conversions);
+        converter.afterPropertiesSet();
+        return converter;
     }
 
     @Primary
     @Bean
-    public MongoTemplate mongoTemplate(@Qualifier("primaryFactory") MongoDbFactory mongoDbFactory,
+    public MongoTemplate mongoTemplate(@Qualifier("primaryFactory") MongoDatabaseFactory mongoDbFactory,
                                        MappingMongoConverter converter) {
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
         MongoTemplate mongoTemplate = new MongoTemplate(mongoDbFactory, converter);

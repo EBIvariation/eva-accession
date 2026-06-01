@@ -16,29 +16,32 @@ package uk.ac.ebi.eva.accession.pipeline.runner;
  * limitations under the License.
  */
 
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.pipeline.test.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_JOB;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.deleteTemporaryContigAndVariantFiles;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.getOriginalVcfContent;
@@ -47,10 +50,11 @@ import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.useOriginalVcfF
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.useTempVcfFile;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.writeToTempVCFFile;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
+        BatchJobRepositoryTestConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
-public class JobFailureBlocksReleasedTest {
+public class JobFailureBlocksReleasedTest extends MongoTestContainerHelper {
     @Autowired
     private InputParameters inputParameters;
 
@@ -74,24 +78,24 @@ public class JobFailureBlocksReleasedTest {
     @Autowired
     private ContiguousIdBlockRepository blockRepository;
 
-    @BeforeClass
+    @BeforeAll
     public static void initializeTempFile() throws Exception {
         tempVcfInputFileToTestFailingJobs = File.createTempFile("resumeFailingJob", ".vcf.gz");
         tempVcfOutputDir = Files.createTempDirectory("contigs_variants_dir");
     }
 
-    @AfterClass
+    @AfterAll
     public static void deleteTempFile() {
         tempVcfInputFileToTestFailingJobs.delete();
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         originalVcfInputFilePath = inputParameters.getVcf();
         originalVcfContent = getOriginalVcfContent(originalVcfInputFilePath);
         writeToTempVCFFile(originalVcfContent, tempVcfInputFileToTestFailingJobs);
 
-        runner.setJobNames(SUBSNP_ACCESSION_JOB);
+        runner.setJobName(SUBSNP_ACCESSION_JOB);
         deleteTemporaryContigAndVariantFiles(inputParameters, tempVcfOutputDir);
         useOriginalVcfFile(inputParameters, originalVcfInputFilePath, vcfReader);
 

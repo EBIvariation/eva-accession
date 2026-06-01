@@ -15,8 +15,8 @@
  */
 package uk.ac.ebi.eva.accession.core.configuration.human;
 
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,12 +25,11 @@ import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.MongoDbFactory;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
+import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
 import org.springframework.data.mongodb.core.WriteResultChecking;
 import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
 import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
@@ -63,30 +62,28 @@ public class HumanMongoConfiguration {
 
     @Bean("humanMongoClient")
     public MongoClient mongoClient(@Qualifier("humanMongoProperties") MongoProperties properties,
-                                   ObjectProvider<MongoClientOptions> options, Environment environment)
+                                   ObjectProvider<MongoClientSettings> settings)
             throws UnknownHostException, UnsupportedEncodingException {
-        return MongoClientCreator.getMongoClient(properties, options, environment, readPreference);
+        return MongoClientCreator.getMongoClient(properties, settings, readPreference);
     }
 
     @Bean("humanFactory")
-    public MongoDbFactory mongoDbFactory(@Qualifier("humanMongoProperties") MongoProperties properties,
-                                         ObjectProvider<MongoClientOptions> options,
-                                         Environment environment)
+    public MongoDatabaseFactory mongoDbFactory(@Qualifier("humanMongoProperties") MongoProperties properties,
+                                               ObjectProvider<MongoClientSettings> settings)
             throws UnknownHostException, UnsupportedEncodingException {
-        return new SimpleMongoDbFactory(mongoClient(properties, options, environment), properties.getDatabase());
+        return new SimpleMongoClientDatabaseFactory(mongoClient(properties, settings), properties.getDatabase());
     }
 
     @Bean("humanMappingConverter")
     public MappingMongoConverter mappingMongoConverter(MongoProperties properties,
-                                                       ObjectProvider<MongoClientOptions> options,
-                                                       Environment environment)
+                                                       ObjectProvider<MongoClientSettings> settings)
             throws UnknownHostException, UnsupportedEncodingException {
-        return new MappingMongoConverter(new DefaultDbRefResolver(mongoDbFactory(properties, options, environment)),
-                                         new MongoMappingContext());
+        return new MappingMongoConverter(new DefaultDbRefResolver(mongoDbFactory(properties, settings)),
+                new MongoMappingContext());
     }
 
     @Bean(name = "humanMongoTemplate")
-    public MongoTemplate humanMongoTemplate(@Qualifier("humanFactory") MongoDbFactory mongoDbFactory,
+    public MongoTemplate humanMongoTemplate(@Qualifier("humanFactory") MongoDatabaseFactory mongoDbFactory,
                                             @Qualifier("humanMappingConverter") MappingMongoConverter converter) {
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
         MongoTemplate mongoTemplate = new MongoTemplate(mongoDbFactory, converter);

@@ -21,12 +21,12 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
-
 import uk.ac.ebi.eva.accession.core.exceptions.MongoBulkWriteExceptionUtils;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
@@ -75,9 +75,9 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
     }
 
     @Override
-    public void write(List<? extends SubmittedVariantEntity> submittedVariantsRemapped) {
+    public void write(Chunk<? extends SubmittedVariantEntity> submittedVariantsRemapped) {
         // We do this to avoid tedious generic type signatures in the method calls
-        List<SubmittedVariantEntity> svesToInsert = new ArrayList<>(submittedVariantsRemapped);
+        List<SubmittedVariantEntity> svesToInsert = new ArrayList<>(submittedVariantsRemapped.getItems());
 
         // Resolve duplicate hashes and accessions before inserting; note that hash resolution must happen first.
         ImmutablePair<List<SubmittedVariantEntity>, List<SubmittedVariantOperationEntity>> duplicateHashDiscards =
@@ -86,26 +86,26 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
                 resolveDuplicateAccessions(svesToInsert);
 
         List<SubmittedVariantEntity> svesToDiscard = Stream.concat(duplicateHashDiscards.getLeft().stream(),
-                                                                    duplicateAccessionDiscards.getLeft().stream())
-                                                            .collect(Collectors.toList());
+                        duplicateAccessionDiscards.getLeft().stream())
+                .collect(Collectors.toList());
         List<SubmittedVariantOperationEntity> discardOperations = Stream.concat(duplicateHashDiscards.getRight().stream(),
-                                                                                duplicateAccessionDiscards.getRight().stream())
-                                                                        .collect(Collectors.toList());
+                        duplicateAccessionDiscards.getRight().stream())
+                .collect(Collectors.toList());
 
         BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                              SubmittedVariantEntity.class,
-                                                              collection);
+                SubmittedVariantEntity.class,
+                collection);
         // Deal with discards before inserts, to avoid DuplicateKeyExceptions
         if (discardOperations.size() > 0) {
             try {
                 BulkOperations svoeBulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                                          SubmittedVariantOperationEntity.class,
-                                                                          operationCollection);
+                        SubmittedVariantOperationEntity.class,
+                        operationCollection);
                 svoeBulkOperations.insert(discardOperations);
                 BulkWriteResult bulkWriteResult = svoeBulkOperations.execute();
                 remappingIngestCounts.addRemappedVariantsDiscarded(bulkWriteResult.getInsertedCount());
 
-            } catch (DuplicateKeyException exception) {
+            } catch (BulkOperationException exception) {
                 // As we check for hash collisions in submitted variants, we should only get duplicate keys from
                 // trying to insert an identical DISCARD operation, which shouldn't happen even when rerunning
                 // (since identical SVEs are skipped).
@@ -123,7 +123,7 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
         if (svesToDiscard.size() > 0) {
             bulkOperations.remove(query(where("_id").in(
                     svesToDiscard.stream().map(SubmittedVariantEntity::getHashedMessage)
-                                 .collect(Collectors.toSet()))));
+                            .collect(Collectors.toSet()))));
             bulkOperations.execute();
         }
 
@@ -138,17 +138,17 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
             List<SubmittedVariantEntity> svesToInsert) {
         Map<String, List<SubmittedVariantEntity>> svesGroupedByHash = getDuplicateHashes(svesToInsert);
         return resolveDuplicates(svesToInsert, svesGroupedByHash,
-                                 "Submitted variant discarded due to duplicate hash");
+                "Submitted variant discarded due to duplicate hash");
     }
 
     private ImmutablePair<List<SubmittedVariantEntity>, List<SubmittedVariantOperationEntity>> resolveDuplicateAccessions(
             List<SubmittedVariantEntity> svesToInsert) {
         Map<Long, List<SubmittedVariantEntity>> svesGroupedByAccession = getDuplicateAccessions(svesToInsert);
         return resolveDuplicates(svesToInsert, svesGroupedByAccession,
-                                 "Submitted variant discarded due to duplicate SS IDs in assembly");
+                "Submitted variant discarded due to duplicate SS IDs in assembly");
     }
 
-    private <T>ImmutablePair<List<SubmittedVariantEntity>, List<SubmittedVariantOperationEntity>> resolveDuplicates(
+    private <T> ImmutablePair<List<SubmittedVariantEntity>, List<SubmittedVariantOperationEntity>> resolveDuplicates(
             List<SubmittedVariantEntity> svesToInsert,
             Map<T, List<SubmittedVariantEntity>> svesGroupedByKey,
             String discardMessage) {
@@ -159,7 +159,7 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
         Map<ImmutableTriple<String, Long, String>, LocalDateTime> createdDateMap =
                 getAllCreatedDateFromSource(duplicateSves);
 
-        for (Map.Entry<T, List<SubmittedVariantEntity>> keyAndSve: svesGroupedByKey.entrySet()) {
+        for (Map.Entry<T, List<SubmittedVariantEntity>> keyAndSve : svesGroupedByKey.entrySet()) {
             List<SubmittedVariantEntity> duplicates = keyAndSve.getValue();
             // Ensure we only keep one out of the list of duplicates for this SS.
             SubmittedVariantEntity currentKept = duplicates.get(0);
@@ -177,7 +177,7 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
                         createdDateMap.get(getKeyForCreatedDate(other)));
                 try {
                     DiscardPriority priority = SubmittedVariantDiscardPolicy.prioritise(currentDeterminants,
-                                                                                        otherDeterminants);
+                            otherDeterminants);
 
                     currentDeterminants = priority.sveToKeep;
                     currentKept = priority.sveToKeep.getSve();
@@ -210,18 +210,18 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
 
     private Map<String, List<SubmittedVariantEntity>> getDuplicateHashes(List<SubmittedVariantEntity> svesToInsert) {
         List<String> hashes = svesToInsert.stream()
-                                          .map(SubmittedVariantEntity::getHashedMessage)
-                                          .collect(Collectors.toList());
+                .map(SubmittedVariantEntity::getHashedMessage)
+                .collect(Collectors.toList());
 
         // Find duplicate hashes already in db
         List<SubmittedVariantEntity> svesWithSameHash = mongoTemplate.find(query(where("_id").in(hashes)),
-                                                                           SubmittedVariantEntity.class, collection);
+                SubmittedVariantEntity.class, collection);
 
         // Get the subset of these that are actually identical (including accession) and remove them immediately from
         // svesToInsert. These are counted as skips rather than discards.
         Map<String, List<SubmittedVariantEntity>> duplicateSve = filterForDuplicates(
                 Stream.concat(svesToInsert.stream(), svesWithSameHash.stream())
-                      .collect(Collectors.groupingBy(sve -> sve.hashCode() + "_" + sve.getAccession())));
+                        .collect(Collectors.groupingBy(sve -> sve.hashCode() + "_" + sve.getAccession())));
         for (List<SubmittedVariantEntity> dups : duplicateSve.values()) {
             int numRemoved = removeAllFromSveList(svesToInsert, dups.get(0));
             remappingIngestCounts.addRemappedVariantsSkipped(numRemoved);
@@ -230,7 +230,7 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
         // Get the remaining duplicate hashes
         Map<String, List<SubmittedVariantEntity>> svesGroupedByHash =
                 Stream.concat(svesToInsert.stream(), svesWithSameHash.stream())
-                      .collect(Collectors.groupingBy(SubmittedVariantEntity::getHashedMessage));
+                        .collect(Collectors.groupingBy(SubmittedVariantEntity::getHashedMessage));
 
         return filterForDuplicates(svesGroupedByHash);
     }
@@ -242,7 +242,7 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
     }
 
     private boolean containsSveList(List<SubmittedVariantEntity> sves, SubmittedVariantEntity sveToFind) {
-        for (SubmittedVariantEntity sve: sves) {
+        for (SubmittedVariantEntity sve : sves) {
             if (equalsSveAndAccession(sve, sveToFind)) {
                 return true;
             }
@@ -256,8 +256,8 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
 
     private Map<Long, List<SubmittedVariantEntity>> getDuplicateAccessions(List<SubmittedVariantEntity> svesToInsert) {
         List<Long> accessions = svesToInsert.stream()
-                                            .map(SubmittedVariantEntity::getAccession)
-                                            .collect(Collectors.toList());
+                .map(SubmittedVariantEntity::getAccession)
+                .collect(Collectors.toList());
 
         // Find duplicate SS already in the database
         List<SubmittedVariantEntity> svesWithSameAccession = mongoTemplate.find(
@@ -266,7 +266,7 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
 
         Map<Long, List<SubmittedVariantEntity>> svesGroupedBySs =
                 Stream.concat(svesToInsert.stream(), svesWithSameAccession.stream())
-                      .collect(Collectors.groupingBy(SubmittedVariantEntity::getAccession));
+                        .collect(Collectors.groupingBy(SubmittedVariantEntity::getAccession));
 
         return filterForDuplicates(svesGroupedBySs);
     }
@@ -278,8 +278,8 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
         // duplicates in all cases. If there's a duplicate triple almost certainly the createdDates are the same.
         Map<ImmutableTriple<String, Long, String>, LocalDateTime> targetToSourceCreatedDate = duplicateSves
                 .stream().collect(Collectors.toMap(this::getKeyForCreatedDate,
-                                                   SubmittedVariantEntity::getCreatedDate,
-                                                   (cd1, cd2) -> Collections.min(Arrays.asList(cd1, cd2))));
+                        SubmittedVariantEntity::getCreatedDate,
+                        (cd1, cd2) -> Collections.min(Arrays.asList(cd1, cd2))));
 
         Map<String, List<SubmittedVariantEntity>> svesBySourceAssembly = duplicateSves
                 .stream().collect(Collectors.groupingBy(
@@ -323,42 +323,42 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
         // If we can't find the source SVE, use the created date of the remapped SVE
         if (Objects.isNull(sourceSves) || sourceSves.isEmpty()) {
             logger.warn("No SS " + targetSve.getAccession() + " found in source assembly "
-                                + targetSve.getRemappedFrom());
+                    + targetSve.getRemappedFrom());
             return targetSve.getCreatedDate();
         }
         // If we find multiple SS in the source, return the min created date
         if (sourceSves.size() > 1) {
             logger.warn("Duplicate SS " + targetSve.getAccession() + " found in source assembly "
-                                + targetSve.getRemappedFrom());
+                    + targetSve.getRemappedFrom());
             return Collections.min(sourceSves, Comparator.comparing(SubmittedVariantEntity::getCreatedDate))
-                              .getCreatedDate();
+                    .getCreatedDate();
         }
         return sourceSves.get(0).getCreatedDate();
     }
 
     private SubmittedVariantOperationEntity getDiscardOperationWithMessage(SubmittedVariantEntity sve, String message) {
         String svoeId = String.format("DISCARD_SS_%s_HASH_%s_SOURCE_%s",
-                                      sve.getAccession(),
-                                      sve.getHashedMessage(),
-                                      sve.getRemappedFrom());
+                sve.getAccession(),
+                sve.getHashedMessage(),
+                sve.getRemappedFrom());
         SubmittedVariantOperationEntity svoe = new SubmittedVariantOperationEntity();
         svoe.fill(EventType.DISCARDED,
-                  sve.getAccession(),
-                  message,
-                  Collections.singletonList(new SubmittedVariantInactiveEntity(sve)));
+                sve.getAccession(),
+                message,
+                Collections.singletonList(new SubmittedVariantInactiveEntity(sve)));
         svoe.setId(svoeId);
         return svoe;
     }
 
-    private <T, S>Map<T, List<S>> filterForDuplicates(Map<T, List<S>> map) {
+    private <T, S> Map<T, List<S>> filterForDuplicates(Map<T, List<S>> map) {
         return map.entrySet().stream()
-                  .filter(candidateEntry -> candidateEntry.getValue().size() > 1)
-                  .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .filter(candidateEntry -> candidateEntry.getValue().size() > 1)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private <T, S>List<S> flattenValues(Map<T, List<S>> map) {
+    private <T, S> List<S> flattenValues(Map<T, List<S>> map) {
         return map.values().stream()
-                  .flatMap(List::stream)
-                  .collect(Collectors.toList());
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
     }
 }

@@ -16,15 +16,9 @@
  */
 package uk.ac.ebi.eva.remapping.ingest.configuration;
 
-import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import uk.ac.ebi.eva.commons.batch.configuration.SpringBoot1CompatibilityConfiguration;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
-
-import javax.persistence.EntityManagerFactory;
-import javax.sql.DataSource;
 
 @Configuration
 public class RunnerConfiguration {
@@ -32,12 +26,5 @@ public class RunnerConfiguration {
     @Bean
     public JobExecutionApplicationListener jobExecutionApplicationListener() {
         return new JobExecutionApplicationListener();
-    }
-
-    @Bean
-    public BatchConfigurer configurer(DataSource dataSource, EntityManagerFactory entityManagerFactory)
-            throws Exception {
-        return SpringBoot1CompatibilityConfiguration.getSpringBoot1CompatibleBatchConfigurer(dataSource,
-                entityManagerFactory);
     }
 }

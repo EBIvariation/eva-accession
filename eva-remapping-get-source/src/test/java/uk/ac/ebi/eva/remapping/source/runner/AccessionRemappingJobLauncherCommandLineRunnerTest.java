@@ -15,72 +15,69 @@
  */
 package uk.ac.ebi.eva.remapping.source.runner;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.core.JobExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
-
-import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.remapping.source.parameters.InputParameters;
 import uk.ac.ebi.eva.remapping.source.parameters.ReportPathResolver;
+import uk.ac.ebi.eva.remapping.source.test.configuration.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.remapping.source.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.remapping.source.test.configuration.MongoTestConfiguration;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
-@UsingDataSet(locations = {
-        "/test-data/dbsnpSubmittedVariantEntity.json",
-        "/test-data/submittedVariantEntity.json"})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
+        BatchJobRepositoryTestConfiguration.class})
 @TestPropertySource("classpath:application.properties")
-public class AccessionRemappingJobLauncherCommandLineRunnerTest {
-
-    private static final String TEST_DB = "test-db";
-
+public class AccessionRemappingJobLauncherCommandLineRunnerTest extends MongoTestContainerHelper {
     @Autowired
     private InputParameters inputParameters;
 
     @Autowired
+    private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private ResourceLoader resourceLoader;
+
+    @Autowired
     private AccessionRemappingJobLauncherCommandLineRunner runner;
 
-    //Required by nosql-unit
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
-
-    @Before
+    @BeforeEach
     public void setUp() {
+        mongoTemplate.getDb().drop();
         deleteOutputFiles();
+
+        MongoTestDataLoader mongoTestDataLoader = new MongoTestDataLoader(mongoTemplate, resourceLoader);
+        mongoTestDataLoader.load("/test-data/dbsnpSubmittedVariantEntity.json");
+        mongoTestDataLoader.load("/test-data/submittedVariantEntity.json");
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
+        mongoTemplate.getDb().drop();
         deleteOutputFiles();
     }
 
     private void deleteOutputFiles() {
         ReportPathResolver.getDbsnpReportPath(inputParameters.getOutputFolder(),
-                                              inputParameters.getAssemblyAccession(),
-                                              inputParameters.getTaxonomy())
-                          .toFile().delete();
+                        inputParameters.getAssemblyAccession(),
+                        inputParameters.getTaxonomy())
+                .toFile().delete();
         ReportPathResolver.getEvaReportPath(inputParameters.getOutputFolder(),
-                                            inputParameters.getAssemblyAccession(),
-                                            inputParameters.getTaxonomy())
-                          .toFile().delete();
+                        inputParameters.getAssemblyAccession(),
+                        inputParameters.getTaxonomy())
+                .toFile().delete();
     }
 
     @Test

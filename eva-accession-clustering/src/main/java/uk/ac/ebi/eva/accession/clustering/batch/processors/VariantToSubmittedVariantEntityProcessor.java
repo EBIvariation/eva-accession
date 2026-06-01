@@ -18,15 +18,14 @@ package uk.ac.ebi.eva.accession.clustering.batch.processors;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.util.Assert;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
-import uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter;
-import uk.ac.ebi.eva.remapping.source.batch.processors.SubmittedVariantToVariantContextProcessor;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
+import uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter;
+import uk.ac.ebi.eva.remapping.source.batch.processors.SubmittedVariantToVariantContextProcessor;
 
 import java.util.function.Function;
 import java.util.stream.Collectors;

@@ -16,11 +16,9 @@
 package uk.ac.ebi.eva.accession.dbsnp2.batch.processors;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.test.StepScopeTestExecutionListener;
@@ -29,12 +27,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp2.batch.io.BzipLazyResource;
 import uk.ac.ebi.eva.accession.dbsnp2.batch.io.JsonNodeLineMapper;
-import uk.ac.ebi.eva.accession.dbsnp2.batch.processors.JsonNodeToClusteredVariantProcessor;
 import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp2.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -45,11 +42,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_VARIANT_READER;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestExecutionListeners({DependencyInjectionTestExecutionListener.class,
         StepScopeTestExecutionListener.class})
@@ -63,10 +60,8 @@ public class JsonNodeToClusteredVariantProcessorTest {
     private InputParameters inputParameters;
     private JsonNodeToClusteredVariantProcessor processor;
     private List<JsonNode> variants = new ArrayList<>();
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         reader.setResource(new BzipLazyResource(
             new File("src/test/resources/input-files/test-dbsnp.json.bz2")));

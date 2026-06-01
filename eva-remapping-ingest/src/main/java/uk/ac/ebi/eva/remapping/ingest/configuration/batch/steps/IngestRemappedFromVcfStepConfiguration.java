@@ -19,7 +19,8 @@ package uk.ac.ebi.eva.remapping.ingest.configuration.batch.steps;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
@@ -28,7 +29,7 @@ import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
+import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -49,15 +50,15 @@ public class IngestRemappedFromVcfStepConfiguration {
             @Qualifier(COMPOSITE_VARIANT_PROCESSOR) ItemProcessor<IVariant, SubmittedVariantEntity> processor,
             @Qualifier(REMAPPED_SUBMITTED_VARIANTS_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
-            StepBuilderFactory stepBuilderFactory,
+            JobRepository jobRepository, PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(BeanNames.INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP)
-                                             .<Variant, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
-                                             .reader(vcfReader)
-                                             .processor(processor)
-                                             .writer(submittedVariantWriter)
-                                             .listener(progressListener)
-                                             .build();
+        TaskletStep step = new StepBuilder(BeanNames.INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP, jobRepository)
+                .<Variant, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
+                .reader(vcfReader)
+                .processor(processor)
+                .writer(submittedVariantWriter)
+                .listener(progressListener)
+                .build();
         return step;
     }
 

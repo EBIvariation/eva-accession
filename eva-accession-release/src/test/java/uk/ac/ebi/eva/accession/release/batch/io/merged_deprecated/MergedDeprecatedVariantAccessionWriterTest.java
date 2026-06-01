@@ -15,33 +15,31 @@
  */
 package uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.batch.item.Chunk;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.utils.PipelineTemporaryFolderUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MergedDeprecatedVariantAccessionWriterTest {
 
     private MergedDeprecatedVariantAccessionWriter writer;
 
-    @Rule
-    public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
+    public PipelineTemporaryFolderUtil temporaryFolderUtil = new PipelineTemporaryFolderUtil();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        File output = temporaryFolderRule.newFile();
+        File output = temporaryFolderUtil.newFile();
         writer = new MergedDeprecatedVariantAccessionWriter(output.toPath());
     }
 
@@ -55,7 +53,7 @@ public class MergedDeprecatedVariantAccessionWriterTest {
         variant3.fill(EventType.MERGED, 3L, 13L, "Reason", null);
 
         writer.open(null);
-        writer.write(Arrays.asList(variant1, variant2, variant3));
+        writer.write(Chunk.of(variant1, variant2, variant3));
         writer.close();
 
         assertEquals(3, numberOfLines(writer.getOutput()));
@@ -73,7 +71,7 @@ public class MergedDeprecatedVariantAccessionWriterTest {
         long accessionIdDestiny = 11L;
         variant1.fill(EventType.MERGED, accessionIdOrigin, accessionIdDestiny, "Reason", null);
         writer.open(null);
-        writer.write(Arrays.asList(variant1));
+        writer.write(Chunk.of(variant1));
         writer.close();
 
         Optional<String> line = new BufferedReader(new FileReader(

@@ -15,8 +15,8 @@
  */
 package uk.ac.ebi.eva.remapping.source.batch.processors;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -26,8 +26,8 @@ import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
 import java.util.function.Function;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class ExcludeMultimapVariantsProcessorTest {
 
@@ -35,7 +35,7 @@ public class ExcludeMultimapVariantsProcessorTest {
 
     private ExcludeMultimapVariantsProcessor processor;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         processor = new ExcludeMultimapVariantsProcessor();
         submittedHashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
@@ -66,9 +66,9 @@ public class ExcludeMultimapVariantsProcessorTest {
         SubmittedVariant submittedVariant = new SubmittedVariant("asm", 1000, "project", "contig", 100, "A", "T", null);
         String hash = submittedHashingFunction.apply(submittedVariant);
         SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(5000000000L, hash, "asm", 1000,
-                                                                                   "project", "contig", 100, "A", "T",
-                                                                                   null, false, false, false, false, 1,
-                                                                                   mapWeight);
+                "project", "contig", 100, "A", "T",
+                null, false, false, false, false, 1,
+                mapWeight);
         return submittedVariantEntity;
     }
 }

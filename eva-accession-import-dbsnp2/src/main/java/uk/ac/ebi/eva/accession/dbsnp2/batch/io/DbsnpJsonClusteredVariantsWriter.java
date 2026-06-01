@@ -18,17 +18,17 @@ package uk.ac.ebi.eva.accession.dbsnp2.batch.io;
 import com.mongodb.MongoBulkWriteException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.mongodb.BulkOperationException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
-
-import uk.ac.ebi.eva.accession.core.batch.io.DbsnpClusteredVariantWriter;
 import uk.ac.ebi.eva.accession.core.batch.io.DbsnpClusteredVariantOperationWriter;
+import uk.ac.ebi.eva.accession.core.batch.io.DbsnpClusteredVariantWriter;
 import uk.ac.ebi.eva.accession.core.batch.io.MergeOperationBuilder;
-import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantOperationRepository;
 
 import java.util.Arrays;
@@ -61,21 +61,20 @@ public class DbsnpJsonClusteredVariantsWriter implements ItemWriter<DbsnpCluster
     }
 
     @Override
-    public void write(List<? extends DbsnpClusteredVariantEntity> clusteredVariants) throws Exception {
+    public void write(Chunk<? extends DbsnpClusteredVariantEntity> clusteredVariants) throws Exception {
         try {
             if (!clusteredVariants.isEmpty()) {
                 dbsnpClusteredVariantWriter.write(clusteredVariants);
-            }
-            else {
+            } else {
                 logger.warn("Could not find any clustered variants to write in the current chunk!");
             }
-        } catch (DuplicateKeyException exception) {
+        } catch (BulkOperationException exception) {
             MongoBulkWriteException writeException = ((MongoBulkWriteException) exception.getCause());
             List<DbsnpClusteredVariantOperationEntity> mergeClusteredOperations =
                     clusteredOperationBuilder.buildMergeOperationsFromException(
-                            (List<DbsnpClusteredVariantEntity>) clusteredVariants, writeException);
+                            List.copyOf(clusteredVariants.getItems()), writeException);
             if (!mergeClusteredOperations.isEmpty()) {
-                dbsnpClusteredVariantOperationWriter.write(mergeClusteredOperations);
+                dbsnpClusteredVariantOperationWriter.write(new Chunk<>(mergeClusteredOperations));
             }
         }
     }
@@ -86,8 +85,8 @@ public class DbsnpJsonClusteredVariantsWriter implements ItemWriter<DbsnpCluster
 
         DbsnpClusteredVariantOperationEntity operation = new DbsnpClusteredVariantOperationEntity();
         operation.fill(EventType.MERGED, origin.getAccession(), mergedInto.getAccession(),
-                       "Identical clustered variant received multiple RS identifiers",
-                       Arrays.asList(inactiveEntity));
+                "Identical clustered variant received multiple RS identifiers",
+                Arrays.asList(inactiveEntity));
 
         return operation;
     }

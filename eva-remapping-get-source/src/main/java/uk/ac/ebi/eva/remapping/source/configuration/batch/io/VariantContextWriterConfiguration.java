@@ -18,11 +18,10 @@ package uk.ac.ebi.eva.remapping.source.configuration.batch.io;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter;
+import uk.ac.ebi.eva.remapping.source.configuration.BeanNames;
 import uk.ac.ebi.eva.remapping.source.parameters.InputParameters;
 import uk.ac.ebi.eva.remapping.source.parameters.ReportPathResolver;
-import uk.ac.ebi.eva.remapping.source.configuration.BeanNames;
 
 import java.nio.file.Path;
 

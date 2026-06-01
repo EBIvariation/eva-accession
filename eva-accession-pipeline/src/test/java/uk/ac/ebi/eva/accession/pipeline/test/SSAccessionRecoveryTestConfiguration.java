@@ -16,7 +16,8 @@
 
 package uk.ac.ebi.eva.accession.pipeline.test;
 
-import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -28,11 +29,7 @@ import uk.ac.ebi.eva.accession.pipeline.configuration.batch.processors.VariantPr
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.recovery.SSAccessionRecoveryServiceConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.SSAccessionRecoveryStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.runner.EvaAccessionJobLauncherCommandLineRunner;
-import uk.ac.ebi.eva.commons.batch.configuration.SpringBoot1CompatibilityConfiguration;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
-
-import javax.persistence.EntityManagerFactory;
-import javax.sql.DataSource;
 
 @EnableAutoConfiguration
 @Import({SSAccessionRecoveryJobConfiguration.class,
@@ -43,17 +40,10 @@ import javax.sql.DataSource;
         EvaAccessionJobLauncherCommandLineRunner.class})
 public class SSAccessionRecoveryTestConfiguration {
     @Bean
-    public BatchConfigurer configurer(DataSource dataSource, EntityManagerFactory entityManagerFactory)
-            throws Exception {
-        return SpringBoot1CompatibilityConfiguration.getSpringBoot1CompatibleBatchConfigurer(dataSource,
-                entityManagerFactory);
-    }
-
-    @Bean
-    public JobLauncherTestUtils jobLauncherTestUtils(BatchConfigurer configurer) throws Exception {
+    public JobLauncherTestUtils jobLauncherTestUtils(JobLauncher jobLauncher, JobRepository jobRepository) {
         JobLauncherTestUtils jobLauncherTestUtils = new JobLauncherTestUtils();
-        jobLauncherTestUtils.setJobLauncher(configurer.getJobLauncher());
-        jobLauncherTestUtils.setJobRepository(configurer.getJobRepository());
+        jobLauncherTestUtils.setJobLauncher(jobLauncher);
+        jobLauncherTestUtils.setJobRepository(jobRepository);
         return jobLauncherTestUtils;
     }
 

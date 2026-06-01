@@ -15,27 +15,22 @@
  */
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.mongodb.MongoClient;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
-
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,17 +39,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
-@UsingDataSet(locations = {"/test-data/submittedVariantEntityStudyReader.json",
-        "/test-data/dbsnpSubmittedVariantEntityMongoReader.json"})
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
-public class StudyClusteringMongoReaderTest {
-
-    private static final String TEST_DB = "test-db";
-
+public class StudyClusteringMongoReaderTest extends MongoTestContainerHelper {
     private static final String ASSEMBLY = "GCA_000000001.1";
 
     private static final List<String> PROJECTS = Arrays.asList("projectId_2", "projectId_3");
@@ -70,30 +60,28 @@ public class StudyClusteringMongoReaderTest {
     private StudyClusteringMongoReader studyClusteringMongoReader;
 
     @Autowired
-    private MongoClient mongoClient;
-
-    @Autowired
     private MongoTemplate mongoTemplate;
 
-    //Required by nosql-unit
     @Autowired
-    private ApplicationContext applicationContext;
+    private ResourceLoader resourceLoader;
 
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
+    @BeforeEach
+    public void setUp() {
+        mongoTemplate.getDb().drop();
 
-    @Before
-    public void setUp(){
+        MongoTestDataLoader mongoTestDataLoader = new MongoTestDataLoader(mongoTemplate, resourceLoader);
+        mongoTestDataLoader.load("/test-data/submittedVariantEntityStudyReader.json");
+        mongoTestDataLoader.load("/test-data/dbsnpSubmittedVariantEntityMongoReader.json");
+
         ExecutionContext executionContext = new ExecutionContext();
         studyClusteringMongoReader = new StudyClusteringMongoReader(mongoTemplate, ASSEMBLY, PROJECTS, CHUNK_SIZE);
         studyClusteringMongoReader.open(executionContext);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         studyClusteringMongoReader.close();
-        mongoClient.dropDatabase(TEST_DB);
+        mongoTemplate.getDb().drop();
     }
 
     @Test

@@ -4,8 +4,9 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -28,8 +29,8 @@ public class SSAccessionRecoveryJobConfiguration {
     private JobExecutionListener ssAccessionRecoveryJobListener;
 
     @Bean(SS_ACCESSION_RECOVERY_JOB)
-    public Job createSSAccessionRecoveryJob(JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(SS_ACCESSION_RECOVERY_JOB)
+    public Job createSSAccessionRecoveryJob(JobRepository jobRepository) {
+        return new JobBuilder(SS_ACCESSION_RECOVERY_JOB, jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .start(ssAccessionRecoveryStep)
                 .listener(ssAccessionRecoveryJobListener)

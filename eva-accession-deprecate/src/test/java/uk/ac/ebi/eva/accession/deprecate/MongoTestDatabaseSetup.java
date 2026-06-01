@@ -32,8 +32,8 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import java.util.Arrays;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class MongoTestDatabaseSetup {
 

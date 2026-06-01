@@ -17,8 +17,8 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.batch.policies;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.batch.item.file.FlatFileParseException;
 
@@ -26,8 +26,8 @@ import uk.ac.ebi.eva.commons.core.models.factories.exception.IncompleteInformati
 import uk.ac.ebi.eva.commons.core.models.factories.exception.NonVariantException;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class InvalidVariantSkipPolicyTest {
 
@@ -36,7 +36,7 @@ public class InvalidVariantSkipPolicyTest {
 
     private InvalidVariantSkipPolicy invalidVariantSkipPolicy;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         invalidVariantSkipPolicy = new InvalidVariantSkipPolicy();
     }

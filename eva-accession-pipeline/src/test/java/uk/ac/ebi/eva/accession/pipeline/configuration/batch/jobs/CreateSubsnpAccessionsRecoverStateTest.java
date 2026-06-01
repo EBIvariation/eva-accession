@@ -16,26 +16,22 @@
 
 package uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs;
 
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
@@ -45,10 +41,12 @@ import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAcces
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.pipeline.test.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.test.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 
@@ -62,8 +60,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
@@ -72,11 +70,11 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.BUILD_REP
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration.JOB_LAUNCHER_SUBSNP_ACCESSION_JOB;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
+        MongoTestConfiguration.class, BatchJobRepositoryTestConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-recover-state-test.properties")
-public class CreateSubsnpAccessionsRecoverStateTest {
-    private static final String TEST_DB = "test-db";
+public class CreateSubsnpAccessionsRecoverStateTest extends MongoTestContainerHelper {
 
     @Autowired
     private SubmittedVariantAccessioningRepository mongoRepository;
@@ -89,14 +87,6 @@ public class CreateSubsnpAccessionsRecoverStateTest {
 
     @Autowired
     private MongoTemplate mongoTemplate;
-
-    //needed for @UsingDataSet
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
     @Autowired
     @Qualifier(JOB_LAUNCHER_SUBSNP_ACCESSION_JOB)
@@ -115,8 +105,9 @@ public class CreateSubsnpAccessionsRecoverStateTest {
 
     private MockRestServiceServer mockServer;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
+        mongoTemplate.getDb().drop();
         this.cleanSlate();
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
@@ -124,10 +115,10 @@ public class CreateSubsnpAccessionsRecoverStateTest {
                 .andRespond(withStatus(HttpStatus.OK));
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
+        mongoTemplate.getDb().drop();
         this.cleanSlate();
-        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
     }
 
     public void cleanSlate() throws Exception {
