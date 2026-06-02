@@ -42,7 +42,7 @@ public class ContiguousIdBlocksDataSourceConfiguration {
         return em;
     }
 
-    @Bean("transactionManager")
+    @Bean
     @Primary
     public PlatformTransactionManager transactionManager(EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);
