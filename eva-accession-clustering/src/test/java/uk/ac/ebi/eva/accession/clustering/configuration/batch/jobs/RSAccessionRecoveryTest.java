@@ -26,22 +26,29 @@ import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
-import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchJobRepositoryTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.RSAccessionRecoveryTestConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +58,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.RSAccessionRecoveryTestConfiguration.JOB_LAUNCHER_RS_ACCESSION_RECOVERY;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {RSAccessionRecoveryTestConfiguration.class, MongoTestConfiguration.class, BatchJobRepositoryTestConfiguration.class})
+@ContextConfiguration(classes = {RSAccessionRecoveryTestConfiguration.class, MongoTestConfiguration.class,
+        ContiguousIdBlocksDataSourceConfiguration.class, InMemoryBatchConfiguration.class})
 @TestPropertySource("classpath:rs-accession-recovery.properties")
 @SpringBatchTest
 public class RSAccessionRecoveryTest extends MongoTestContainerHelper {
@@ -64,9 +72,20 @@ public class RSAccessionRecoveryTest extends MongoTestContainerHelper {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    @Autowired
+    private DataSource dataSource;
+
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws SQLException {
         mongoTemplate.getDb().drop();
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DROP TABLE IF EXISTS contiguous_id_blocks");
+        }
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("test-data/contiguous_id_blocks_schema.sql"));
+        populator.addScript(new ClassPathResource("test-data/rs_accession_recovery_test_data.sql"));
+        populator.execute(dataSource);
     }
 
     @AfterEach
@@ -203,7 +222,7 @@ public class RSAccessionRecoveryTest extends MongoTestContainerHelper {
         assertEquals(3000000000l, block1.getFirstValue());
         assertEquals(3000000029l, block1.getLastCommitted());
         assertEquals(3000000029l, block1.getLastValue());
-        assertEquals("0", block1.getApplicationInstanceId());
+        assertEquals("1", block1.getApplicationInstanceId());
         assertTrue(block1.isNotReserved());
 
         // Block Recovered partially - (used 3000000030-3000000034 and 3000000040-3000000059)
@@ -212,7 +231,7 @@ public class RSAccessionRecoveryTest extends MongoTestContainerHelper {
         assertEquals(3000000030l, block2.getFirstValue());
         assertEquals(3000000034l, block2.getLastCommitted());
         assertEquals(3000000059l, block2.getLastValue());
-        assertEquals("0", block2.getApplicationInstanceId());
+        assertEquals("1", block2.getApplicationInstanceId());
         assertTrue(block2.isNotReserved());
 
         // Block Recovered - recovered entire block
@@ -220,7 +239,7 @@ public class RSAccessionRecoveryTest extends MongoTestContainerHelper {
         assertEquals(3000000060l, block3.getFirstValue());
         assertEquals(3000000089l, block3.getLastCommitted());
         assertEquals(3000000089l, block3.getLastValue());
-        assertEquals("0", block3.getApplicationInstanceId());
+        assertEquals("1", block3.getApplicationInstanceId());
         assertTrue(block3.isNotReserved());
 
         // Block Recovered - None of the accessions are used, just released the block
@@ -228,7 +247,7 @@ public class RSAccessionRecoveryTest extends MongoTestContainerHelper {
         assertEquals(3000000090l, block4.getFirstValue());
         assertEquals(3000000089l, block4.getLastCommitted());
         assertEquals(3000000119l, block4.getLastValue());
-        assertEquals("0", block4.getApplicationInstanceId());
+        assertEquals("1", block4.getApplicationInstanceId());
         assertTrue(block4.isNotReserved());
 
         // Block Not Recovered - Block not to be recovered as it's last update is after cut off time

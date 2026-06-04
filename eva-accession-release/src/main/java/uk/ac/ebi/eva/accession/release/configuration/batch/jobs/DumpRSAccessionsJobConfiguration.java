@@ -3,9 +3,7 @@ package uk.ac.ebi.eva.accession.release.configuration.batch.jobs;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,7 +16,6 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_MERGE
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_STEP;
 
 @Configuration
-@EnableBatchProcessing
 public class DumpRSAccessionsJobConfiguration {
 
     @Autowired
@@ -32,7 +29,6 @@ public class DumpRSAccessionsJobConfiguration {
     @Bean(DUMP_ACTIVE_ACCESSIONS_JOB)
     public Job dumpActiveAccessionJob(JobRepository jobRepository) {
         return new JobBuilder(DUMP_ACTIVE_ACCESSIONS_JOB, jobRepository)
-                .incrementer(new RunIdIncrementer())
                 .start(dumpActiveAccessionsStep)
                 .build();
     }
@@ -40,7 +36,6 @@ public class DumpRSAccessionsJobConfiguration {
     @Bean(DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB)
     public Job dumpMergedAndDeprecatedAccessionJob(JobRepository jobRepository) {
         return new JobBuilder(DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB, jobRepository)
-                .incrementer(new RunIdIncrementer())
                 .start(dumpMergedAndDeprecatedAccessionsStep)
                 .build();
     }

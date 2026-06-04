@@ -34,10 +34,10 @@ import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.remapping.ingest.batch.listeners.RemappingIngestCounts;
 import uk.ac.ebi.eva.remapping.ingest.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.remapping.ingest.test.configuration.MongoTestConfiguration;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;

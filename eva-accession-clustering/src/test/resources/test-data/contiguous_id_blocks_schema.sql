@@ -1,3 +1,7 @@
+CREATE SEQUENCE IF NOT EXISTS contiguous_id_blocks_seq
+    START WITH 1
+    INCREMENT BY 50;
+
 CREATE TABLE contiguous_id_blocks (
   id bigint not NULL,
   application_instance_id varchar(255) not NULL,

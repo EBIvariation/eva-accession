@@ -17,11 +17,11 @@
 package uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps;
 
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -30,17 +30,18 @@ import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 
 import java.io.File;
 
+import static uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration.BATCH_TRANSACTION_MANAGER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.BUILD_REPORT_STEP;
 
 @Configuration
-@EnableBatchProcessing
 public class BuildReportStepConfiguration {
 
     @Autowired
     private InputParameters inputParameters;
 
     @Bean(BUILD_REPORT_STEP)
-    public Step buildReportStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+    public Step buildReportStep(JobRepository jobRepository,
+                                @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager) {
         BuildReportTasklet tasklet = new BuildReportTasklet(new File(inputParameters.getOutputVcf()));
         TaskletStep step = new StepBuilder(BUILD_REPORT_STEP, jobRepository)
                 .tasklet(tasklet, transactionManager)

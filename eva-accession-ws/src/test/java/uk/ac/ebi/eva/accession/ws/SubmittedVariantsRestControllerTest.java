@@ -30,12 +30,15 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.server.ResponseStatusException;
@@ -47,6 +50,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -67,6 +71,10 @@ import uk.ac.ebi.eva.accession.ws.service.SubmittedVariantsBeaconService;
 import uk.ac.ebi.eva.accession.ws.test.NoContigTranslationArgumentMatcher;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -90,9 +98,10 @@ import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_VALID
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({SubmittedVariantAccessioningConfiguration.class})
+@Import({SubmittedVariantAccessioningConfiguration.class, ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:accession-ws-test.properties")
-public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelper{
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelper {
     private static String TEST_APPLICATION_INSTANCE_ID = "test-application-instance-id";
     private static final String URL = "/v1/submitted-variants/";
 
@@ -131,6 +140,9 @@ public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelpe
     @MockBean
     private ContigAliasService contigAliasService;
 
+    @Autowired
+    private DataSource dataSource;
+
     private List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions;
 
     private SubmittedVariant variant1;
@@ -140,12 +152,20 @@ public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelpe
     private SubmittedVariant variant3;
 
     @BeforeEach
-    public void setUp() throws AccessionCouldNotBeGeneratedException {
+    public void setUp() throws AccessionCouldNotBeGeneratedException, SQLException {
         repository.deleteAll();
         mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
         mongoTemplate.dropCollection(DbsnpSubmittedVariantOperationEntity.class);
         mongoTemplate.dropCollection(SubmittedVariantEntity.class);
         mongoTemplate.dropCollection(SubmittedVariantOperationEntity.class);
+
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DROP TABLE IF EXISTS contiguous_id_blocks");
+        }
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("test-data/contiguous_id_blocks_schema.sql"));
+        populator.execute(dataSource);
 
         Long CLUSTERED_VARIANT = null;
         variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT", CLUSTERED_VARIANT);
@@ -160,6 +180,8 @@ public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelpe
         mockController = new SubmittedVariantsRestController(mockService, mockSubmittedVariantsBeaconService);
 
         setUpContigAliasMock();
+
+
     }
 
     private void setUpContigAliasMock() {

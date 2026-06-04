@@ -42,8 +42,6 @@ public class InputParameters {
 
     private int chunkSize;
 
-    private boolean forceRestart;
-
     private ContigNaming contigNaming;
 
     private String duplicateSSAccFile;
@@ -141,14 +139,6 @@ public class InputParameters {
 
     public void setChunkSize(int chunkSize) {
         this.chunkSize = chunkSize;
-    }
-
-    public boolean isForceRestart() {
-        return forceRestart;
-    }
-
-    public void setForceRestart(boolean forceRestart) {
-        this.forceRestart = forceRestart;
     }
 
     public ContigNaming getContigNaming() {

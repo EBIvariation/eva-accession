@@ -22,9 +22,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -39,6 +42,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.generators.DbsnpMonotonicAccessionGenerator;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -48,12 +52,15 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariant
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.core.test.configuration.JPATestConfiguration;
 import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.ArrayList;
@@ -76,7 +83,8 @@ import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_VALID
 @ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:ss-accession-test.properties")
 @ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class,
-        JPATestConfiguration.class})
+        ContiguousIdBlocksDataSourceConfiguration.class})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class SubmittedVariantAccessioningServiceTest extends MongoTestContainerHelper {
     private static String TEST_APPLICATION_INSTANCE_ID = "test-application-instance-id";
 
@@ -131,6 +139,9 @@ public class SubmittedVariantAccessioningServiceTest extends MongoTestContainerH
     private Long accessioningMonotonicInitSs;
 
     @Autowired
+    private DataSource dataSource;
+
+    @Autowired
     private MongoDatabaseFactory mongoDbFactory;
 
     @Autowired
@@ -140,7 +151,7 @@ public class SubmittedVariantAccessioningServiceTest extends MongoTestContainerH
     private MongoTemplate mongoTemplate;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws SQLException {
         mongoTemplate.getDb().drop();
         submittedVariant = new SubmittedVariant("GCA_000003055.3", 9913, PROJECT, "21", 20800319, "C", "T",
                 CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
@@ -160,6 +171,14 @@ public class SubmittedVariantAccessioningServiceTest extends MongoTestContainerH
         submittedVariantModified = new SubmittedVariant("GCA_000003055.3", 9913, PROJECT, "21", 20800319,
                 "C", "TCTC", CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
                 DEFAULT_ASSEMBLY_MATCH, true, DEFAULT_VALIDATED, null);
+
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DROP TABLE IF EXISTS contiguous_id_blocks");
+        }
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("test-data/contiguous_id_blocks_schema.sql"));
+        populator.execute(dataSource);
     }
 
     @AfterEach
@@ -169,6 +188,7 @@ public class SubmittedVariantAccessioningServiceTest extends MongoTestContainerH
 
     @Test
     public void sameAccessionsAreReturnedForIdenticalVariants() throws AccessionCouldNotBeGeneratedException {
+
         List<SubmittedVariant> variants = Arrays.asList(
                 new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", CLUSTERED_VARIANT,
                         DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH, ALLELES_MATCH,

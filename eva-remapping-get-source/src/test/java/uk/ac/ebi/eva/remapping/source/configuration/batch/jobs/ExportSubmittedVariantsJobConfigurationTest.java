@@ -30,15 +30,14 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 import uk.ac.ebi.eva.remapping.source.configuration.BeanNames;
 import uk.ac.ebi.eva.remapping.source.parameters.InputParameters;
 import uk.ac.ebi.eva.remapping.source.parameters.ReportPathResolver;
-import uk.ac.ebi.eva.remapping.source.test.configuration.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.remapping.source.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.remapping.source.test.configuration.MongoTestConfiguration;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -52,8 +51,7 @@ import static uk.ac.ebi.eva.remapping.source.test.configuration.BatchTestConfigu
 
 @ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:with-projects.properties")
-@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
-        BatchJobRepositoryTestConfiguration.class})
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 public class ExportSubmittedVariantsJobConfigurationTest extends MongoTestContainerHelper {
     private static final long EXPECTED_LINES_DBSNP = 3;
 

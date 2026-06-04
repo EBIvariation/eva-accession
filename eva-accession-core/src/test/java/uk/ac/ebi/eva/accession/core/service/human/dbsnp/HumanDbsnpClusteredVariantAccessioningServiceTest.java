@@ -28,9 +28,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.test.configuration.JPATestConfiguration;
 import uk.ac.ebi.eva.accession.core.test.configuration.human.MongoHumanTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:ss-accession-test.properties")
-@ContextConfiguration(classes = {MongoHumanTestConfiguration.class, JPATestConfiguration.class})
+@ContextConfiguration(classes = {MongoHumanTestConfiguration.class, ContiguousIdBlocksDataSourceConfiguration.class})
 public class HumanDbsnpClusteredVariantAccessioningServiceTest extends MongoTestContainerHelper {
 
     private static final Long HUMAN_ACTIVE_RS_ID_1 = 1118L;

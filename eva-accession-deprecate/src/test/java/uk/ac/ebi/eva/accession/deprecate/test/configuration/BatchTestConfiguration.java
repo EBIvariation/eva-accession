@@ -20,9 +20,10 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.web.client.RestTemplate;
+import uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.deprecate.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.deprecate.configuration.batch.io.StudySubmittedVariantsFileReaderConfiguration;
@@ -38,8 +39,8 @@ import uk.ac.ebi.eva.accession.deprecate.configuration.batch.steps.DeprecateSubm
 import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATE_STUDY_SUBMITTED_VARIANTS_JOB;
 import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_JOB;
 
-@EnableAutoConfiguration
-@Import({MongoConfiguration.class,
+@Import({InMemoryBatchConfiguration.class,
+        MongoConfiguration.class,
         InputParametersConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class,
         StudySubmittedVariantsReaderConfiguration.class,
@@ -75,4 +76,11 @@ public class BatchTestConfiguration {
         return utils;
 
     }
+
+    @Bean(name = "COUNT_STATS_REST_TEMPLATE")
+    public RestTemplate countStatsRestTemplate() {
+        return new RestTemplate();
+    }
+
+
 }

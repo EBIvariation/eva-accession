@@ -22,10 +22,10 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ResourceLoader;
+import uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 import uk.ac.ebi.eva.remapping.ingest.configuration.RemappingMetadataConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.io.IngestRemappedSubmittedVariantsWriterConfiguration;
@@ -39,8 +39,8 @@ import uk.ac.ebi.eva.remapping.ingest.configuration.policies.ChunkSizeCompletion
 
 import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.INGEST_REMAPPED_VARIANTS_FROM_VCF_JOB;
 
-@EnableAutoConfiguration
-@Import({IngestRemappedFromVcfStepConfiguration.class,
+@Import({InMemoryBatchConfiguration.class,
+        IngestRemappedFromVcfStepConfiguration.class,
         StoreRemappingMetadataStepConfiguration.class,
         IngestRemappedVariantsFromVcfJobConfiguration.class,
         VcfReaderConfiguration.class,
