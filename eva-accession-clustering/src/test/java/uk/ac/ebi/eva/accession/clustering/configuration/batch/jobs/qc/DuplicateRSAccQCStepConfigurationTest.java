@@ -30,15 +30,16 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.clustering.batch.io.qc.DuplicateRSAccQCResult;
-import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
@@ -46,12 +47,17 @@ import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -66,7 +72,8 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.DUPLICA
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_DUPLICATE_RS_ACC_QC_JOB;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class, BatchJobRepositoryTestConfiguration.class})
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
+        ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:duplicate-rs-acc-qc-test.properties")
 public class DuplicateRSAccQCStepConfigurationTest extends MongoTestContainerHelper {
     private static final String duplicateRsAccFile = "src/test/resources/duplicateRSAcc.csv";
@@ -78,12 +85,23 @@ public class DuplicateRSAccQCStepConfigurationTest extends MongoTestContainerHel
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    @Autowired
+    private DataSource dataSource;
+
     private final Gson gson = new GsonBuilder().create();
 
     @BeforeEach
-    public void setUp() throws IOException {
+    public void setUp() throws IOException, SQLException {
         mongoTemplate.getDb().drop();
         Files.deleteIfExists(Paths.get(duplicateRsAccFile));
+
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DROP TABLE IF EXISTS contiguous_id_blocks");
+        }
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("test-data/contiguous_id_blocks_schema.sql"));
+        populator.execute(dataSource);
     }
 
     @AfterEach

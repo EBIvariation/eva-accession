@@ -41,6 +41,8 @@ import uk.ac.ebi.eva.remapping.source.configuration.batch.listeners.ListenersCon
 import uk.ac.ebi.eva.remapping.source.configuration.batch.policies.PoliciesConfiguration;
 import uk.ac.ebi.eva.remapping.source.configuration.batch.processors.SubmittedVariantsProcessorConfiguration;
 
+import static uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration.BATCH_TRANSACTION_MANAGER;
+
 @Configuration
 @Import({SubmittedVariantMongoReaderConfiguration.class,
         SubmittedVariantsProcessorConfiguration.class,
@@ -51,7 +53,8 @@ public class ExportSubmittedVariantsStepConfiguration {
 
     @Bean(BeanNames.EXPORT_EVA_SUBMITTED_VARIANTS_STEP)
     public Step exportEvaSubmittedVariantsStep(
-            JobRepository jobRepository, PlatformTransactionManager transactionManager,
+            JobRepository jobRepository,
+            @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy,
             @Autowired @Qualifier(BeanNames.EVA_SUBMITTED_VARIANT_READER) ItemReader<SubmittedVariantEntity> variantReader,
             @Autowired @Qualifier(BeanNames.SUBMITTED_VARIANT_PROCESSOR) ItemProcessor<SubmittedVariantEntity, VariantContext> variantProcessor,
@@ -74,7 +77,8 @@ public class ExportSubmittedVariantsStepConfiguration {
 
     @Bean(BeanNames.EXPORT_DBSNP_SUBMITTED_VARIANTS_STEP)
     public Step exportDbsnpSubmittedVariantsStep(
-            JobRepository jobRepository, PlatformTransactionManager transactionManager,
+            JobRepository jobRepository,
+            @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
             SimpleCompletionPolicy chunkSizeCompletionPolicy,
             @Autowired @Qualifier(BeanNames.DBSNP_SUBMITTED_VARIANT_READER) ItemReader<DbsnpSubmittedVariantEntity> variantReader,
             @Autowired @Qualifier(BeanNames.SUBMITTED_VARIANT_PROCESSOR) ItemProcessor<SubmittedVariantEntity, VariantContext> variantProcessor,

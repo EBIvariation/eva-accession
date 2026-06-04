@@ -21,9 +21,9 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 import uk.ac.ebi.eva.remapping.source.configuration.InputParametersConfiguration;
@@ -33,8 +33,8 @@ import uk.ac.ebi.eva.remapping.source.runner.AccessionRemappingJobLauncherComman
 
 import static uk.ac.ebi.eva.remapping.source.configuration.BeanNames.EXPORT_SUBMITTED_VARIANTS_JOB;
 
-@EnableAutoConfiguration
-@Import({MongoConfiguration.class,
+@Import({InMemoryBatchConfiguration.class,
+        MongoConfiguration.class,
         InputParametersConfiguration.class,
         ExportSubmittedVariantsJobConfiguration.class,
         PoliciesConfiguration.class,

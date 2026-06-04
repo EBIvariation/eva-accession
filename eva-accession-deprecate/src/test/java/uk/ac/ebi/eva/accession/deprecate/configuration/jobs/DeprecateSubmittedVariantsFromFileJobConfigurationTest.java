@@ -29,16 +29,14 @@ import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import uk.ac.ebi.eva.accession.core.runner.CommandLineRunnerUtils;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.deprecate.MongoTestDatabaseSetup;
-import uk.ac.ebi.eva.accession.deprecate.test.configuration.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.deprecate.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.deprecate.test.configuration.MongoTestConfiguration;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -46,14 +44,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_JOB;
 import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_STEP;
 import static uk.ac.ebi.eva.accession.deprecate.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_FILE;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
-        BatchJobRepositoryTestConfiguration.class})
+        ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:deprecate-submitted-variants-from-file-test.properties")
 public class DeprecateSubmittedVariantsFromFileJobConfigurationTest extends MongoTestContainerHelper {
     @Autowired
@@ -100,32 +96,5 @@ public class DeprecateSubmittedVariantsFromFileJobConfigurationTest extends Mong
         Collection<StepExecution> stepExecutions = jobExecution.getStepExecutions();
         List<String> steps = stepExecutions.stream().map(StepExecution::getStepName).collect(Collectors.toList());
         assertEquals(expectedSteps, steps);
-    }
-
-    @Test
-    @DirtiesContext
-    public void restartCompletedJobThatIsAlreadyInTheRepository() throws Exception {
-        JobExecution jobExecution = jobLauncherTestUtilsFromFile.launchJob();
-
-        List<String> expectedSteps = Collections.singletonList(DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_STEP);
-        assertStepsExecuted(expectedSteps, jobExecution);
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-        MongoTestDatabaseSetup.assertPostDeprecationDatabaseState(this.mongoTemplate);
-
-        long instanceIdFirstJob = CommandLineRunnerUtils.getLastJobExecution(DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_JOB,
-                        jobExplorer,
-                        jobExecution.getJobParameters())
-                .getJobInstance().getInstanceId();
-
-        jobExecution = jobLauncherTestUtilsFromFile.launchJob();
-        expectedSteps = Collections.singletonList(DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_STEP);
-        assertStepsExecuted(expectedSteps, jobExecution);
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-        long instanceIdSecondJob = CommandLineRunnerUtils.getLastJobExecution(DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_JOB,
-                        jobExplorer,
-                        jobExecution.getJobParameters())
-                .getJobInstance().getInstanceId();
-        assertNotEquals(instanceIdSecondJob, instanceIdFirstJob);
-        MongoTestDatabaseSetup.assertPostDeprecationDatabaseState(this.mongoTemplate);
     }
 }

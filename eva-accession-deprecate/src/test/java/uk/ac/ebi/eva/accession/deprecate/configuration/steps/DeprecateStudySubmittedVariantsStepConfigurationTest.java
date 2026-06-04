@@ -28,19 +28,19 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.deprecate.MongoTestDatabaseSetup;
 import uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames;
-import uk.ac.ebi.eva.accession.deprecate.test.configuration.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.deprecate.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.deprecate.test.configuration.MongoTestConfiguration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.ac.ebi.eva.accession.deprecate.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
-        BatchJobRepositoryTestConfiguration.class})
+        ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:study-submitted-variants-test.properties")
 public class DeprecateStudySubmittedVariantsStepConfigurationTest extends MongoTestContainerHelper {
     @Autowired

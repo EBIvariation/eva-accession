@@ -33,10 +33,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
-import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.ArrayList;

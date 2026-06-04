@@ -17,9 +17,7 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -31,7 +29,6 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PR
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP;
 
 @Configuration
-@EnableBatchProcessing
 public class BackPropagateRSJobConfiguration {
     // Deal with back-propagation of new RS, that were assigned to SS in the remapped assembly, to the original assembly
     @Bean(BACK_PROPAGATE_NEW_RS_JOB)
@@ -40,7 +37,6 @@ public class BackPropagateRSJobConfiguration {
             @Qualifier(BACK_PROPAGATE_NEW_RS_STEP) Step backPropagateNewRSStep,
             JobRepository jobRepository) {
         return new JobBuilder(BACK_PROPAGATE_NEW_RS_JOB, jobRepository)
-                .incrementer(new RunIdIncrementer())
                 .start(backPropagateNewRSStep)
                 .build();
     }
@@ -53,7 +49,6 @@ public class BackPropagateRSJobConfiguration {
             @Qualifier(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP) Step backPropagateSplitMergedRSStep,
             JobRepository jobRepository) {
         return new JobBuilder(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_JOB, jobRepository)
-                .incrementer(new RunIdIncrementer())
                 .start(backPropagateSplitMergedRSStep)
                 .build();
     }

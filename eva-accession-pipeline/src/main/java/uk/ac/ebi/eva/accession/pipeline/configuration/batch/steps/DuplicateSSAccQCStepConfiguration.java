@@ -1,7 +1,6 @@
 package uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps;
 
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
@@ -17,13 +16,13 @@ import uk.ac.ebi.eva.accession.pipeline.batch.io.DuplicateSSAccQCResult;
 
 import java.util.List;
 
+import static uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration.BATCH_TRANSACTION_MANAGER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.DUPLICATE_SS_ACC_QC_PROCESSOR;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.DUPLICATE_SS_ACC_QC_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.DUPLICATE_SS_ACC_QC_WRITER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SS_ACC_FILE_READER;
 
 @Configuration
-@EnableBatchProcessing
 public class DuplicateSSAccQCStepConfiguration {
 
     @Autowired
@@ -39,7 +38,8 @@ public class DuplicateSSAccQCStepConfiguration {
     private ItemWriter<List<DuplicateSSAccQCResult>> duplicateSSAccQCWriter;
 
     @Bean(DUPLICATE_SS_ACC_QC_STEP)
-    public Step duplicateSSAccQCStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+    public Step duplicateSSAccQCStep(JobRepository jobRepository,
+                                     @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager) {
         TaskletStep step = new StepBuilder(DUPLICATE_SS_ACC_QC_STEP, jobRepository)
                 // hardcoded the chunk size as 1, as the reader takes care of accumulating
                 // and sending the chunk size (defined in properties file) elements to the processor

@@ -33,8 +33,6 @@ public class InputParameters {
 
     private String outputFolder;
 
-    private boolean forceRestart;
-
     private int chunkSize;
 
     private String accessionedVcf;
@@ -95,14 +93,6 @@ public class InputParameters {
 
     public void setOutputFolder(String outputFolder) {
         this.outputFolder = outputFolder;
-    }
-
-    public boolean isForceRestart() {
-        return forceRestart;
-    }
-
-    public void setForceRestart(boolean forceRestart) {
-        this.forceRestart = forceRestart;
     }
 
     public int getChunkSize() {

@@ -16,15 +16,14 @@
 package uk.ac.ebi.eva.accession.dbsnp2.test;
 
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.flow.ImportDbsnpJsonFlowConfiguration;
@@ -41,9 +40,8 @@ import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.IMPORT_DBSNP_JSON_VARIANTS_JOB;
 
 @Configuration
-@EnableAutoConfiguration
-@EnableBatchProcessing
-@Import({ListenersConfiguration.class,
+@Import({InMemoryBatchConfiguration.class,
+        ListenersConfiguration.class,
         MongoConfiguration.class,
         ImportDbsnpJsonVariantsJobConfiguration.class,
         ImportDbsnpJsonVariantsStepConfiguration.class,

@@ -28,12 +28,12 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
-import uk.ac.ebi.eva.accession.pipeline.test.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -49,7 +49,7 @@ import static uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration.JOB_L
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class,  MongoTestConfiguration.class,
-        BatchJobRepositoryTestConfiguration.class})
+        ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:duplicate-ss-acc-qc-test.properties")
 public class DuplicateSSAccQCJobConfigurationTest extends MongoTestContainerHelper {
     private static final String duplicateSsAccFile = "src/test/resources/duplicateSSAcc.csv";

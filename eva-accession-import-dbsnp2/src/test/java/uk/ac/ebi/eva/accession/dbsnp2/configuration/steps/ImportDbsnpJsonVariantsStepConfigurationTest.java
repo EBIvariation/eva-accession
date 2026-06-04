@@ -30,18 +30,16 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
-import uk.ac.ebi.eva.accession.dbsnp2.test.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.test.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.dbsnp2.test.MongoTestConfiguration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.IMPORT_DBSNP_JSON_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.dbsnp2.test.BatchTestConfiguration.JOB_IMPORT_DBSNP_JSON_VARIANTS_JOB;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
-        BatchJobRepositoryTestConfiguration.class})
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @TestPropertySource("classpath:application.properties")
 public class ImportDbsnpJsonVariantsStepConfigurationTest extends MongoTestContainerHelper {
 

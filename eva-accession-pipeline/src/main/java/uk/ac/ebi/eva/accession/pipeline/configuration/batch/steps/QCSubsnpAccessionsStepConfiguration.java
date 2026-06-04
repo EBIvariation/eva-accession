@@ -17,7 +17,6 @@
 package uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps;
 
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
@@ -38,12 +37,12 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import java.io.File;
 import java.io.IOException;
 
+import static uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration.BATCH_TRANSACTION_MANAGER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.REPORT_READER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.VARIANT_READER;
 
 @Configuration
-@EnableBatchProcessing
 public class QCSubsnpAccessionsStepConfiguration {
 
     @Autowired
@@ -64,7 +63,8 @@ public class QCSubsnpAccessionsStepConfiguration {
     }
 
     @Bean(QC_SUBSNP_ACCESSION_STEP)
-    public Step qcSubsnpAccessionStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) throws IOException {
+    public Step qcSubsnpAccessionStep(JobRepository jobRepository,
+                                      @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager) throws IOException {
         ReportCheckTasklet tasklet = new ReportCheckTasklet(inputReader, reportReader(),
                 inputParameters.getChunkSize() * 2, contigMapping);
         TaskletStep step = new StepBuilder(QC_SUBSNP_ACCESSION_STEP, jobRepository)

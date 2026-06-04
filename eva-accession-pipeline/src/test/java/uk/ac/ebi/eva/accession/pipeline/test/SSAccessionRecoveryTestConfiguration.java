@@ -19,7 +19,6 @@ package uk.ac.ebi.eva.accession.pipeline.test;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobLauncherTestUtils;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.AccessionWriterConfiguration;
@@ -31,7 +30,6 @@ import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.SSAccessionRec
 import uk.ac.ebi.eva.accession.pipeline.runner.EvaAccessionJobLauncherCommandLineRunner;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
-@EnableAutoConfiguration
 @Import({SSAccessionRecoveryJobConfiguration.class,
         SSAccessionRecoveryStepConfiguration.class,
         SSAccessionRecoveryServiceConfiguration.class,

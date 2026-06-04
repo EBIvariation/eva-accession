@@ -21,9 +21,10 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.web.client.RestTemplate;
+import uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.AccessionWriterConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.DuplicateSSAccQCWriterConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.SSAccFileReaderConfiguration;
@@ -48,8 +49,7 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.DUPLICATE
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP_ACCESSION_JOB;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_JOB;
 
-@EnableAutoConfiguration
-@Import({SubsnpAccessionsJobConfiguration.class, SubsnpAccessionsStepConfiguration.class,
+@Import({InMemoryBatchConfiguration.class, SubsnpAccessionsJobConfiguration.class, SubsnpAccessionsStepConfiguration.class,
         QCSubsnpAccessionsJobConfiguration.class, QCSubsnpAccessionsStepConfiguration.class,
         VcfReaderConfiguration.class, VariantProcessorConfiguration.class, AccessionWriterConfiguration.class,
         BuildReportStepConfiguration.class, AccessioningShutdownStepConfiguration.class,
@@ -96,5 +96,10 @@ public class BatchTestConfiguration {
     @Bean
     public JobExecutionApplicationListener jobExecutionApplicationListener() {
         return new JobExecutionApplicationListener();
+    }
+
+    @Bean(name = "COUNT_STATS_REST_TEMPLATE")
+    public RestTemplate countStatsRestTemplate() {
+        return new RestTemplate();
     }
 }

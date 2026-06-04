@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.ws.rest;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +30,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedExcepti
 import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestControllerAdvice;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.ErrorMessage;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 
 /**

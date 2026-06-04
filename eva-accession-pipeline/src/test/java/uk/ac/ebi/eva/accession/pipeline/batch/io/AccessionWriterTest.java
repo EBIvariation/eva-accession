@@ -25,15 +25,17 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.eva.accession.core.batch.io.FastaSequenceReader;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
@@ -43,17 +45,19 @@ import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.service.GetOrCreateAccessionWrapperCreator;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.core.utils.PipelineTemporaryFolderUtil;
 import uk.ac.ebi.eva.accession.pipeline.batch.processors.VariantConverter;
 import uk.ac.ebi.eva.accession.pipeline.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners.ListenersConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.metric.AccessioningMetric;
-import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
+import javax.sql.DataSource;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -61,6 +65,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,9 +83,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.ac.ebi.eva.accession.pipeline.batch.processors.ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME;
 
 @ExtendWith(SpringExtension.class)
-@EnableAutoConfiguration
 @ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, ListenersConfiguration.class,
-        InputParametersConfiguration.class, MongoTestConfiguration.class})
+        InputParametersConfiguration.class, MongoTestConfiguration.class, ContiguousIdBlocksDataSourceConfiguration.class,
+BatchTestConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 public class AccessionWriterTest extends MongoTestContainerHelper {
 
@@ -136,6 +142,9 @@ public class AccessionWriterTest extends MongoTestContainerHelper {
     @Autowired
     private MetricCompute metricCompute;
 
+    @Autowired
+    private DataSource dataSource;
+
     private ContigMapping contigMapping;
 
     @MockBean
@@ -153,6 +162,14 @@ public class AccessionWriterTest extends MongoTestContainerHelper {
 
     @BeforeEach
     public void setUp() throws Exception {
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DROP TABLE IF EXISTS contiguous_id_blocks");
+        }
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("test-data/contiguous_id_blocks_schema.sql"));
+        populator.execute(dataSource);
+
         contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(CHROMOSOME_1, "assembled-molecule", "1", CONTIG_1, "refseq_1", "chr1", true),
                 new ContigSynonyms(CHROMOSOME_2, "assembled-molecule", "2", CONTIG_2, "refseq_2", "chr2", true)));

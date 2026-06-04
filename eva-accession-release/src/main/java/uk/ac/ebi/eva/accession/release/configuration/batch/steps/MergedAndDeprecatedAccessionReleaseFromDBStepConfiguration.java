@@ -2,7 +2,6 @@ package uk.ac.ebi.eva.accession.release.configuration.batch.steps;
 
 import htsjdk.variant.variantcontext.VariantContext;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
@@ -17,13 +16,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
+import static uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration.BATCH_TRANSACTION_MANAGER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MERGED_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_AND_DEPRECATED_ACCESSIONS_RELEASE_FROM_DB_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_AND_DEPRECATED_ACCESSIONS_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PROCESSOR;
 
 @Configuration
-@EnableBatchProcessing
 public class MergedAndDeprecatedAccessionReleaseFromDBStepConfiguration {
 
     @Autowired
@@ -39,7 +38,9 @@ public class MergedAndDeprecatedAccessionReleaseFromDBStepConfiguration {
     ItemStreamWriter<VariantContext> accessionWriter;
 
     @Bean(MERGED_AND_DEPRECATED_ACCESSIONS_RELEASE_FROM_DB_STEP)
-    public Step mergedAndDeprecatedAccessionsReleaseFromDBStep(JobRepository jobRepository, PlatformTransactionManager transactionManager,
+    public Step mergedAndDeprecatedAccessionsReleaseFromDBStep(JobRepository jobRepository,
+                                                               @Qualifier(BATCH_TRANSACTION_MANAGER)
+                                                               PlatformTransactionManager transactionManager,
                                                                SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = new StepBuilder(MERGED_AND_DEPRECATED_ACCESSIONS_RELEASE_FROM_DB_STEP, jobRepository)
                 .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy, transactionManager)

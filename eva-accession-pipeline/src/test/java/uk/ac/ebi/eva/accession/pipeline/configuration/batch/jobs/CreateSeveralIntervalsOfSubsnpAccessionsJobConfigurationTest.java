@@ -26,9 +26,11 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -36,18 +38,19 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
-import uk.ac.ebi.eva.accession.pipeline.test.BatchJobRepositoryTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 
+import javax.sql.DataSource;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -55,6 +58,8 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -72,7 +77,7 @@ import static uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration.JOB_L
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
-        MongoTestConfiguration.class, BatchJobRepositoryTestConfiguration.class})
+        MongoTestConfiguration.class, ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-interval-test.properties")
 public class CreateSeveralIntervalsOfSubsnpAccessionsJobConfigurationTest extends MongoTestContainerHelper {
 
@@ -94,6 +99,9 @@ public class CreateSeveralIntervalsOfSubsnpAccessionsJobConfigurationTest extend
     @Autowired
     private CountServiceParameters countServiceParameters;
 
+    @Autowired
+    private DataSource dataSource;
+
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
 
     @Autowired
@@ -110,6 +118,14 @@ public class CreateSeveralIntervalsOfSubsnpAccessionsJobConfigurationTest extend
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
+
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DROP TABLE IF EXISTS contiguous_id_blocks");
+        }
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("test-data/contiguous_id_blocks_schema.sql"));
+        populator.execute(dataSource);
     }
 
     @AfterEach

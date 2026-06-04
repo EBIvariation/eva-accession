@@ -20,7 +20,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
@@ -41,7 +40,6 @@ import java.util.function.Function;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(SpringExtension.class)
-@EnableAutoConfiguration
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 @TestPropertySource("classpath:test-model.properties")
 public class ClusteredVariantEntityIntegrationTest extends MongoTestContainerHelper {

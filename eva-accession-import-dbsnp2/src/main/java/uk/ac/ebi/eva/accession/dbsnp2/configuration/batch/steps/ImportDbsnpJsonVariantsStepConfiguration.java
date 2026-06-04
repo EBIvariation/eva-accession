@@ -18,7 +18,6 @@ package uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.steps;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
@@ -32,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 
+import static uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration.BATCH_TRANSACTION_MANAGER;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_VARIANT_PROCESSOR;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_VARIANT_WRITER;
@@ -42,7 +42,6 @@ import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.IMPORT_DBSN
  * Configuration for dbSNP JSON import flow step
  */
 @Configuration
-@EnableBatchProcessing
 public class ImportDbsnpJsonVariantsStepConfiguration {
 
     @Autowired
@@ -63,7 +62,8 @@ public class ImportDbsnpJsonVariantsStepConfiguration {
 
 
     @Bean(IMPORT_DBSNP_JSON_VARIANTS_STEP)
-    public Step importDbsnpJsonVariantsStep(JobRepository jobRepository, PlatformTransactionManager transactionManager,
+    public Step importDbsnpJsonVariantsStep(JobRepository jobRepository,
+                                            @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
                                             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         return new StepBuilder(IMPORT_DBSNP_JSON_VARIANTS_STEP, jobRepository)
                 .<JsonNode, DbsnpClusteredVariantEntity>chunk(chunkSizeCompletionPolicy, transactionManager)

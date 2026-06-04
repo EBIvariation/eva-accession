@@ -17,9 +17,7 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -29,7 +27,6 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB;
 
 @Configuration
-@EnableBatchProcessing
 public class ProcessRemappedVariantsWithRSJobConfiguration {
     // Deal with remapped variants with an existing RS and create split or merge candidates as needed
     // Can be parallelized across multiple species
@@ -38,7 +35,6 @@ public class ProcessRemappedVariantsWithRSJobConfiguration {
             @Qualifier(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP) Step clusteringClusteredVariantsFromMongoStep,
             JobRepository jobRepository) {
         return new JobBuilder(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB, jobRepository)
-                .incrementer(new RunIdIncrementer())
                 .start(clusteringClusteredVariantsFromMongoStep)
                 .build();
     }
