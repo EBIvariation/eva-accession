@@ -18,7 +18,6 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemStreamReader;
@@ -94,7 +93,6 @@ public class NewClusteredVariantsQCJobConfiguration {
     public Job ClusteringQCJob(@Qualifier(REPORT_MISSING_CVE_STEP) Step reportMissingCveStep,
                                JobRepository jobRepository) {
         return new JobBuilder(NEW_CLUSTERED_VARIANTS_QC_JOB, jobRepository)
-                .incrementer(new RunIdIncrementer())
                 .start(reportMissingCveStep)
                 .build();
     }

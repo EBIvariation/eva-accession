@@ -19,7 +19,6 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
@@ -134,7 +133,6 @@ public class ClusteringQCJobConfiguration {
             Step reportExtraneousRSStep,
             JobRepository jobRepository) {
         return new JobBuilder(CLUSTERING_QC_JOB, jobRepository)
-                .incrementer(new RunIdIncrementer())
                 .start(reportUnclusteredSSAndPendingMergeSplitStep)
                 .next(reportExtraneousRSStep)
                 .build();

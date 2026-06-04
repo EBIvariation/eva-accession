@@ -4,7 +4,6 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -29,7 +28,6 @@ public class RSAccessionRecoveryJobConfiguration {
     @Bean(RS_ACCESSION_RECOVERY_JOB)
     public Job createMonotonicAccessionRecoveryAgentCategoryRSJob(JobRepository jobRepository) {
         return new JobBuilder(RS_ACCESSION_RECOVERY_JOB, jobRepository)
-                .incrementer(new RunIdIncrementer())
                 .start(monotonicAccessionRecoveryAgentCategoryRSStep)
                 .listener(monotonicAccessionRecoveryAgentCategoryRSJobListener)
                 .build();

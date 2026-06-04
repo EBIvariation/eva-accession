@@ -20,7 +20,6 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -55,7 +54,6 @@ public class SubsnpAccessionsJobConfiguration {
     @Bean(SUBSNP_ACCESSION_JOB)
     public Job subsnpAccessionJob(JobRepository jobRepository) {
         return new JobBuilder(SUBSNP_ACCESSION_JOB, jobRepository)
-                .incrementer(new RunIdIncrementer())
                 .start(subsnpAccessionStep)
                 .next(accessioningShutdownStep)
                 .next(buildReportStep)

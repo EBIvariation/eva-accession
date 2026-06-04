@@ -18,7 +18,6 @@ package uk.ac.ebi.eva.accession.deprecate.configuration.batch.jobs;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -36,7 +35,6 @@ public class DeprecateSubmittedVariantsFromFileJobConfiguration {
     @Bean(BeanNames.DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_JOB)
     public Job deprecateStudySubmittedVariantsFromFileJob(JobRepository jobRepository) {
         return new JobBuilder(BeanNames.DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_JOB, jobRepository)
-                .incrementer(new RunIdIncrementer())
                 .start(deprecateSubmittedVariantsFromFileStep)
                 .build();
     }

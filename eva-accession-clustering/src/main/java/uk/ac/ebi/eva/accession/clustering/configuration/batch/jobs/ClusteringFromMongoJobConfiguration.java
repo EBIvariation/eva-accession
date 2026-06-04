@@ -26,7 +26,6 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.flow.FlowExecutionStatus;
 import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.core.job.flow.support.SimpleFlow;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.repeat.RepeatStatus;
@@ -89,7 +88,6 @@ public class ClusteringFromMongoJobConfiguration {
         JobExecutionDecider jobExecutionDecider = isRemappedAssemblyPresent(inputParameters);
         Step dummyStep = dummyStep(jobRepository, transactionManager);
         return new JobBuilder(CLUSTERING_FROM_MONGO_JOB, jobRepository)
-                .incrementer(new RunIdIncrementer())
                 //We need the dummy step here because Spring won't conditionally start the first step
                 .start(dummyStep)
                 .listener(jobExecutionListener)
