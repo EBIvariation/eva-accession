@@ -47,18 +47,22 @@ public class InputParameters {
     private String duplicateSSAccFile;
 
     public JobParameters toJobParameters() {
-        return new JobParametersBuilder()
+        JobParametersBuilder builder = new JobParametersBuilder()
                 .addString("vcf", vcf)
                 .addString("vcfAggregation", vcfAggregation.toString())
-                .addString("aggregatedMappingFile", aggregatedMappingFile)
                 .addString("fasta", fasta)
                 .addString("outputVcf", outputVcf)
                 .addLong("taxonomyAccession", (long) taxonomyAccession)
                 .addString("assemblyAccession", assemblyAccession)
                 .addString("projectAccession", projectAccession)
                 .addLong("chunkSize", (long) chunkSize)
-                .addString("contigNaming", contigNaming.toString())
-                .toJobParameters();
+                .addString("contigNaming", contigNaming.toString());
+
+        if (aggregatedMappingFile != null) {
+            builder.addString("aggregatedMappingFile", aggregatedMappingFile);
+        }
+
+        return builder.toJobParameters();
     }
 
     public String getVcf() {
