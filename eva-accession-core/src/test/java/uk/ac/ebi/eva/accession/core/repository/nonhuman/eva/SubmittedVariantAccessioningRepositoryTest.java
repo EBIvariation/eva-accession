@@ -15,29 +15,23 @@
  */
 package uk.ac.ebi.eva.accession.core.repository.nonhuman.eva;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.ApplicationContext;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.AccessionProjection;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
-
-import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
-import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,16 +39,16 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_VALIDATED;
 
-@RunWith(SpringRunner.class)
-@DataJpaTest
+@ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:ss-accession-test.properties")
-@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class})
-public class SubmittedVariantAccessioningRepositoryTest {
+@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class,
+        ContiguousIdBlocksDataSourceConfiguration.class})
+public class SubmittedVariantAccessioningRepositoryTest extends MongoTestContainerHelper {
 
     private static final Long CLUSTERED_VARIANT = null;
 
@@ -67,32 +61,30 @@ public class SubmittedVariantAccessioningRepositoryTest {
     @Autowired
     private SubmittedVariantAccessioningRepository repository;
 
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName("submitted-variants-test").build());
-
-    //Required by nosql-unit
     @Autowired
-    private ApplicationContext applicationContext;
+    private MongoTemplate mongoTemplate;
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
-    @Before
+    @BeforeEach
     public void setUp() {
+        mongoTemplate.getDb().drop();
         submittedVariant = new SubmittedVariant("GCA_000003055.3", 9913, PROJECT, "21", 20800319, "C", "T",
-                                                CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
-                                                DEFAULT_ASSEMBLY_MATCH, true,
-                                                DEFAULT_VALIDATED, null);
+                CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
+                DEFAULT_ASSEMBLY_MATCH, true,
+                DEFAULT_VALIDATED, null);
 
         newSubmittedVariant = new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt",
-                                                   CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
-                                                   DEFAULT_ASSEMBLY_MATCH, true,
-                                                   DEFAULT_VALIDATED, null);
+                CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
+                DEFAULT_ASSEMBLY_MATCH, true,
+                DEFAULT_VALIDATED, null);
 
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
+    @AfterEach
+    void cleanDb() {
+        mongoTemplate.getDb().drop();
+    }
+
+
     @Test
     public void queryAccessionRange() {
         long firstAccession = 1000L;
@@ -104,25 +96,24 @@ public class SubmittedVariantAccessioningRepositoryTest {
         repository.saveAll(variants);
 
         assertAccessionsEquals(Arrays.asList(firstAccession),
-                               repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1000L, 1000L));
+                repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1000L, 1000L));
 
         assertAccessionsEquals(Arrays.asList(),
-                               repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1001L, 1001L));
+                repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1001L, 1001L));
 
         assertAccessionsEquals(Arrays.asList(firstAccession, secondAccession),
-                               repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1000L, 1005L));
+                repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1000L, 1005L));
 
         assertAccessionsEquals(Arrays.asList(secondAccession),
-                               repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1001L, 1005L));
+                repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1001L, 1005L));
     }
 
     private void assertAccessionsEquals(List<Long> expectedAccessions,
                                         List<AccessionProjection<Long>> accessionsProjection) {
         assertEquals(new TreeSet<>(expectedAccessions),
-                     accessionsProjection.stream().map(AccessionProjection::getAccession).collect(Collectors.toSet()));
+                accessionsProjection.stream().map(AccessionProjection::getAccession).collect(Collectors.toSet()));
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testQueryAssemblyAndAccessionFilter() {
         long firstAccession = 1000L;
@@ -132,12 +123,12 @@ public class SubmittedVariantAccessioningRepositoryTest {
                 new SubmittedVariantEntity(secondAccession, "hash-2", newSubmittedVariant, 1));
 
         repository.saveAll(variants);
-        List<Long> accessions =  repository.findByReferenceSequenceAccessionAndAccessionIn(
+        List<Long> accessions = repository.findByReferenceSequenceAccessionAndAccessionIn(
                 "assembly", Arrays.asList(firstAccession, secondAccession)
         ).stream().map(AccessionedDocument::getAccession).collect(Collectors.toList());
         assertEquals(1, accessions.size());
 
-        accessions =  repository.findByReferenceSequenceAccessionAndAccessionIn(
+        accessions = repository.findByReferenceSequenceAccessionAndAccessionIn(
                 "assembly", Collections.singletonList(firstAccession)
         ).stream().map(AccessionedDocument::getAccession).collect(Collectors.toList());
         assertEquals(0, accessions.size());

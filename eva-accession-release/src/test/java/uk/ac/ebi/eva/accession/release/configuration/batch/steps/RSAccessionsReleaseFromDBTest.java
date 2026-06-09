@@ -16,25 +16,21 @@
 
 package uk.ac.ebi.eva.accession.release.configuration.batch.steps;
 
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.mongodb.MongoClient;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
+import uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
@@ -43,11 +39,11 @@ import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
-import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration;
-import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
@@ -70,15 +66,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration.TEST_RELEASE_ACTIVE_ACCESSIONS_JOB;
 import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration.TEST_RELEASE_MERGED_AND_DEPRECATED_ACCESSIONS_JOB;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {MongoTestConfiguration.class, ReleaseFromDBTestConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {InMemoryBatchConfiguration.class, MongoTestConfiguration.class,
+        ReleaseFromDBTestConfiguration.class})
 @TestPropertySource("classpath:dump-rs-accession-test.properties")
-public class RSAccessionsReleaseFromDBTest {
-    private static final String TEST_DB = "test-db";
+public class RSAccessionsReleaseFromDBTest extends MongoTestContainerHelper {
     private static final String testRunDir = "src/test/resources/release-test-run";
     private static final String rsAccFile = "src/test/resources/release-test-run/rsAccFile.csv";
 
@@ -94,31 +90,20 @@ public class RSAccessionsReleaseFromDBTest {
     private JobLauncherTestUtils jobLauncherReleaseMergedAndDeprecatedAccessions;
 
     @Autowired
-    private MongoClient mongoClient;
-
-    @Autowired
     private MongoTemplate mongoTemplate;
 
-    //Required by nosql-unit
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
-
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
-        this.mongoClient.dropDatabase(TEST_DB);
+        mongoTemplate.getDb().drop();
         if (Files.exists(Paths.get(testRunDir))) {
             deleteDirectory(Paths.get(testRunDir));
         }
         Files.createDirectories(Paths.get(testRunDir));
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws IOException {
-        this.mongoClient.dropDatabase(TEST_DB);
+        mongoTemplate.getDb().drop();
         if (Files.exists(Paths.get(testRunDir))) {
             deleteDirectory(Paths.get(testRunDir));
         }

@@ -1,9 +1,10 @@
 package uk.ac.ebi.eva.accession.pipeline.batch.io;
 
-import gherkin.deps.com.google.gson.Gson;
-import gherkin.deps.com.google.gson.GsonBuilder;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
@@ -48,7 +49,7 @@ public class DuplicateSSAccQCWriter implements ItemStreamWriter<List<DuplicateSS
     }
 
     @Override
-    public void write(List<? extends List<DuplicateSSAccQCResult>> listOfDuplicateSSAccQCResultLists) throws Exception {
+    public void write(Chunk<? extends List<DuplicateSSAccQCResult>> listOfDuplicateSSAccQCResultLists) throws Exception {
         for (List<DuplicateSSAccQCResult> duplicateSSAccQCResultList : listOfDuplicateSSAccQCResultLists) {
             if (duplicateSSAccQCResultList != null && !duplicateSSAccQCResultList.isEmpty()) {
                 appendToFile(duplicateSSAccQCResultList);

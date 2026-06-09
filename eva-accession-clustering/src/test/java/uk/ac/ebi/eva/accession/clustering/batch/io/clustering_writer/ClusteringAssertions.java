@@ -19,7 +19,7 @@ import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringProgressList
 import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ClusteringAssertions {
 

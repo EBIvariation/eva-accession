@@ -16,17 +16,22 @@
  */
 package uk.ac.ebi.eva.accession.release.configuration;
 
-import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
-import org.springframework.batch.core.configuration.annotation.DefaultBatchConfigurer;
-import org.springframework.batch.core.explore.JobExplorer;
-import org.springframework.batch.core.explore.support.MapJobExplorerFactoryBean;
-import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean;
+import org.springframework.batch.core.ExitStatus;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
 @Configuration
+@Import({MongoConfiguration.class})
 public class RunnerConfiguration {
 
     @Bean
@@ -35,16 +40,15 @@ public class RunnerConfiguration {
     }
 
     @Bean
-    public BatchConfigurer configurer() {
-        return new DefaultBatchConfigurer() {
-            @Override
-            protected JobRepository createJobRepository() throws Exception {
-                return new MapJobRepositoryFactoryBean().getObject();
-            }
+    public CommandLineRunner runJob(JobLauncher jobLauncher, ApplicationContext context,
+                                    @Value("${spring.batch.job.names}") String jobName) {
+        return args -> {
+            Job job = context.getBean(jobName, Job.class);
+            JobExecution execution = jobLauncher.run(job, new JobParametersBuilder()
+                    .toJobParameters());
 
-            @Override
-            protected JobExplorer createJobExplorer() throws Exception {
-                return new MapJobExplorerFactoryBean((MapJobRepositoryFactoryBean) new MapJobRepositoryFactoryBean()).getObject();
+            if (!execution.getExitStatus().equals(ExitStatus.COMPLETED)) {
+                throw new RuntimeException("Job failed with status: " + execution.getExitStatus());
             }
         };
     }

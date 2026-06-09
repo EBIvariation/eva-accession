@@ -16,30 +16,28 @@
  */
 package uk.ac.ebi.eva.remapping.ingest.batch.io;
 
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.mongodb.MongoClient;
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.remapping.ingest.batch.listeners.RemappingIngestCounts;
 import uk.ac.ebi.eva.remapping.ingest.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.remapping.ingest.test.rule.FixSpringMongoDbRule;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -49,21 +47,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.REMAPPED_SUBMITTED_VARIANTS_WRITER;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @TestPropertySource("classpath:ingest-remapped-variants.properties")
-public class RemappedSubmittedVariantsWriterTest {
-
-    private static final String TEST_DB = "test-ingest-remapping";
-
-    @Autowired
-    private MongoClient mongoClient;
-
+public class RemappedSubmittedVariantsWriterTest extends MongoTestContainerHelper {
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private ResourceLoader resourceLoader;
 
     @Autowired
     @Qualifier(REMAPPED_SUBMITTED_VARIANTS_WRITER)
@@ -72,27 +67,25 @@ public class RemappedSubmittedVariantsWriterTest {
     private final Function<ISubmittedVariant, String> hashingFunction =
             new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
 
-    //Required by nosql-unit
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
-
     @Autowired
     private RemappingIngestCounts remappingIngestCounts;
 
-    @After
+    @BeforeEach
+    public void setUp() {
+        mongoTemplate.getDb().drop();
+    }
+
+
+    @AfterEach
     public void tearDown() {
-        mongoClient.dropDatabase(TEST_DB);
+        mongoTemplate.getDb().drop();
         remappingIngestCounts.resetCounts();
     }
 
     private SubmittedVariantEntity createSve(Long accession, long start, String ref, String alt,
                                              LocalDateTime createdDate, String remappedFrom) {
         SubmittedVariant model = new SubmittedVariant("GCA_000000001.2", 1000, "projectId_1", "CM000002.1",
-                                                      start, ref, alt, 3000000002L);
+                start, ref, alt, 3000000002L);
         String hash = hashingFunction.apply(model);
         SubmittedVariantEntity sve = new SubmittedVariantEntity(accession, hash, model, 1);
         sve.setCreatedDate(createdDate);
@@ -104,7 +97,7 @@ public class RemappedSubmittedVariantsWriterTest {
                                                        Long accession, long start, String ref, String alt,
                                                        LocalDateTime createdDate, String remappedFrom) {
         SubmittedVariant model = new SubmittedVariant(assembly, 1000, "projectId_1", "CM000002.1",
-                                                      start, ref, alt, 3000000002L);
+                start, ref, alt, 3000000002L);
         String hash = hashingFunction.apply(model);
         SubmittedVariantEntity sve = new SubmittedVariantEntity(accession, hash, model, 1);
         sve.setCreatedDate(createdDate);
@@ -137,7 +130,7 @@ public class RemappedSubmittedVariantsWriterTest {
         List<SubmittedVariantEntity> svesToWrite = Collections.singletonList(
                 // SVE remapped from newer source SVE should be discarded
                 createSve(5000000002L, 2100, "C", "T", LocalDateTime.now(), "GCA_000000001.5"));
-        writer.write(svesToWrite);
+        writer.write(new Chunk<>(svesToWrite));
         assertRemappingIngestCounts(0, 0, 1);
         assertDatabaseCounts(3);
     }
@@ -150,7 +143,7 @@ public class RemappedSubmittedVariantsWriterTest {
 
         List<SubmittedVariantEntity> svesToWrite = Collections.singletonList(
                 createSve(5000000004L, 1100, "C", "T", LocalDateTime.now(), null));
-        writer.write(svesToWrite);
+        writer.write(new Chunk<>(svesToWrite));
         assertRemappingIngestCounts(1, 0, 1);
         assertDatabaseCounts(1);
     }
@@ -160,7 +153,7 @@ public class RemappedSubmittedVariantsWriterTest {
         List<SubmittedVariantEntity> svesToWrite = Arrays.asList(
                 createSve(5000000003L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1"),
                 createSve(5000000003L, 1100, "A", "T", LocalDateTime.now(), "GCA_000000001.1"));
-        writer.write(svesToWrite);
+        writer.write(new Chunk<>(svesToWrite));
         assertRemappingIngestCounts(1, 0, 1);
         assertDatabaseCounts(1);
     }
@@ -172,7 +165,7 @@ public class RemappedSubmittedVariantsWriterTest {
 
         List<SubmittedVariantEntity> svesToWrite = Collections.singletonList(
                 createSve(5000000005L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1"));
-        writer.write(svesToWrite);
+        writer.write(new Chunk<>(svesToWrite));
         assertRemappingIngestCounts(0, 0, 1);
         assertDatabaseCounts(1);
     }
@@ -187,7 +180,7 @@ public class RemappedSubmittedVariantsWriterTest {
                 createSve(5000000003L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1"),
                 // Duplicate hash but different accession => discard operation
                 createSve(5000000004L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1"));
-        writer.write(svesToWrite);
+        writer.write(new Chunk<>(svesToWrite));
         assertRemappingIngestCounts(0, 1, 1);
         assertDatabaseCounts(1);
     }
@@ -201,7 +194,7 @@ public class RemappedSubmittedVariantsWriterTest {
         SubmittedVariantEntity duplicateSve = createSve(5000000003L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1");
         duplicateSve.setBackPropagatedVariantAccession(12345L);
         List<SubmittedVariantEntity> svesToWrite = Collections.singletonList(duplicateSve);
-        writer.write(svesToWrite);
+        writer.write(new Chunk<>(svesToWrite));
         assertRemappingIngestCounts(0, 0, 1);
         assertDatabaseCounts(1);
     }
@@ -212,7 +205,7 @@ public class RemappedSubmittedVariantsWriterTest {
 
         List<SubmittedVariantEntity> svesToWrite = Collections.singletonList(
                 createSve(5000000002L, 1100, "C", "T", LocalDateTime.now(), null));
-        writer.write(svesToWrite);
+        writer.write(new Chunk<>(svesToWrite));
         assertRemappingIngestCounts(1, 0, 1);
 
         Set<SubmittedVariantEntity> sveAfterFirstWrite = new HashSet<>(
@@ -221,7 +214,7 @@ public class RemappedSubmittedVariantsWriterTest {
                 mongoTemplate.findAll(SubmittedVariantOperationEntity.class));
 
         remappingIngestCounts.resetCounts();
-        writer.write(svesToWrite);
+        writer.write(new Chunk<>(svesToWrite));
         assertRemappingIngestCounts(0, 1, 0);
 
         Set<SubmittedVariantEntity> sveAfterSecondWrite = new HashSet<>(
@@ -249,7 +242,7 @@ public class RemappedSubmittedVariantsWriterTest {
         List<SubmittedVariantEntity> firstBatch = Collections.singletonList(
                 createSve(5000000003L, 1400, "C", "T", now, "GCA_000000001.1")
         );
-        writer.write(firstBatch);
+        writer.write(new Chunk<>(firstBatch));
         assertRemappingIngestCounts(0, 0, 2);
         assertDatabaseCounts(1);
 
@@ -257,7 +250,7 @@ public class RemappedSubmittedVariantsWriterTest {
                 createSve(5000000003L, 1400, "C", "T", now, "GCA_000000001.1"),
                 createSve(5000000004L, 1400, "C", "T", now, "GCA_000000001.1")
         );
-        writer.write(secondBatch);
+        writer.write(new Chunk<>(secondBatch));
         assertRemappingIngestCounts(0, 1, 3);
         assertDatabaseCounts(1);
     }
@@ -281,7 +274,7 @@ public class RemappedSubmittedVariantsWriterTest {
                 createSve(5000000003L, 1400, "C", "T", now, "GCA_000000001.1"),
                 createSve(5000000004L, 1400, "C", "T", now, "GCA_000000001.1")
         );
-        writer.write(svesToWrite);
+        writer.write(new Chunk<>(svesToWrite));
         assertRemappingIngestCounts(1, 2, 0);
         assertDatabaseCounts(3);
     }

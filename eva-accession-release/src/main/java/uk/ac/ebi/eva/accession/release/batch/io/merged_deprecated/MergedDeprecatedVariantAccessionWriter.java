@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated;
 
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
@@ -27,7 +28,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
-import java.util.List;
 
 /**
  * Writes the accessions of historical variants, that have been merged into a later deprecate one, to a flat file.
@@ -57,7 +57,7 @@ public class MergedDeprecatedVariantAccessionWriter implements ItemStreamWriter<
     }
 
     @Override
-    public void write(List<? extends EventDocument<? extends IClusteredVariant, Long,
+    public void write(Chunk<? extends EventDocument<? extends IClusteredVariant, Long,
             ? extends InactiveSubDocument<? extends IClusteredVariant, Long>>> variants) throws Exception {
         for (EventDocument<? extends IClusteredVariant, Long, ? extends InactiveSubDocument<? extends IClusteredVariant, Long>> variant
                 : variants) {

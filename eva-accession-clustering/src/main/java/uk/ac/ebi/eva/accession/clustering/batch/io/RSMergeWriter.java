@@ -16,9 +16,11 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import com.mongodb.MongoBulkWriteException;
+import jakarta.annotation.Nonnull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -45,7 +47,6 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessionin
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -126,9 +127,9 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
     }
 
     @Override
-    public void write(@Nonnull List<? extends SubmittedVariantOperationEntity> submittedVariantOperationEntities)
+    public void write(@Nonnull Chunk<? extends SubmittedVariantOperationEntity> submittedVariantOperationEntities)
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException, AccessionDoesNotExistException {
-        allMergeCandidateOperations = new ArrayList<>(submittedVariantOperationEntities);
+        allMergeCandidateOperations = new ArrayList<>(submittedVariantOperationEntities.getItems());
         // Create a map of all merge candidate operations keyed by RS ID to facilitate quick random lookups
         populateOperationsIndex(allMergeCandidateOperations);
         for (int i = 0; i < allMergeCandidateOperations.size(); i++) {
@@ -136,9 +137,9 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
             writeRSMerge(allMergeCandidateOperations.get(i));
         }
         List<String> allCandidateIds = allMergeCandidateOperations.stream().map(EventDocument::getId)
-                                                                  .collect(Collectors.toList());
+                .collect(Collectors.toList());
         this.mongoTemplate.findAllAndRemove(query(where("_id").in(allCandidateIds)),
-                                            SubmittedVariantOperationEntity.class);
+                SubmittedVariantOperationEntity.class);
     }
 
     private void populateOperationsIndex
@@ -146,10 +147,10 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         rsIDIndexedOperations = new HashMap<>();
         for (int i = 0; i < allMergeCandidateOperations.size(); i++) {
             SubmittedVariantOperationEntity operation = allMergeCandidateOperations.get(i);
-            for (Long rsID:
+            for (Long rsID :
                     operation.getInactiveObjects().stream()
-                             .map(SubmittedVariantInactiveEntity::getClusteredVariantAccession)
-                             .collect(Collectors.toSet())) {
+                            .map(SubmittedVariantInactiveEntity::getClusteredVariantAccession)
+                            .collect(Collectors.toSet())) {
                 OperationWithIndex obj = new OperationWithIndex(i, operation);
                 if (rsIDIndexedOperations.containsKey(rsID)) {
                     rsIDIndexedOperations.get(rsID).add(obj);
@@ -176,13 +177,13 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         // because ClusteredVariantEntity "equals" method does NOT involve comparing accessions
         List<ClusteredVariantEntity> mergeCandidates =
                 currentOperation.getInactiveObjects()
-                                .stream()
-                                // Ensure duplicates inside inactiveObjects are tolerated
-                                .filter(distinctByKey(this::getHashedMessageAndAccessionForSVIE))
-                                .map(entity -> clusteringWriter.toClusteredVariantEntity(
-                                        entity.toSubmittedVariantEntity()))
-                                .filter(distinctByKey(AccessionedDocument::getAccession))
-                                .collect(Collectors.toList());
+                        .stream()
+                        // Ensure duplicates inside inactiveObjects are tolerated
+                        .filter(distinctByKey(this::getHashedMessageAndAccessionForSVIE))
+                        .map(entity -> clusteringWriter.toClusteredVariantEntity(
+                                entity.toSubmittedVariantEntity()))
+                        .filter(distinctByKey(AccessionedDocument::getAccession))
+                        .collect(Collectors.toList());
         // From among the participating RS in a merge,
         // use the current RS prioritization policy to get the target RS into which the rest of the RS will be merged
         ImmutablePair<ClusteredVariantEntity, List<ClusteredVariantEntity>> mergeDestinationAndMergees =
@@ -192,9 +193,9 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
 
         removeMergeesAndInsertMergeDestination(mergeDestination, mergees);
 
-        for (ClusteredVariantEntity mergee: mergees) {
+        for (ClusteredVariantEntity mergee : mergees) {
             logger.info("RS merge operation: Merging rs{} to rs{} due to hash collision...",
-                        mergee.getAccession(), mergeDestination.getAccession());
+                    mergee.getAccession(), mergeDestination.getAccession());
             recordMergeOperations(mergeDestination, mergee, currentOperation);
         }
     }
@@ -234,17 +235,17 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         List<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
                 existingOperations =
                 this.mongoTemplate.find(query(where(ACCESSION_ATTRIBUTE).is(mergee.getAccession()))
-                                                .addCriteria(where(MERGE_DESTINATION_ATTRIBUTE).is(
-                                                        mergeDestination.getAccession()))
-                                                .addCriteria(where(ASM_ATTRIBUTE_IN_OPERATIONS_COLLECTION)
-                                                                     .is(this.assemblyAccession)),
-                                        operationsCollectionToWriteTo);
+                                .addCriteria(where(MERGE_DESTINATION_ATTRIBUTE).is(
+                                        mergeDestination.getAccession()))
+                                .addCriteria(where(ASM_ATTRIBUTE_IN_OPERATIONS_COLLECTION)
+                                        .is(this.assemblyAccession)),
+                        operationsCollectionToWriteTo);
         if (existingOperations.isEmpty()) {
             ClusteredVariantOperationEntity operation = new ClusteredVariantOperationEntity();
             operation.fill(EventType.MERGED, mergee.getAccession(), mergeDestination.getAccession(),
-                           "After remapping to " + mergee.getAssemblyAccession() +
-                                   ", RS IDs mapped to the same locus.",
-                           Collections.singletonList(new ClusteredVariantInactiveEntity(mergee)));
+                    "After remapping to " + mergee.getAssemblyAccession() +
+                            ", RS IDs mapped to the same locus.",
+                    Collections.singletonList(new ClusteredVariantInactiveEntity(mergee)));
             this.mongoTemplate.insert(operation,
                     this.mongoTemplate.getCollectionName(operationsCollectionToWriteTo));
             metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_MERGE_OPERATIONS, 1);
@@ -261,6 +262,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     /**
      * Get destination RS and the set of RS to be merged into the destination RS
+     *
      * @param mergeCandidates Set of RS candidates that should be merged
      * @return Pair with the first element being the destination RS
      * and the next being the list of RS that should be merged into the former.
@@ -274,17 +276,17 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         }
         final Long targetRSAccession = lastPrioritizedAccession;
         ClusteredVariantEntity targetRS = mergeCandidates.stream().filter(rs -> rs.getAccession()
-                                                                                  .equals(targetRSAccession))
-                                                         .findFirst().get();
+                        .equals(targetRSAccession))
+                .findFirst().get();
         List<ClusteredVariantEntity> mergees = mergeCandidates.stream()
-                                                              .filter(rs -> !rs.getAccession()
-                                                                               .equals(targetRSAccession))
-                                                              .collect(Collectors.toList());
+                .filter(rs -> !rs.getAccession()
+                        .equals(targetRSAccession))
+                .collect(Collectors.toList());
         return new ImmutablePair<>(targetRS, mergees);
     }
 
     protected void recordMergeOperations(ClusteredVariantEntity mergeDestination, ClusteredVariantEntity mergee,
-                         SubmittedVariantOperationEntity currentOperation) {
+                                         SubmittedVariantOperationEntity currentOperation) {
         Long accessionToBeMerged = mergee.getAccession();
         Long accessionToKeep = mergeDestination.getAccession();
 
@@ -296,9 +298,9 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         ClusteredVariantMergingPolicy.Priority prioritised =
                 new ClusteredVariantMergingPolicy.Priority(accessionToKeep, accessionToBeMerged);
         updateSubmittedVariants(prioritised, currentOperation, SubmittedVariantEntity.class,
-                                SubmittedVariantOperationEntity.class);
+                SubmittedVariantOperationEntity.class);
         updateSubmittedVariants(prioritised, currentOperation, DbsnpSubmittedVariantEntity.class,
-                                DbsnpSubmittedVariantOperationEntity.class);
+                DbsnpSubmittedVariantOperationEntity.class);
 
         // Update other merge candidate operations involving the mergee
         // by replacing references to mergee RS ID with the target RS ID
@@ -325,36 +327,36 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                 where(RS_KEY_IN_OPERATIONS_COLLECTION).is(prioritised.accessionToBeMerged)));
         List<SubmittedVariantOperationEntity> operationsInDBInvolvingMergee =
                 mongoTemplate.find(queryForMergeCandidatesInvolvingMergee, SubmittedVariantOperationEntity.class);
-        for (SubmittedVariantOperationEntity operation: operationsInDBInvolvingMergee) {
+        for (SubmittedVariantOperationEntity operation : operationsInDBInvolvingMergee) {
             List<SubmittedVariantInactiveEntity> submittedVariantInactiveEntitiesWithMergeeRSReplaced =
                     operation.getInactiveObjects().stream()
-                             .map(entity -> replaceRSInSubmittedVariantInactiveEntity(
-                                     entity, prioritised.accessionToBeMerged, prioritised.accessionToKeep)
-                             ).collect(Collectors.toList());
+                            .map(entity -> replaceRSInSubmittedVariantInactiveEntity(
+                                    entity, prioritised.accessionToBeMerged, prioritised.accessionToKeep)
+                            ).collect(Collectors.toList());
             mongoTemplate.updateFirst(query(where(ID_ATTRIBUTE).is(operation.getId())),
-                                      update(INACTIVE_OBJECT_ATTRIBUTE,
-                                             submittedVariantInactiveEntitiesWithMergeeRSReplaced),
-                                      SubmittedVariantOperationEntity.class);
+                    update(INACTIVE_OBJECT_ATTRIBUTE,
+                            submittedVariantInactiveEntitiesWithMergeeRSReplaced),
+                    SubmittedVariantOperationEntity.class);
         }
     }
 
     private void updateOperationsInMemory(ClusteredVariantMergingPolicy.Priority prioritised,
-                           SubmittedVariantOperationEntity currentMergeOperation) {
+                                          SubmittedVariantOperationEntity currentMergeOperation) {
         if (rsIDIndexedOperations.containsKey(prioritised.accessionToBeMerged)) {
             List<OperationWithIndex> operationsInMemoryInvolvingMergee =
                     rsIDIndexedOperations.get(prioritised.accessionToBeMerged)
-                                         .stream()
-                                         // Filter for upcoming operations only
-                                         .filter(e -> (e.operationIndex > this.currentlyProcessingOperationIndex)
-                                                 && !(e.operation.equals(currentMergeOperation)))
-                                         .collect(Collectors.toList());
-            for (OperationWithIndex operationWithIndex: operationsInMemoryInvolvingMergee) {
+                            .stream()
+                            // Filter for upcoming operations only
+                            .filter(e -> (e.operationIndex > this.currentlyProcessingOperationIndex)
+                                    && !(e.operation.equals(currentMergeOperation)))
+                            .collect(Collectors.toList());
+            for (OperationWithIndex operationWithIndex : operationsInMemoryInvolvingMergee) {
                 SubmittedVariantOperationEntity operation = operationWithIndex.operation;
                 List<SubmittedVariantInactiveEntity> inactiveEntities =
                         operation.getInactiveObjects().stream()
-                                 .map(entity -> replaceRSInSubmittedVariantInactiveEntity
-                                         (entity, prioritised.accessionToBeMerged, prioritised.accessionToKeep))
-                                 .collect(Collectors.toList());
+                                .map(entity -> replaceRSInSubmittedVariantInactiveEntity
+                                        (entity, prioritised.accessionToBeMerged, prioritised.accessionToKeep))
+                                .collect(Collectors.toList());
                 SubmittedVariantOperationEntity updatedOperation =
                         new SubmittedVariantOperationEntity();
                 updatedOperation.fill(operation.getEventType(), operation.getAccession(), operation.getReason(),
@@ -377,11 +379,11 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     private void updateSplitCandidates(ClusteredVariantMergingPolicy.Priority prioritised) {
         Query queryForSplitCandidatesInvolvingTargetRS = query(getSplitCandidatesCriteria(this.assemblyAccession)
-                                                                       .and(RS_KEY_IN_OPERATIONS_COLLECTION)
-                                                                       .is(prioritised.accessionToKeep));
+                .and(RS_KEY_IN_OPERATIONS_COLLECTION)
+                .is(prioritised.accessionToKeep));
         Query queryForSplitCandidatesInvolvingMergee = query(getSplitCandidatesCriteria(this.assemblyAccession)
-                                                                     .and(RS_KEY_IN_OPERATIONS_COLLECTION)
-                                                                     .is(prioritised.accessionToBeMerged));
+                .and(RS_KEY_IN_OPERATIONS_COLLECTION)
+                .is(prioritised.accessionToBeMerged));
         // Since the mergee has been merged into the target RS,
         // the split candidates record for mergee are no longer valid - so, delete them!
         mongoTemplate.remove(queryForSplitCandidatesInvolvingMergee, SubmittedVariantOperationEntity.class);
@@ -393,30 +395,30 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         List<SubmittedVariantInactiveEntity> ssClusteredUnderTargetRS =
                 this.submittedVariantAccessioningService
                         .getByClusteredVariantAccessionIn(Collections.singletonList(prioritised.accessionToKeep),
-                                                          ContigNamingConvention.NO_REPLACEMENT)
+                                ContigNamingConvention.NO_REPLACEMENT)
                         .stream()
                         .filter(result -> result.getData().getReferenceSequenceAccession()
-                                                .equals(this.assemblyAccession))
+                                .equals(this.assemblyAccession))
                         .map(result -> new SubmittedVariantEntity(result.getAccession(), result.getHash(),
-                                                                  result.getData(), result.getVersion()))
+                                result.getData(), result.getVersion()))
                         .map(SubmittedVariantInactiveEntity::new)
                         .collect(Collectors.toList());
         Map<String, List<ClusteredVariantEntity>> distinctLociInDBForTargetRS =
                 ssClusteredUnderTargetRS.stream()
-                                .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
-                                .map(clusteringWriter::toClusteredVariantEntity)
-                                .collect(Collectors.groupingBy(ClusteredVariantEntity::getHashedMessage));
+                        .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
+                        .map(clusteringWriter::toClusteredVariantEntity)
+                        .collect(Collectors.groupingBy(ClusteredVariantEntity::getHashedMessage));
 
         //Update existing split candidates record for target RS if it exists. Else, create a new record!
         if (Objects.nonNull(splitCandidateInvolvingTargetRS) && distinctLociInDBForTargetRS.size() > 1) {
             mongoTemplate.updateFirst(query(where(ID_ATTRIBUTE).is(splitCandidateInvolvingTargetRS.getId())),
-                                      update(INACTIVE_OBJECT_ATTRIBUTE, ssClusteredUnderTargetRS),
-                                      SubmittedVariantOperationEntity.class);
+                    update(INACTIVE_OBJECT_ATTRIBUTE, ssClusteredUnderTargetRS),
+                    SubmittedVariantOperationEntity.class);
         } else {
             Set<String> targetRSDistinctLoci =
                     ssClusteredUnderTargetRS.stream().map(entity -> clusteringWriter
-                                                    .getClusteredVariantHash(entity.getModel()))
-                                            .collect(Collectors.toSet());
+                                    .getClusteredVariantHash(entity.getModel()))
+                            .collect(Collectors.toSet());
             // Condition for generating split operation: ensure that there is more than one locus sharing the target RS
             if (targetRSDistinctLoci.size() > 1) {
                 // The new SPLIT candidate is for rs prioritised.accessionToKeep
@@ -458,8 +460,8 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
 
         List<SubmittedVariantOperationEntity> operations =
                 svToUpdate.stream()
-                          .map(sv -> buildSubmittedOperation(sv, prioritised.accessionToKeep))
-                          .collect(Collectors.toList());
+                        .map(sv -> buildSubmittedOperation(sv, prioritised.accessionToKeep))
+                        .collect(Collectors.toList());
         mongoTemplate.insert(operations, submittedOperationCollection);
         metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATE_OPERATIONS, operations.size());
     }

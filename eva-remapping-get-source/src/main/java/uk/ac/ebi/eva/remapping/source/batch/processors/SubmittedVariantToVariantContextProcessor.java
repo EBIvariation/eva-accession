@@ -19,7 +19,6 @@ package uk.ac.ebi.eva.remapping.source.batch.processors;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.VariantContextBuilder;
 import org.springframework.batch.item.ItemProcessor;
-
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
 import java.util.HashMap;
@@ -27,9 +26,9 @@ import java.util.Map;
 
 import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.BACKPROP_RS_KEY;
 import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.CREATED_DATE;
+import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.PROJECT_KEY;
 import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.RS_KEY;
 import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.SS_HASH;
-import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.PROJECT_KEY;
 import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.TAXONOMY;
 
 /**

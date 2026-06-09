@@ -18,8 +18,8 @@ package uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps;
 
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
@@ -29,12 +29,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.backoff.ExponentialBackOffPolicy;
+import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.MissingUnsavedAccessionsException;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionWriter;
 import uk.ac.ebi.eva.accession.pipeline.batch.policies.InvalidVariantSkipPolicy;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
+import static uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration.BATCH_TRANSACTION_MANAGER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_WRITER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.COMPOSITE_VARIANT_PROCESSOR;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_STEP;
@@ -42,7 +44,6 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_AC
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.VARIANT_READER;
 
 @Configuration
-@EnableBatchProcessing
 public class SubsnpAccessionsStepConfiguration {
 
     @Autowired
@@ -65,10 +66,11 @@ public class SubsnpAccessionsStepConfiguration {
     private InvalidVariantSkipPolicy invalidVariantSkipPolicy;
 
     @Bean(SUBSNP_ACCESSION_STEP)
-    public Step subsnpAccessionStep(StepBuilderFactory stepBuilderFactory,
+    public Step subsnpAccessionStep(JobRepository jobRepository,
+                                    @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
                                     SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(SUBSNP_ACCESSION_STEP)
-                .<IVariant, IVariant>chunk(chunkSizeCompletionPolicy)
+        TaskletStep step = new StepBuilder(SUBSNP_ACCESSION_STEP, jobRepository)
+                .<IVariant, IVariant>chunk(chunkSizeCompletionPolicy, transactionManager)
                 .reader(variantReader)
                 .processor(variantProcessor)
                 .writer(accessionWriter)

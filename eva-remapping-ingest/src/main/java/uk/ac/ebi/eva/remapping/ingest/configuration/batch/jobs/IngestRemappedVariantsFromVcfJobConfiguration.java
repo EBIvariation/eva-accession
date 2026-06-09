@@ -17,9 +17,8 @@ package uk.ac.ebi.eva.remapping.ingest.configuration.batch.jobs;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,19 +28,17 @@ import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.INGEST_REMA
 import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.STORE_REMAPPING_METADATA_STEP;
 
 @Configuration
-@EnableBatchProcessing
 public class IngestRemappedVariantsFromVcfJobConfiguration {
 
     @Bean(INGEST_REMAPPED_VARIANTS_FROM_VCF_JOB)
     public Job ingestRemappedVariantsFromVcfJob(
             @Qualifier(INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP) Step ingestRemappedVariantsStep,
             @Qualifier(STORE_REMAPPING_METADATA_STEP) Step storeRemappingMetadataStep,
-            JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(INGEST_REMAPPED_VARIANTS_FROM_VCF_JOB)
-                                .incrementer(new RunIdIncrementer())
-                                .start(storeRemappingMetadataStep)
-                                .next(ingestRemappedVariantsStep)
-                                .build();
+            JobRepository jobRepository) {
+        return new JobBuilder(INGEST_REMAPPED_VARIANTS_FROM_VCF_JOB, jobRepository)
+                .start(storeRemappingMetadataStep)
+                .next(ingestRemappedVariantsStep)
+                .build();
     }
 
 }

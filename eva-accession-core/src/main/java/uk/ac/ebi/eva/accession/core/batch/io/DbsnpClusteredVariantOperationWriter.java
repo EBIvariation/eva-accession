@@ -20,15 +20,13 @@ package uk.ac.ebi.eva.accession.core.batch.io;
 
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.bulk.BulkWriteResult;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
-
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.batch.listeners.ImportCounts;
-
-import java.util.List;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 
 public class DbsnpClusteredVariantOperationWriter implements ItemWriter<DbsnpClusteredVariantOperationEntity> {
 
@@ -42,12 +40,12 @@ public class DbsnpClusteredVariantOperationWriter implements ItemWriter<DbsnpClu
     }
 
     @Override
-    public void write(List<? extends DbsnpClusteredVariantOperationEntity> importedClusteredVariantsOperations)
+    public void write(Chunk<? extends DbsnpClusteredVariantOperationEntity> importedClusteredVariantsOperations)
             throws Exception {
         try {
             BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                                  DbsnpClusteredVariantOperationEntity.class);
-            bulkOperations.insert(importedClusteredVariantsOperations);
+                    DbsnpClusteredVariantOperationEntity.class);
+            bulkOperations.insert(importedClusteredVariantsOperations.getItems());
             bulkOperations.execute();
             importCounts.addOperationsWritten(importedClusteredVariantsOperations.size());
         } catch (DuplicateKeyException exception) {

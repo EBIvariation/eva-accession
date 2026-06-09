@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.pipeline.batch.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
@@ -60,15 +61,15 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
     }
 
     @Override
-    public void write(List<? extends IVariant> variants) throws Exception {
+    public void write(Chunk<? extends IVariant> variants) throws Exception {
         if (!variants.isEmpty()) {
-            List<ISubmittedVariant> submittedVariants = variants.stream().map(variantConverter::convert)
+            List<ISubmittedVariant> submittedVariants = variants.getItems().stream().map(variantConverter::convert)
                     .collect(Collectors.toList());
             List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(submittedVariants,
                     jobExecution.getJobId().toString());
             metricCompute.addCount(AccessioningMetric.SUBMITTED_VARIANTS, variants.size());
             metricCompute.addCount(AccessioningMetric.ACCESSIONED_VARIANTS, accessions.size());
-            accessionReportWriter.write(variants, accessions);
+            accessionReportWriter.write(variants.getItems(), accessions);
             checkCountsMatch(submittedVariants, accessions);
         }
     }
@@ -77,28 +78,28 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
                           List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessions) {
         if (variants.size() != accessions.size()) {
             Set<ISubmittedVariant> accessionedVariants = accessions.stream()
-                                                                   .map(AccessionWrapper::getData)
-                                                                   .map(this::getSubmittedVariantWithoutClusteredVariantAccession)
-                                                                   .collect(Collectors.toSet());
+                    .map(AccessionWrapper::getData)
+                    .map(this::getSubmittedVariantWithoutClusteredVariantAccession)
+                    .collect(Collectors.toSet());
             HashSet<ISubmittedVariant> distinctVariants = new HashSet<>(variants);
             int duplicateCount = variants.size() - distinctVariants.size();
             metricCompute.addCount(AccessioningMetric.DISTINCT_VARIANTS, distinctVariants.size());
             metricCompute.addCount(AccessioningMetric.DUPLICATE_VARIANTS, duplicateCount);
             if (duplicateCount != 0) {
                 logger.warn("A variant chunk contains {} repeated variants. This is not an error, but please check " +
-                                    "it's expected.", duplicateCount);
+                        "it's expected.", duplicateCount);
             }
 
             Set<ISubmittedVariant> variantsWithoutAccession = distinctVariants.stream()
-                                                                              .filter(v -> !accessionedVariants
-                                                                                      .contains(v))
-                                                                              .collect(Collectors.toSet());
+                    .filter(v -> !accessionedVariants
+                            .contains(v))
+                    .collect(Collectors.toSet());
             metricCompute.addCount(AccessioningMetric.DISCARDED_VARIANTS, variantsWithoutAccession.size());
             if (variantsWithoutAccession.size() != 0) {
                 logger.error("A problem occurred while accessioning a chunk. Total num variants = {}, distinct = {}, " +
-                                     "duplicate = {}, accessioned = {}, not accessioned = {}",
-                             variants.size(), distinctVariants.size(), duplicateCount, accessionedVariants.size(),
-                             variantsWithoutAccession.size());
+                                "duplicate = {}, accessioned = {}, not accessioned = {}",
+                        variants.size(), distinctVariants.size(), duplicateCount, accessionedVariants.size(),
+                        variantsWithoutAccession.size());
                 logger.error("The non-accessioned variants are: {}", variantsWithoutAccession.toString());
 
                 throw new IllegalStateException(
@@ -109,18 +110,18 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
 
     private ISubmittedVariant getSubmittedVariantWithoutClusteredVariantAccession(ISubmittedVariant submittedVariant) {
         return new SubmittedVariant(submittedVariant.getReferenceSequenceAccession(),
-                                    submittedVariant.getTaxonomyAccession(),
-                                    submittedVariant.getProjectAccession(),
-                                    submittedVariant.getContig(),
-                                    submittedVariant.getStart(),
-                                    submittedVariant.getReferenceAllele(),
-                                    submittedVariant.getAlternateAllele(),
-                                    null,
-                                    submittedVariant.isSupportedByEvidence(),
-                                    submittedVariant.isAssemblyMatch(),
-                                    submittedVariant.isAllelesMatch(),
-                                    submittedVariant.isValidated(),
-                                    submittedVariant.getCreatedDate());
+                submittedVariant.getTaxonomyAccession(),
+                submittedVariant.getProjectAccession(),
+                submittedVariant.getContig(),
+                submittedVariant.getStart(),
+                submittedVariant.getReferenceAllele(),
+                submittedVariant.getAlternateAllele(),
+                null,
+                submittedVariant.isSupportedByEvidence(),
+                submittedVariant.isAssemblyMatch(),
+                submittedVariant.isAllelesMatch(),
+                submittedVariant.isValidated(),
+                submittedVariant.getCreatedDate());
     }
 
     @Override

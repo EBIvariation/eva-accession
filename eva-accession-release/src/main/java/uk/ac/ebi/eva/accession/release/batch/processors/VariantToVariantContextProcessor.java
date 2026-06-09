@@ -19,7 +19,6 @@ package uk.ac.ebi.eva.accession.release.batch.processors;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.VariantContextBuilder;
 import org.springframework.batch.item.ItemProcessor;
-
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
@@ -33,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader.MAPPING_WEIGHT_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
@@ -42,11 +42,10 @@ import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariant
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantMongoReader.MERGED_INTO_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader.MAPPING_WEIGHT_KEY;
 
 /**
  * Converts an IVariant to a VariantContext.
- *
+ * <p>
  * The latter can be serialized using HTSJDK. This processor requires any to-be-serialized property to be set in the
  * IVariant already, such as the alleles.
  */
@@ -103,7 +102,7 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
                 case MERGED_INTO_KEY:
                 case MAPPING_WEIGHT_KEY:
                     attributes.put(attribute.getKey(),
-                                   toUniqueConcatenation(replaceInvalidCharacters(attribute.getValue())));
+                            toUniqueConcatenation(replaceInvalidCharacters(attribute.getValue())));
                     break;
                 case ALLELES_MATCH_KEY:
                 case ASSEMBLY_MATCH_KEY:
@@ -141,8 +140,8 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
      */
     private List<String> replaceInvalidCharacters(List<String> infoValues) {
         return infoValues.stream()
-                         .map(s -> s.replaceAll("[ ,;=]", "_"))
-                         .collect(Collectors.toList());
+                .map(s -> s.replaceAll("[ ,;=]", "_"))
+                .collect(Collectors.toList());
     }
 
     private String toUniqueConcatenation(List<String> value) {

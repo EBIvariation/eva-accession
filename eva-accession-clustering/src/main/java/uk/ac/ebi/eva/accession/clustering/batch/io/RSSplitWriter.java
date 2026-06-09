@@ -16,22 +16,21 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import com.mongodb.MongoBulkWriteException;
-
 import com.mongodb.client.result.UpdateResult;
+import jakarta.annotation.Nonnull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
-
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
-
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteredVariantSplittingPolicy.SplitDeterminants;
 import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
@@ -50,7 +49,6 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessionin
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -114,15 +112,14 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
     }
 
     @Override
-    public void write(@Nonnull List<? extends SubmittedVariantOperationEntity> submittedVariantOperationEntities)
+    public void write(@Nonnull Chunk<? extends SubmittedVariantOperationEntity> submittedVariantOperationEntities)
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException, IOException {
         try {
             this.rsReportFileWriter = new FileWriter(this.rsReportFile, true);
             for (SubmittedVariantOperationEntity entity : submittedVariantOperationEntities) {
                 writeRSSplit(entity);
             }
-        }
-        finally {
+        } finally {
             this.rsReportFileWriter.close();
         }
     }
@@ -159,17 +156,17 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                         .entrySet().stream().map(rsHashAndAssociatedSS ->
                                 new SplitDeterminants(
                                         clusteringWriter.toClusteredVariantEntity(rsHashAndAssociatedSS.getValue()
-                                                                                                       .get(0)),
+                                                .get(0)),
                                         rsHashAndAssociatedSS.getKey(),
                                         rsHashAndAssociatedSS.getValue().size(),
                                         // Get lowest SS ID associated with a given RS hash
                                         rsHashAndAssociatedSS.getValue().stream()
-                                                             .map(SubmittedVariantEntity::getAccession)
-                                                             .min(Comparator.naturalOrder()).get()))
+                                                .map(SubmittedVariantEntity::getAccession)
+                                                .min(Comparator.naturalOrder()).get()))
                         .collect(Collectors.toList());
         // Based on the split policy, one of the hashes will retain the RS associated with it
         // and the other hashes should be associated with new RS IDs
-        List<String> hashesThatShouldGetNewRS =  getHashesThatShouldGetNewRS(splitCandidates);
+        List<String> hashesThatShouldGetNewRS = getHashesThatShouldGetNewRS(splitCandidates);
         issueNewRSForHashes(hashesThatShouldGetNewRS, submittedVariantOperationEntity.getInactiveObjects());
     }
 
@@ -182,13 +179,13 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
             throws AccessionCouldNotBeGeneratedException, IOException {
         Map<String, List<SubmittedVariantEntity>> rsHashAndAssociatedSS =
                 submittedVariantInactiveEntities
-                .stream()
-                .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
-                // If the split was processed multiple times due to multiple runs of the clustering pipeline
-                // ensure that the SS was not already assigned a new RS
-                .filter(ss -> !this.doesSSAlreadyHaveANewRS(ss))
-                .collect(Collectors.groupingBy(this::getRSHashForSS));
-        for (String rsHash: rsHashAndAssociatedSS.keySet()) {
+                        .stream()
+                        .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
+                        // If the split was processed multiple times due to multiple runs of the clustering pipeline
+                        // ensure that the SS was not already assigned a new RS
+                        .filter(ss -> !this.doesSSAlreadyHaveANewRS(ss))
+                        .collect(Collectors.groupingBy(this::getRSHashForSS));
+        for (String rsHash : rsHashAndAssociatedSS.keySet()) {
             if (hashesThatShouldGetNewRS.contains(rsHash)) {
                 // Remove entry in clustered variant collections if hash already exists
                 removeExistingHash(rsHash);
@@ -197,19 +194,19 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                         rsHashAndAssociatedSS.get(rsHash).get(0));
                 Long newRSAccession =
                         this.clusteredVariantAccessioningService.getOrCreate(
-                                Collections.singletonList(clusteredVariantEntity), jobExecution.getJobId().toString())
+                                        Collections.singletonList(clusteredVariantEntity), jobExecution.getJobId().toString())
                                 .get(0).getAccession();
                 ClusteringWriter.writeRSReportEntry(this.rsReportFileWriter, newRSAccession, rsHash);
                 metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, 1);
                 List<SubmittedVariantEntity> associatedSSEntries = rsHashAndAssociatedSS.get(rsHash);
-                for (SubmittedVariantEntity submittedVariantEntity: associatedSSEntries) {
-                    Long oldRSAccession =  submittedVariantEntity.getClusteredVariantAccession();
+                for (SubmittedVariantEntity submittedVariantEntity : associatedSSEntries) {
+                    Long oldRSAccession = submittedVariantEntity.getClusteredVariantAccession();
                     logger.info("RS split operation: Associating ss{} with hash {} to newly issued rs{}...",
-                                submittedVariantEntity.getAccession(), submittedVariantEntity.getHashedMessage(),
-                                newRSAccession);
+                            submittedVariantEntity.getAccession(), submittedVariantEntity.getHashedMessage(),
+                            newRSAccession);
                     associateNewRSToSS(newRSAccession, submittedVariantEntity);
                     writeRSUpdateOperation(oldRSAccession, newRSAccession,
-                                           clusteringWriter.toClusteredVariantEntity(submittedVariantEntity));
+                            clusteringWriter.toClusteredVariantEntity(submittedVariantEntity));
                     writeSSUpdateOperation(oldRSAccession, newRSAccession, submittedVariantEntity);
                 }
             }
@@ -229,7 +226,7 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         if (ssInDBOption.isPresent()) {
             ISubmittedVariant ssInDB = ssInDBOption.get();
             return !(ssInDB.getClusteredVariantAccession()
-                         .equals(ssMarkedToReceiveNewRS.getClusteredVariantAccession()));
+                    .equals(ssMarkedToReceiveNewRS.getClusteredVariantAccession()));
         }
         return false;
     }
@@ -270,12 +267,12 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         String splitOperationDescription = "Due to hash mismatch, rs" + newRSAccession +
                 " was issued to split from rs" + oldRSAccession + ".";
         splitOperation.fill(EventType.RS_SPLIT, oldRSAccession, newRSAccession, splitOperationDescription,
-                            Collections.singletonList(new ClusteredVariantInactiveEntity(clusteredVariantEntity)));
+                Collections.singletonList(new ClusteredVariantInactiveEntity(clusteredVariantEntity)));
         Query queryToCheckPreviousRSOperation = query(where(ACCESSION_ATTRIBUTE).is(oldRSAccession))
                 .addCriteria(where(EVENT_TYPE_ATTRIBUTE).is(EventType.RS_SPLIT))
                 .addCriteria(where(SPLIT_INTO_ATTRIBUTE).is(newRSAccession))
                 .addCriteria(where(ASSEMBLY_ATTRIBUTE_IN_CLUSTERED_OPERATIONS_COLLECTION)
-                                     .is(clusteredVariantEntity.getAssemblyAccession()));
+                        .is(clusteredVariantEntity.getAssemblyAccession()));
         if (this.mongoTemplate.find(queryToCheckPreviousRSOperation, operationClass).isEmpty()) {
             this.mongoTemplate.insert(splitOperation, this.mongoTemplate.getCollectionName(operationClass));
             metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_RS_SPLIT, 1);
@@ -292,13 +289,14 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         String updateOperationDescription = "SS was associated with the split RS rs" + newRSAccession
                 + " that was split from rs" + oldRSAccession + " after remapping.";
         updateOperation.fill(EventType.UPDATED, submittedVariantEntity.getAccession(), updateOperationDescription,
-                             Collections.singletonList(new SubmittedVariantInactiveEntity(submittedVariantEntity)));
+                Collections.singletonList(new SubmittedVariantInactiveEntity(submittedVariantEntity)));
         this.mongoTemplate.insert(updateOperation, this.mongoTemplate.getCollectionName(operationClass));
         metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATE_OPERATIONS, 1);
     }
 
     /**
      * Get hashes that should receive the new RS
+     *
      * @param splitCandidates List of triples
      *                        1) ClusteredVariant object with the hash 2) the hash itself and
      *                        3) the number of variants with that hash
@@ -316,15 +314,15 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                 hashThatShouldRetainOldRS.getClusteredVariantEntity().getAccession());
         String hashToFind = hashThatShouldRetainOldRS.getRsHash();
         Class<? extends ClusteredVariantEntity> otherCollection =
-                (rsCollectionToUse == DbsnpClusteredVariantEntity.class)?
-                        ClusteredVariantEntity.class: DbsnpClusteredVariantEntity.class;
+                (rsCollectionToUse == DbsnpClusteredVariantEntity.class) ?
+                        ClusteredVariantEntity.class : DbsnpClusteredVariantEntity.class;
         if (this.mongoTemplate.find(query(where(ID_ATTRIBUTE).is(hashToFind)), rsCollectionToUse).isEmpty()) {
             // Don't insert an entry with an RS hash if that hash already exists in another collection
             // This way, we at least make it possible for a clustering re-run to resolve a previously unresolved merge
             // See https://docs.google.com/spreadsheets/d/10NqzlcmKF5cVotJtnYhEFYvD_A7P9WsjN2p2ipYFKxE/edit#gid=0
             // If we allow multiple hashes to co-exist in different collections, a re-run will be hindered
             // (see EVA-3132 and https://ebi-eva.slack.com/archives/C5A6MLDAR/p1676986532496859)
-            if (this.mongoTemplate.find(query(where(ID_ATTRIBUTE).is(hashToFind)),otherCollection).isEmpty()) {
+            if (this.mongoTemplate.find(query(where(ID_ATTRIBUTE).is(hashToFind)), otherCollection).isEmpty()) {
                 this.mongoTemplate.insert(hashThatShouldRetainOldRS.getClusteredVariantEntity(),
                         this.mongoTemplate.getCollectionName(rsCollectionToUse));
                 metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, 1);
@@ -332,13 +330,13 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                 logger.warn("Skipping creation of RS record " + hashThatShouldRetainOldRS.getClusteredVariantEntity()
                         + " because the  hash " + hashToFind + " is present in the " + otherCollection.getSimpleName()
                         + " collection! This should NOT happen and likely indicates an RS merge that did not take place!"
-                        +" See https://docs.google.com/spreadsheets/d/10NqzlcmKF5cVotJtnYhEFYvD_A7P9WsjN2p2ipYFKxE/edit#gid=0.");
+                        + " See https://docs.google.com/spreadsheets/d/10NqzlcmKF5cVotJtnYhEFYvD_A7P9WsjN2p2ipYFKxE/edit#gid=0.");
             }
         }
         return splitCandidates.stream()
-                              .map(SplitDeterminants::getRsHash)
-                              .filter(rsHash -> !(rsHash.equals(hashThatShouldRetainOldRS.getRsHash())))
-                              .collect(Collectors.toList());
+                .map(SplitDeterminants::getRsHash)
+                .filter(rsHash -> !(rsHash.equals(hashThatShouldRetainOldRS.getRsHash())))
+                .collect(Collectors.toList());
     }
 
     public void setJobExecution(JobExecution jobExecution) {

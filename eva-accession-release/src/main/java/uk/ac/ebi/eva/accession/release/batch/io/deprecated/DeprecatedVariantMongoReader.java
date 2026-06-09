@@ -15,7 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.release.batch.io.deprecated;
 
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Field;
 import com.mongodb.client.model.Filters;
@@ -67,33 +67,33 @@ public class DeprecatedVariantMongoReader extends VariantMongoAggregationReader 
     @Override
     protected List<Bson> buildAggregation() {
         Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD),
-                                                         assemblyAccession));
+                assemblyAccession));
         Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.DEPRECATED.toString()));
         Bson sort = Aggregates.sort(orderBy(ascending(getInactiveField(CONTIG_FIELD), getInactiveField(START_FIELD))));
         List<Bson> aggregation = new ArrayList<>(Arrays.asList(matchAssembly, matchMerged, sort));
 
         for (String submittedVariantOperationCollectionName : allSubmittedVariantOperationCollectionNames) {
             Bson lookup = Aggregates.lookup(submittedVariantOperationCollectionName, ACCESSION_FIELD,
-                                                          getInactiveField(CLUSTERED_VARIANT_ACCESSION_FIELD),
-                                                          submittedVariantOperationCollectionName);
+                    getInactiveField(CLUSTERED_VARIANT_ACCESSION_FIELD),
+                    submittedVariantOperationCollectionName);
             aggregation.add(lookup);
         }
         // Concat entries from all submitted variant operation collections
         Bson ssConcat = Aggregates.addFields(new Field<>(SS_INFO_FIELD,
-                                                         new Document("$concatArrays", allSubmittedVariantOperationCollectionNames
-                                                                 .stream().map(v -> "$" + v)
-                                                                 .collect(Collectors.toList()))));
+                new Document("$concatArrays", allSubmittedVariantOperationCollectionNames
+                        .stream().map(v -> "$" + v)
+                        .collect(Collectors.toList()))));
         aggregation.add(ssConcat);
         // Ensure that we are only retrieving the variants with the relevant taxonomy
         // and event type in the Submitted operations collections
         Bson matchTaxonomyAndEventType = Aggregates.match(Filters.and(
                 Filters.ne(SS_INFO_FIELD, Collections.emptyList()),
                 Filters.eq(SS_INFO_FIELD + "." +
-                                   getInactiveField(REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS),
-                           this.assemblyAccession),
+                                getInactiveField(REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS),
+                        this.assemblyAccession),
                 Filters.eq(SS_INFO_FIELD + "." + getInactiveField(TAXONOMY_FIELD), this.taxonomyAccession),
                 Filters.in(SS_INFO_FIELD + "." + EVENT_TYPE_FIELD,
-                           Arrays.asList(EventType.UPDATED.toString(), EventType.DEPRECATED.toString()))));
+                        Arrays.asList(EventType.UPDATED.toString(), EventType.DEPRECATED.toString()))));
         aggregation.add(matchTaxonomyAndEventType);
         logger.info("Issuing aggregation: {}", aggregation);
         logger.info(aggregation.toString());

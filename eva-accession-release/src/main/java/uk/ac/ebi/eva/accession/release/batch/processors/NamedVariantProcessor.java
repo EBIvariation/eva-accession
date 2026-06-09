@@ -36,7 +36,7 @@ import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationRe
 
 /**
  * Transform a named variant {@link VariantType#SEQUENCE_ALTERATION} into a structural variant with symbolic alleles.
- *
+ * <p>
  * Examples of structural variants taken from
  * <a href='https://samtools.github.io/hts-specs/VCFv4.3.pdf'>VCFv.3 spec</a> (section 5.3):
  * <pre>
@@ -47,9 +47,9 @@ import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationRe
  * 3       9425916 .    C    <INS:ME:L1>  23   PASS   SVTYPE=INS;END=9425916;SVLEN=6027
  * }
  * </pre>
- *
+ * <p>
  * Note that unlike regular INDELS, variants with symbolic alleles have the context bases only in the REF column.
- *
+ * <p>
  * Also, note that the deletions have the symbolic allele in the ALT column.
  */
 public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
@@ -58,9 +58,9 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
 
     private static Map<String, VariantType> sequenceOntologyToVariantType =
             Arrays.stream(VariantType.values())
-                  .filter(type -> type != VariantType.NO_ALTERNATE)
-                  .collect(Collectors.toMap(VariantTypeToSOAccessionMap::getSequenceOntologyAccession,
-                                            type -> type));
+                    .filter(type -> type != VariantType.NO_ALTERNATE)
+                    .collect(Collectors.toMap(VariantTypeToSOAccessionMap::getSequenceOntologyAccession,
+                            type -> type));
 
     @Override
     public IVariant process(Variant variant) throws Exception {
@@ -75,7 +75,7 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
             if (isNamedAllele(oldAlternate) || isSymbolicAllele(oldAlternate)) {
                 throw new IllegalArgumentException(
                         "This variant (with named/symbolic alleles in both the reference and alternate alleles) can't"
-                        + " be written in VCF, as only the ALT column can have symbolic alleles: " + variant);
+                                + " be written in VCF, as only the ALT column can have symbolic alleles: " + variant);
             } else {
                 // swap the alleles, look this class' documentation
                 newReference = oldAlternate;
@@ -86,7 +86,7 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
         }
 
         Variant newVariant = new Variant(variant.getChromosome(), variant.getStart(), variant.getEnd(), newReference,
-                                         makeAltAlleleValid(newAlternate));
+                makeAltAlleleValid(newAlternate));
 
         newVariant.addSourceEntries(variant.getSourceEntries());
         newVariant.setMainId(variant.getMainId());
@@ -131,19 +131,19 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
         boolean isSequenceAlteration = variant.getType() == VariantType.SEQUENCE_ALTERATION;
 
         if (isSequenceAlteration && !containsSequenceAlterationInMongo
-            || !isSequenceAlteration && containsSequenceAlterationInMongo) {
+                || !isSequenceAlteration && containsSequenceAlterationInMongo) {
             logger.warn("Variant is stored in MongoDB with types " + types + ", but AbstractVariant::getType says"
-                        + " that the correct type is " + variant.getType() + ". The variant (" + variant.getMainId()
-                        + ") is: " + variant);
+                    + " that the correct type is " + variant.getType() + ". The variant (" + variant.getMainId()
+                    + ") is: " + variant);
         }
     }
 
     private Set<VariantType> getTypeFromAttributes(Variant variant) {
         return variant.getSourceEntries()
-                      .stream()
-                      .map(AbstractVariantSourceEntry::getAttributes)
-                      .map(attributes -> attributes.get(VARIANT_CLASS_KEY))
-                      .map(sequenceOntologyToVariantType::get)
-                      .collect(Collectors.toSet());
+                .stream()
+                .map(AbstractVariantSourceEntry::getAttributes)
+                .map(attributes -> attributes.get(VARIANT_CLASS_KEY))
+                .map(sequenceOntologyToVariantType::get)
+                .collect(Collectors.toSet());
     }
 }

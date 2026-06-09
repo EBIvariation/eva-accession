@@ -23,7 +23,7 @@ import uk.ac.ebi.eva.accession.core.exceptions.PositionOutsideOfContigException;
 public class IllegalStartSkipPolicy implements SkipPolicy {
 
     @Override
-    public boolean shouldSkip(Throwable exception, int skipCount) throws SkipLimitExceededException {
+    public boolean shouldSkip(Throwable exception, long skipCount) throws SkipLimitExceededException {
         return exception instanceof PositionOutsideOfContigException;
     }
 }

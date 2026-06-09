@@ -24,6 +24,7 @@ import htsjdk.variant.vcf.VCFHeaderLineType;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
@@ -31,7 +32,6 @@ import org.springframework.batch.item.ItemStreamWriter;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -87,15 +87,15 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
         metaData.add(new VCFInfoHeaderLine(SS_HASH, 1, VCFHeaderLineType.String,
                 "Hash (_id in MongoDB) of the Submitted Variant from which the remapped variant was created"));
         metaData.add(new VCFInfoHeaderLine(RS_KEY, 1, VCFHeaderLineType.String,
-                                           "RS ID where this SS ID is clustered"));
+                "RS ID where this SS ID is clustered"));
         metaData.add(new VCFInfoHeaderLine(BACKPROP_RS_KEY, 1, VCFHeaderLineType.String,
-                                           "RS ID that was backpropagated to this SS from another remapping"));
+                "RS ID that was backpropagated to this SS from another remapping"));
         metaData.add(new VCFInfoHeaderLine(PROJECT_KEY, 1, VCFHeaderLineType.String,
-                                           "PROJECT ID associated with this SS ID"));
+                "PROJECT ID associated with this SS ID"));
         metaData.add(new VCFInfoHeaderLine(TAXONOMY, 1, VCFHeaderLineType.String,
-                                           "TAXONOMY ID associated with this SS ID"));
+                "TAXONOMY ID associated with this SS ID"));
         metaData.add(new VCFInfoHeaderLine(CREATED_DATE, 1, VCFHeaderLineType.String,
-                                           "Date when the SS ID was created"));
+                "Date when the SS ID was created"));
         return metaData;
     }
 
@@ -104,7 +104,7 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
     }
 
     @Override
-    public void write(List<? extends VariantContext> variantContexts) throws Exception {
+    public void write(Chunk<? extends VariantContext> variantContexts) throws Exception {
         for (VariantContext variantContext : variantContexts) {
             writer.add(variantContext);
         }

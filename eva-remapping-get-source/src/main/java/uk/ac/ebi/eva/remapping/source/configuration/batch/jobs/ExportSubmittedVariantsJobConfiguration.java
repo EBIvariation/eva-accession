@@ -18,33 +18,32 @@ package uk.ac.ebi.eva.remapping.source.configuration.batch.jobs;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-
 import uk.ac.ebi.eva.remapping.source.configuration.batch.steps.ExportSubmittedVariantsStepConfiguration;
-import uk.ac.ebi.eva.remapping.source.configuration.BeanNames;
+
+import static uk.ac.ebi.eva.remapping.source.configuration.BeanNames.EXPORT_DBSNP_SUBMITTED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.remapping.source.configuration.BeanNames.EXPORT_EVA_SUBMITTED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.remapping.source.configuration.BeanNames.EXPORT_SUBMITTED_VARIANTS_JOB;
 
 @Configuration
-@EnableBatchProcessing
 @Import({ExportSubmittedVariantsStepConfiguration.class})
 public class ExportSubmittedVariantsJobConfiguration {
 
-    @Bean(BeanNames.EXPORT_SUBMITTED_VARIANTS_JOB)
+    @Bean(EXPORT_SUBMITTED_VARIANTS_JOB)
     public Job accessionReleaseJob(
-            JobBuilderFactory jobBuilderFactory,
-            @Autowired @Qualifier(BeanNames.EXPORT_EVA_SUBMITTED_VARIANTS_STEP) Step exportEvaSubmittedVariantsStep,
-            @Autowired @Qualifier(BeanNames.EXPORT_DBSNP_SUBMITTED_VARIANTS_STEP) Step exportDbsnpSubmittedVariantsStep
+            JobRepository jobRepository,
+            @Autowired @Qualifier(EXPORT_EVA_SUBMITTED_VARIANTS_STEP) Step exportEvaSubmittedVariantsStep,
+            @Autowired @Qualifier(EXPORT_DBSNP_SUBMITTED_VARIANTS_STEP) Step exportDbsnpSubmittedVariantsStep
     ) {
-        return jobBuilderFactory.get(BeanNames.EXPORT_SUBMITTED_VARIANTS_JOB)
-                                .incrementer(new RunIdIncrementer())
-                                .start(exportEvaSubmittedVariantsStep)
-                                .next(exportDbsnpSubmittedVariantsStep)
-                                .build();
+        return new JobBuilder(EXPORT_SUBMITTED_VARIANTS_JOB, jobRepository)
+                .start(exportEvaSubmittedVariantsStep)
+                .next(exportDbsnpSubmittedVariantsStep)
+                .build();
     }
 }

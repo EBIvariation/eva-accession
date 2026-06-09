@@ -16,7 +16,6 @@
 
 package uk.ac.ebi.eva.remapping.source.parameters;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 
@@ -36,8 +35,6 @@ public class InputParameters {
 
     private int taxonomy;
 
-    private boolean forceRestart;
-
     private int chunkSize;
 
     public JobParameters toJobParameters() {
@@ -46,8 +43,8 @@ public class InputParameters {
                 .addString("fasta", fasta)
                 .addString("assemblyReportUrl", assemblyReportUrl)
                 .addString("outputFolder", outputFolder)
-                .addString("projects", CollectionUtils.isEmpty(projects) ? "" : String.join(",", projects))
-                .addLong("taxonomy", (long)taxonomy)
+                .addString("projects", (projects == null || projects.isEmpty()) ? "" : String.join(",", projects))
+                .addLong("taxonomy", (long) taxonomy)
                 .toJobParameters();
     }
 
@@ -81,14 +78,6 @@ public class InputParameters {
 
     public void setOutputFolder(String outputFolder) {
         this.outputFolder = outputFolder;
-    }
-
-    public boolean isForceRestart() {
-        return forceRestart;
-    }
-
-    public void setForceRestart(boolean forceRestart) {
-        this.forceRestart = forceRestart;
     }
 
     public int getChunkSize() {

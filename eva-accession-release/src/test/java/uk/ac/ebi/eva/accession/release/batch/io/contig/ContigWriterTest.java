@@ -15,14 +15,12 @@
  */
 package uk.ac.ebi.eva.accession.release.batch.io.contig;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.batch.item.Chunk;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
-import uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter;
+import uk.ac.ebi.eva.accession.core.utils.PipelineTemporaryFolderUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,7 +30,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ContigWriterTest {
 
@@ -60,28 +59,27 @@ public class ContigWriterTest {
 
     private File output;
 
-    @Rule
-    public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
+    public PipelineTemporaryFolderUtil temporaryFolderUtil = new PipelineTemporaryFolderUtil();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        output = temporaryFolderRule.newFile();
+        output = temporaryFolderUtil.newFile();
     }
 
     @Test
     public void write() throws Exception {
         ContigMapping contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, REFSEQ_ACCESSION_1,
-                                   "ucsc1", true),
+                        "ucsc1", true),
                 new ContigSynonyms(SEQUENCE_NAME_2, "assembled-molecule", "2", GENBANK_ACCESSION_2, REFSEQ_ACCESSION_2,
-                                   "ucsc2", false),
+                        "ucsc2", false),
                 new ContigSynonyms(SEQUENCE_NAME_3, "assembled-molecule", "3", GENBANK_ACCESSION_3, "na", "ucsc3",
-                                   false)));
+                        false)));
         ContigWriter contigWriter = new ContigWriter(output, contigMapping);
 
         contigWriter.open(null);
         List<String> contigs = Arrays.asList(GENBANK_ACCESSION_1, GENBANK_ACCESSION_2, GENBANK_ACCESSION_3);
-        contigWriter.write(contigs);
+        contigWriter.write(new Chunk<>(contigs));
         contigWriter.close();
 
         assertEquals(contigs.size(), numberOfLines(output));
@@ -110,16 +108,16 @@ public class ContigWriterTest {
     public void useSequenceNameIfContigIsRefSeqAccession() throws IOException {
         ContigMapping contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, REFSEQ_ACCESSION_1,
-                                   "ucsc1", true),
+                        "ucsc1", true),
                 new ContigSynonyms(SEQUENCE_NAME_2, "assembled-molecule", "2", GENBANK_ACCESSION_2, REFSEQ_ACCESSION_2,
-                                   "ucsc2", false),
+                        "ucsc2", false),
                 new ContigSynonyms(SEQUENCE_NAME_3, "assembled-molecule", "3", GENBANK_ACCESSION_3, "na", "ucsc3",
-                                   false)));
+                        false)));
         ContigWriter contigWriter = new ContigWriter(output, contigMapping);
 
         contigWriter.open(null);
         List<String> contigs = Arrays.asList(REFSEQ_ACCESSION_1, REFSEQ_ACCESSION_2, GENBANK_ACCESSION_3);
-        contigWriter.write(contigs);
+        contigWriter.write(new Chunk<>(contigs));
         contigWriter.close();
 
         assertEquals(contigs.size(), numberOfLines(output));
@@ -131,64 +129,64 @@ public class ContigWriterTest {
     /**
      * This will happen a contig is null
      */
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void throwExceptionIfNullContig() {
         ContigMapping contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, REFSEQ_ACCESSION_1,
-                                   "ucsc1", true)));
+                        "ucsc1", true)));
         ContigWriter contigWriter = new ContigWriter(output, contigMapping);
 
         contigWriter.open(null);
         String nullGenbankAccession = null;
-        contigWriter.write(Arrays.asList(GENBANK_ACCESSION_1, nullGenbankAccession));
+        assertThrows(IllegalArgumentException.class, () -> contigWriter.write(Chunk.of(GENBANK_ACCESSION_1, nullGenbankAccession)));
         contigWriter.close();
     }
 
     /**
      * This will happen a contig is empty
      */
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void throwExceptionIfEmptyContig() {
         ContigMapping contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, REFSEQ_ACCESSION_1,
-                                   "ucsc1", true)));
+                        "ucsc1", true)));
         ContigWriter contigWriter = new ContigWriter(output, contigMapping);
 
         contigWriter.open(null);
         String emptyGenbankAccession = "";
-        contigWriter.write(Arrays.asList(GENBANK_ACCESSION_1, emptyGenbankAccession));
+        assertThrows(IllegalArgumentException.class, () -> contigWriter.write(Chunk.of(GENBANK_ACCESSION_1, emptyGenbankAccession)));
         contigWriter.close();
     }
 
     /**
      * This will happen if the assembly report does not have a value for sequence name in at least one row
      */
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void throwExceptionIfEmptySequenceName() {
         ContigMapping contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, REFSEQ_ACCESSION_1,
-                                   "ucsc1", true),
+                        "ucsc1", true),
                 new ContigSynonyms(EMPTY_STRING, "assembled-molecule", "4", GENBANK_ACCESSION_EMPTY_SEQUENCE_NAME, "na",
-                                   "ucsc4", false)));
+                        "ucsc4", false)));
         ContigWriter contigWriter = new ContigWriter(output, contigMapping);
 
         contigWriter.open(null);
-        contigWriter.write(Arrays.asList(GENBANK_ACCESSION_1, GENBANK_ACCESSION_EMPTY_SEQUENCE_NAME));
+        assertThrows(IllegalArgumentException.class, () -> contigWriter.write(Chunk.of(GENBANK_ACCESSION_1, GENBANK_ACCESSION_EMPTY_SEQUENCE_NAME)));
         contigWriter.close();
     }
 
     /**
      * This will happen if there is any contig in mongo that is not in the assembly report
      */
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void throwExceptionIfContigNotInAssemblyReport() {
         ContigMapping contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, REFSEQ_ACCESSION_1,
-                                   "ucsc1", true)));
+                        "ucsc1", true)));
         ContigWriter contigWriter = new ContigWriter(output, contigMapping);
 
         contigWriter.open(null);
-        contigWriter.write(Arrays.asList(GENBANK_ACCESSION_1, GENBANK_ACCESSION_NOT_IN_ASSEMBLY_REPORT));
+        assertThrows(IllegalArgumentException.class, () -> contigWriter.write(Chunk.of(GENBANK_ACCESSION_1, GENBANK_ACCESSION_NOT_IN_ASSEMBLY_REPORT)));
         contigWriter.close();
     }
 }

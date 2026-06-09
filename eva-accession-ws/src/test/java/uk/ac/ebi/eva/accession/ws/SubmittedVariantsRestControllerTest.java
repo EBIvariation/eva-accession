@@ -17,10 +17,11 @@
  */
 package uk.ac.ebi.eva.accession.ws;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import jakarta.servlet.http.HttpServletResponse;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,14 +30,17 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.server.ResponseStatusException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
@@ -46,19 +50,20 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
-
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
-import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
 import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantsRestController;
@@ -66,18 +71,21 @@ import uk.ac.ebi.eva.accession.ws.service.SubmittedVariantsBeaconService;
 import uk.ac.ebi.eva.accession.ws.test.NoContigTranslationArgumentMatcher;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -88,11 +96,12 @@ import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_ASSEM
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_VALIDATED;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({SubmittedVariantAccessioningConfiguration.class})
+@Import({SubmittedVariantAccessioningConfiguration.class, ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:accession-ws-test.properties")
-public class SubmittedVariantsRestControllerTest {
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelper {
     private static String TEST_APPLICATION_INSTANCE_ID = "test-application-instance-id";
     private static final String URL = "/v1/submitted-variants/";
 
@@ -131,6 +140,9 @@ public class SubmittedVariantsRestControllerTest {
     @MockBean
     private ContigAliasService contigAliasService;
 
+    @Autowired
+    private DataSource dataSource;
+
     private List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions;
 
     private SubmittedVariant variant1;
@@ -139,13 +151,21 @@ public class SubmittedVariantsRestControllerTest {
 
     private SubmittedVariant variant3;
 
-    @Before
-    public void setUp() throws AccessionCouldNotBeGeneratedException {
+    @BeforeEach
+    public void setUp() throws AccessionCouldNotBeGeneratedException, SQLException {
         repository.deleteAll();
         mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
         mongoTemplate.dropCollection(DbsnpSubmittedVariantOperationEntity.class);
         mongoTemplate.dropCollection(SubmittedVariantEntity.class);
         mongoTemplate.dropCollection(SubmittedVariantOperationEntity.class);
+
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DROP TABLE IF EXISTS contiguous_id_blocks");
+        }
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("test-data/contiguous_id_blocks_schema.sql"));
+        populator.execute(dataSource);
 
         Long CLUSTERED_VARIANT = null;
         variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT", CLUSTERED_VARIANT);
@@ -155,31 +175,33 @@ public class SubmittedVariantsRestControllerTest {
 
         SubmittedVariantsBeaconService mockSubmittedVariantsBeaconService = Mockito.spy(new SubmittedVariantsBeaconService(service));
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockSubmittedVariantsBeaconService).queryBeacon(null, "alt", "ref",
-                                                                                                                            "CHROM1", 1, "ref",
-                                                                                                                            ContigNamingConvention.INSDC, false);
+                "CHROM1", 1, "ref",
+                ContigNamingConvention.INSDC, false);
         mockController = new SubmittedVariantsRestController(mockService, mockSubmittedVariantsBeaconService);
 
         setUpContigAliasMock();
+
+
     }
 
     private void setUpContigAliasMock() {
         NoContigTranslationArgumentMatcher contigMatcher = new NoContigTranslationArgumentMatcher();
 
         when(contigAliasService.translateContigToInsdc(anyString(), anyString(), argThat(contigMatcher)))
-               .thenCallRealMethod();
+                .thenCallRealMethod();
         when(contigAliasService.translateContigToInsdc(anyString(), anyString(), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
-               .then(invocation -> {
-                   String contigName = invocation.getArgument(0);
-                   if (contigName.endsWith(ENA_CONTIG_SUFFIX)) {
-                       return contigName.substring(0, contigName.length() - ENA_CONTIG_SUFFIX.length());
-                   }
-                   throw new NoSuchElementException("Tried to translate non-ENA contig using ENA naming convention");
-               });
+                .then(invocation -> {
+                    String contigName = invocation.getArgument(0);
+                    if (contigName.endsWith(ENA_CONTIG_SUFFIX)) {
+                        return contigName.substring(0, contigName.length() - ENA_CONTIG_SUFFIX.length());
+                    }
+                    throw new NoSuchElementException("Tried to translate non-ENA contig using ENA naming convention");
+                });
         when(contigAliasService.translateContigToInsdc(anyString(), anyString(), eq(ContigNamingConvention.UCSC)))
                 .thenThrow(NoSuchElementException.class);
 
         when(contigAliasService.translateContigFromInsdc(anyString(), argThat(contigMatcher)))
-               .thenCallRealMethod();
+                .thenCallRealMethod();
         when(contigAliasService.translateContigFromInsdc(any(), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
                 .then(invocation -> {
                     String contigName = invocation.getArgument(0);
@@ -193,10 +215,10 @@ public class SubmittedVariantsRestControllerTest {
                 .thenCallRealMethod();
 
         when(contigAliasService.createSubmittedVariantAccessionWrapperWithNewContig(any(), anyString()))
-               .thenCallRealMethod();
+                .thenCallRealMethod();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         repository.deleteAll();
         mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
@@ -293,12 +315,12 @@ public class SubmittedVariantsRestControllerTest {
             ISubmittedVariant variant = generatedAccession.getData();
             ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
                     getVariantsResponse = controller.getByIdFields(variant.getReferenceSequenceAccession(),
-                                                                   variant.getContig(),
-                                                                   Collections.singletonList(
-                                                                           variant.getProjectAccession()),
-                                                                   variant.getStart(), variant.getReferenceAllele(),
-                                                                   variant.getAlternateAllele(),
-                                                                   ContigNamingConvention.INSDC);
+                    variant.getContig(),
+                    Collections.singletonList(
+                            variant.getProjectAccession()),
+                    variant.getStart(), variant.getReferenceAllele(),
+                    variant.getAlternateAllele(),
+                    ContigNamingConvention.INSDC);
 
             assertEquals(1, getVariantsResponse.getBody().size());
             assertCreatedDateNotNull(getVariantsResponse.getBody());
@@ -309,15 +331,15 @@ public class SubmittedVariantsRestControllerTest {
     @Test
     public void testGetByIdFieldsMultipleStudiesPerRequest() {
         List<String> multipleProjectAccessions = Arrays.asList(variant1.getProjectAccession(),
-                                                               variant2.getProjectAccession(),
-                                                               variant3.getProjectAccession());
+                variant2.getProjectAccession(),
+                variant3.getProjectAccession());
 
         ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
                 getVariantsResponse = controller.getByIdFields(variant2.getReferenceSequenceAccession(),
-                                                               variant2.getContig(), multipleProjectAccessions,
-                                                               variant2.getStart(), variant2.getReferenceAllele(),
-                                                               variant2.getAlternateAllele(),
-                                                               ContigNamingConvention.INSDC);
+                variant2.getContig(), multipleProjectAccessions,
+                variant2.getStart(), variant2.getReferenceAllele(),
+                variant2.getAlternateAllele(),
+                ContigNamingConvention.INSDC);
 
         assertEquals(2, getVariantsResponse.getBody().size());
         assertCreatedDateNotNull(getVariantsResponse.getBody());
@@ -331,12 +353,12 @@ public class SubmittedVariantsRestControllerTest {
             ISubmittedVariant variant = generatedAccession.getData();
             ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
                     getVariantsResponse = controller.getByIdFields(variant.getReferenceSequenceAccession(),
-                                                                   variant.getContig() + ENA_CONTIG_SUFFIX,
-                                                                   Collections.singletonList(
-                                                                           variant.getProjectAccession()),
-                                                                   variant.getStart(), variant.getReferenceAllele(),
-                                                                   variant.getAlternateAllele(),
-                                                                   ContigNamingConvention.ENA_SEQUENCE_NAME);
+                    variant.getContig() + ENA_CONTIG_SUFFIX,
+                    Collections.singletonList(
+                            variant.getProjectAccession()),
+                    variant.getStart(), variant.getReferenceAllele(),
+                    variant.getAlternateAllele(),
+                    ContigNamingConvention.ENA_SEQUENCE_NAME);
 
             assertEquals(1, getVariantsResponse.getBody().size());
             assertCreatedDateNotNull(getVariantsResponse.getBody());
@@ -348,13 +370,13 @@ public class SubmittedVariantsRestControllerTest {
     @Test
     public void testGetByIdFields_withWrongContigTranslation() {
         assertThrows(ResponseStatusException.class,
-                     () -> controller.getByIdFields(variant1.getReferenceSequenceAccession(),
-                                                    variant1.getContig(),
-                                                    Collections.singletonList(variant1.getProjectAccession()),
-                                                    variant1.getStart(),
-                                                    variant1.getReferenceAllele(),
-                                                    variant1.getAlternateAllele(),
-                                                    ContigNamingConvention.UCSC));
+                () -> controller.getByIdFields(variant1.getReferenceSequenceAccession(),
+                        variant1.getContig(),
+                        Collections.singletonList(variant1.getProjectAccession()),
+                        variant1.getStart(),
+                        variant1.getReferenceAllele(),
+                        variant1.getAlternateAllele(),
+                        ContigNamingConvention.UCSC));
     }
 
     @Test
@@ -382,8 +404,8 @@ public class SubmittedVariantsRestControllerTest {
     @Test
     public void testDoesVariantExistFoundExistingVariantsMultipleStudiesPerRequest() {
         List<String> multipleProjectAccessions = Arrays.asList(variant1.getProjectAccession(),
-                                                               variant2.getProjectAccession(),
-                                                               variant3.getProjectAccession());
+                variant2.getProjectAccession(),
+                variant3.getProjectAccession());
 
         for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
             ISubmittedVariant variant = generatedAccession.getData();
@@ -435,7 +457,7 @@ public class SubmittedVariantsRestControllerTest {
         assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.getStatus());
         assertEquals(HttpServletResponse.SC_BAD_REQUEST, beaconAlleleResponse.getError().getErrorCode());
         assertEquals("Please provide a positive number as start position",
-                     beaconAlleleResponse.getError().getErrorMessage());
+                beaconAlleleResponse.getError().getErrorMessage());
 
         BeaconAlleleRequest embeddedRequestObject = beaconAlleleResponse.getAlleleRequest();
         assertEquals(variant1.getReferenceSequenceAccession(), embeddedRequestObject.getAssemblyId());
@@ -449,7 +471,7 @@ public class SubmittedVariantsRestControllerTest {
     public void testDoesVariantExistWith500Error() {
         HttpServletResponse response = new MockHttpServletResponse();
         BeaconAlleleResponse beaconAlleleResponse = mockController.doesVariantExist(
-                "asm", "CHROM1" + ENA_CONTIG_SUFFIX, null,1, "ref", "alt", response);
+                "asm", "CHROM1" + ENA_CONTIG_SUFFIX, null, 1, "ref", "alt", response);
 
         assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getStatus());
         assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, beaconAlleleResponse.getError().getErrorCode());
@@ -465,26 +487,26 @@ public class SubmittedVariantsRestControllerTest {
     @Test
     public void testGetRedirectionForMergedVariants()
             throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
-                   AccessionDeprecatedException {
+            AccessionDeprecatedException {
         // given
         Long CLUSTERED_VARIANT = null;
         SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 2000, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
-                                                         CLUSTERED_VARIANT);
+                CLUSTERED_VARIANT);
         SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 2000, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
-                                                         CLUSTERED_VARIANT);
+                CLUSTERED_VARIANT);
         List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(
                 Arrays.asList(variant1, variant2), TEST_APPLICATION_INSTANCE_ID);
 
         Long outdatedAccession = accessions.get(0).getAccession();
         Long currentAccession = accessions.get(1).getAccession();
         service.merge(outdatedAccession,
-                      currentAccession,
-                      "Just for testing the endpoint, let's pretend the variants are equivalent");
+                currentAccession,
+                "Just for testing the endpoint, let's pretend the variants are equivalent");
 
         // when
         String getVariantsUrl = URL + outdatedAccession;
         ResponseEntity<String> firstResponse = testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
-                                                                         String.class);
+                String.class);
 
         // then
         assertEquals(HttpStatus.MOVED_PERMANENTLY, firstResponse.getStatusCode());
@@ -507,7 +529,7 @@ public class SubmittedVariantsRestControllerTest {
     /**
      * If there is a variant with operations of several types (e.g. UPDATED and MERGED) the MERGED event should take
      * priority and the endpoint should return a redirection, **even if the MERGED event is not the last one**.
-     *
+     * <p>
      * Example dbsnp variant: ss825691104. It was declustered from rs796064771 and merged into ss825691103 at the same
      * time.
      */
@@ -517,33 +539,33 @@ public class SubmittedVariantsRestControllerTest {
         // given
         Long CLUSTERED_VARIANT = null;
         SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 2000, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
-                                                         CLUSTERED_VARIANT);
+                CLUSTERED_VARIANT);
         Long outdatedAccession = 1L;
         SubmittedVariantEntity submittedVariantEntity1 = new SubmittedVariantEntity(outdatedAccession, "hash-100",
-                                                                                    variant1, 1);
+                variant1, 1);
         Long currentAccession = 2L;
         SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 2000, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
-                                                         CLUSTERED_VARIANT);
+                CLUSTERED_VARIANT);
         SubmittedVariantEntity submittedVariantEntity2 = new SubmittedVariantEntity(currentAccession, "hash-200",
-                                                                                    variant2, 1);
+                variant2, 1);
 
         mongoTemplate.insert(Arrays.asList(submittedVariantEntity1, submittedVariantEntity2),
-                             DbsnpSubmittedVariantEntity.class);
+                DbsnpSubmittedVariantEntity.class);
 
         dbsnpService.merge(outdatedAccession,
-                           currentAccession,
-                           "Just for testing the endpoint, let's pretend the variants are equivalent");
+                currentAccession,
+                "Just for testing the endpoint, let's pretend the variants are equivalent");
 
         SubmittedVariant updatedVariant = new SubmittedVariant(variant1);
         updatedVariant.setContig("contig_2");
 
         dbsnpInactiveService.update(new DbsnpSubmittedVariantEntity(outdatedAccession, "hash-300", updatedVariant, 1),
-                                    "update a merged variant");
+                "update a merged variant");
 
         // when
         String getVariantsUrl = URL + outdatedAccession;
         ResponseEntity<String> firstResponse = testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
-                                                                         String.class);
+                String.class);
 
         // then
         assertEquals(HttpStatus.MOVED_PERMANENTLY, firstResponse.getStatusCode());
@@ -566,10 +588,10 @@ public class SubmittedVariantsRestControllerTest {
     @Test
     public void testGetDeprecatedEvaSubmittedVariant()
             throws AccessionMergedException, AccessionDoesNotExistException,
-                   AccessionDeprecatedException {
+            AccessionDeprecatedException {
         // given
         Long accession = generatedAccessions.stream().filter(wrapper -> wrapper.getData().equals(variant1))
-                                            .findFirst().get().getAccession();
+                .findFirst().get().getAccession();
         service.deprecate(accession, "deprecated for testing");
         String getVariantUrl = URL + accession;
 
@@ -590,18 +612,18 @@ public class SubmittedVariantsRestControllerTest {
         // given
         Long CLUSTERED_VARIANT = null;
         SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 2000, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
-                                                         CLUSTERED_VARIANT);
+                CLUSTERED_VARIANT);
         Long deprecatedAccession = 1L;
         SubmittedVariantEntity submittedVariantEntity1 = new SubmittedVariantEntity(deprecatedAccession, "hash-100",
-                                                                                    variant1, 1);
+                variant1, 1);
         Long otherAccession = 2L;
         SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 2000, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
-                                                         CLUSTERED_VARIANT);
+                CLUSTERED_VARIANT);
         SubmittedVariantEntity submittedVariantEntity2 = new SubmittedVariantEntity(otherAccession, "hash-200",
-                                                                                    variant2, 1);
+                variant2, 1);
 
         mongoTemplate.insert(Arrays.asList(submittedVariantEntity1, submittedVariantEntity2),
-                             DbsnpSubmittedVariantEntity.class);
+                DbsnpSubmittedVariantEntity.class);
         service.deprecate(deprecatedAccession, "deprecated for testing");
         String getVariantUrl = URL + deprecatedAccession;
 

@@ -1,10 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>uk.ac.ebi.eva</groupId>
     <artifactId>eva-accession</artifactId>
-    <version>0.6.58-SNAPSHOT</version>
+    <version>${revision}</version>
     <packaging>pom</packaging>
 
     <name>eva-accession</name>
@@ -23,16 +22,20 @@
     </modules>
 
     <properties>
+        <revision>1.0.0-SNAPSHOT</revision>
+        <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <junit.version>4.13</junit.version>
-        <variation-commons-version>0.8.10</variation-commons-version>
-        <accession-commons-version>0.7.21</accession-commons-version>
+        <variation-commons-version>1.0.0-SNAPSHOT</variation-commons-version>
+        <accession-commons-version>1.0.0-SNAPSHOT</accession-commons-version>
+        <samtools-htsjdk-version>4.0.0</samtools-htsjdk-version>
+        <eva-metrics-version>1.0.0-SNAPSHOT</eva-metrics-version>
+        <springdoc.version>2.8.17</springdoc.version>
     </properties>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.1.0.RELEASE</version>
+        <version>3.4.13</version>
     </parent>
 
     <dependencyManagement>
@@ -40,18 +43,49 @@
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
                 <artifactId>eva-accession-core</artifactId>
-                <version>0.6.58-SNAPSHOT</version>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
-                <artifactId>eva-accession-clustering</artifactId>
-                <version>0.6.58-SNAPSHOT</version>
+                <artifactId>eva-accession-ws</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>uk.ac.ebi.eva</groupId>
+                <artifactId>eva-accession-pipeline</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>uk.ac.ebi.eva</groupId>
+                <artifactId>eva-accession-release</artifactId>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
                 <artifactId>eva-remapping-get-source</artifactId>
-                <version>0.6.58-SNAPSHOT</version>
+                <version>${revision}</version>
             </dependency>
+            <dependency>
+                <groupId>uk.ac.ebi.eva</groupId>
+                <artifactId>eva-accession-deprecate</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>uk.ac.ebi.eva</groupId>
+                <artifactId>eva-accession-import-dbsnp2</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>uk.ac.ebi.eva</groupId>
+                <artifactId>eva-accession-clustering</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>uk.ac.ebi.eva</groupId>
+                <artifactId>eva-remapping-ingest</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
             <dependency>
                 <groupId>uk.ac.ebi.ampt2d</groupId>
                 <artifactId>accession-commons-mongodb</artifactId>
@@ -85,38 +119,22 @@
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
                 <artifactId>eva-metrics</artifactId>
-                <version>0.0.4</version>
-            </dependency>
-            <dependency>
-                <groupId>org.postgresql</groupId>
-                <artifactId>postgresql</artifactId>
-                <version>42.7.5</version>
-            </dependency>
-            <dependency>
-                <groupId>com.lordofthejars</groupId>
-                <artifactId>nosqlunit-mongodb</artifactId>
-                <version>1.0.0-rc.5</version>
-                <scope>test</scope>
+                <version>${eva-metrics-version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.samtools</groupId>
                 <artifactId>htsjdk</artifactId>
-                <version>2.14.3</version>
+                <version>${samtools-htsjdk-version}</version>
             </dependency>
             <dependency>
                 <groupId>com.thoughtworks.xstream</groupId>
                 <artifactId>xstream</artifactId>
-                <version>1.4.9</version>
+                <version>1.4.21</version>
             </dependency>
             <dependency>
-                <groupId>io.springfox</groupId>
-                <artifactId>springfox-swagger2</artifactId>
-                <version>2.8.0</version>
-            </dependency>
-            <dependency>
-                <groupId>io.springfox</groupId>
-                <artifactId>springfox-swagger-ui</artifactId>
-                <version>2.8.0</version>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -136,9 +154,18 @@
         </dependency>
 
         <dependency>
-            <groupId>org.hsqldb</groupId>
-            <artifactId>hsqldb</artifactId>
-            <version>2.3.4</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mongodb</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -170,11 +197,27 @@
     </distributionManagement>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <configuration>
+                        <reuseForks>false</reuseForks>
+                        <argLine>
+                            --add-opens java.base/java.time=ALL-UNNAMED
+                            --add-opens java.base/java.lang=ALL-UNNAMED
+                            --add-opens java.base/java.util=ALL-UNNAMED
+                        </argLine>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>2.6</version>
+                <version>3.3.0</version>
                 <configuration>
                     <delimiters>
                         <!-- Provide a delimiter that doesn't clash with Spring ${} placeholders nor @ in URLs -->
@@ -186,21 +229,16 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <release>${java.version}</release>
+                    <showDeprecation>true</showDeprecation>
+                    <showWarnings>true</showWarnings>
+                    <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <reuseForks>false</reuseForks>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>pl.project13.maven</groupId>
-                <artifactId>git-commit-id-plugin</artifactId>
-                <version>2.2.5</version>
+                <groupId>io.github.git-commit-id</groupId>
+                <artifactId>git-commit-id-maven-plugin</artifactId>
+                <version>9.0.1</version>
                 <configuration>
                     <includeOnlyProperties>
                         <includeOnlyProperty>^git.tags$</includeOnlyProperty>
@@ -211,6 +249,31 @@
                         <includeOnlyProperty>^git.commit.time$</includeOnlyProperty>
                     </includeOnlyProperties>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

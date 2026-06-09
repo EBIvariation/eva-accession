@@ -15,35 +15,29 @@
  */
 package uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer;
 
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import org.assertj.core.util.Sets;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
-
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
-
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
@@ -62,6 +56,8 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.mongodb.readers.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
@@ -74,9 +70,9 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringAssertions.assertClusteringCounts;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
@@ -92,20 +88,17 @@ import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertRe
 
 /**
  * This class handles some scenarios of ClusteringWriter where redundant RSs are discovered and merged.
- *
+ * <p>
  * That includes all the scenarios that involve writing to the Operation collections, e.g.
  * clusteredVariantOperationEntity to register an RS merge.
  * Other test classes in this folder take care of other scenarios.
  */
-@RunWith(SpringRunner.class)
-@EnableAutoConfiguration
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {ClusteredVariantAccessioningConfiguration.class,
-        SubmittedVariantAccessioningConfiguration.class, BatchTestConfiguration.class})
+        SubmittedVariantAccessioningConfiguration.class, BatchTestConfiguration.class, MongoTestConfiguration.class,
+        ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:clustering-writer-test.properties")
-public class MergeAccessionClusteringWriterTest {
-
-    private static final String TEST_DB = "test-db";
-
+public class MergeAccessionClusteringWriterTest extends MongoTestContainerHelper {
     private static final String CLUSTERED_VARIANT_COLLECTION = "clusteredVariantEntity";
 
     private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
@@ -166,30 +159,23 @@ public class MergeAccessionClusteringWriterTest {
     @Autowired
     private Long accessioningMonotonicInitSs;
 
-    //Required by nosql-unit
-    @Autowired
-    private ApplicationContext applicationContext;
-
     private Function<ISubmittedVariant, String> hashingFunction;
 
     private Function<IClusteredVariant, String> clusteredHashingFunction;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
     private static final String defaultReferenceAlleleForTesting = "T";
 
     private static final String defaultAlternateAlleleForTesting = "A";
 
-    @Before
+    @BeforeEach
     public void setUp() {
         mongoTemplate.getDb().drop();
+        metricCompute.clearCount();
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         mongoTemplate.getDb().drop();
         metricCompute.clearCount();
@@ -287,20 +273,20 @@ public class MergeAccessionClusteringWriterTest {
 
         // ssToRemap in the old assembly, will be remapped to asm2 (see sve1Remapped below)
         mongoTemplate.insert(createSubmittedVariantEntity(ASM_1, START, rs1, ssToRemap, NOT_REMAPPED),
-                             getSubmittedCollection(ssToRemap));
+                getSubmittedCollection(ssToRemap));
 
         // ss2 in the new assembly, will change its RS to rs1 when we realise rs1 and rs2 should be merged
         // because they both map to the same position in asm2
         mongoTemplate.insert(createSubmittedVariantEntity(ASM_2, START, rs2, ss2, NOT_REMAPPED), getSubmittedCollection(ss2));
 
         assertDatabaseCounts(expectedDbsnpCve - additionalDbsnpCveCreatedPostMerge,
-                             expectedCve - additionalCveCreatedPostMerge, 0, 0,
-                             expectedDbsnpSve, expectedSve, 0, 0);
+                expectedCve - additionalCveCreatedPostMerge, 0, 0,
+                expectedDbsnpSve, expectedSve, 0, 0);
 
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(ASM_2, START, rs1, ssToRemap, ASM_1,
-                                                                           defaultAlternateAlleleForTesting,
-                                                                           defaultReferenceAlleleForTesting);
+                defaultAlternateAlleleForTesting,
+                defaultReferenceAlleleForTesting);
         // To ensure that we don't create collision with ss2,
         // use alleles other than defaultAlternateAlleleForTesting or defaultReferenceAlleleForTesting
         mongoTemplate.insert(sve1Remapped, getSubmittedCollection(sve1Remapped.getAccession()));
@@ -314,7 +300,7 @@ public class MergeAccessionClusteringWriterTest {
 
         // then
         assertDatabaseCounts(expectedDbsnpCve, expectedCve, expectedDbsnpCvOperations, expectedCvOperations,
-                             expectedDbsnpSve, expectedSve, expectedDbsnpSvOperations, expectedSvOperations);
+                expectedDbsnpSve, expectedSve, expectedDbsnpSvOperations, expectedSvOperations);
 
         assertAssembliesPresent(Sets.newTreeSet(ASM_1, ASM_2));
     }
@@ -325,10 +311,9 @@ public class MergeAccessionClusteringWriterTest {
                                         int expectedDbsnpSve, int expectedSve,
                                         int expectedDbsnpSvOperations, int expectedSvOperations) throws Exception {
         mergeClusteredAccession(rs1, rs2, ssToRemap, ss2, expectedDbsnpCve, expectedCve, expectedDbsnpCvOperations,
-                                expectedCvOperations, expectedDbsnpSve, expectedSve, expectedDbsnpSvOperations,
-                                expectedSvOperations, 0, 0);
+                expectedCvOperations, expectedDbsnpSve, expectedSve, expectedDbsnpSvOperations,
+                expectedSvOperations, 0, 0);
     }
-
 
 
     private ClusteredVariantEntity createClusteredVariantEntity(String assembly, Long rs) {
@@ -360,12 +345,12 @@ public class MergeAccessionClusteringWriterTest {
         assertEquals(expectedDbsnpCve, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
         assertEquals(expectedCve, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
         assertEquals(expectedDbsnpCvOperations, mongoTemplate.count(new Query(),
-                                                                    DbsnpClusteredVariantOperationEntity.class));
+                DbsnpClusteredVariantOperationEntity.class));
         assertEquals(expectedCvOperations, mongoTemplate.count(new Query(), ClusteredVariantOperationEntity.class));
         assertEquals(expectedDbsnpSve, mongoTemplate.count(new Query(), DbsnpSubmittedVariantEntity.class));
         assertEquals(expectedSve, mongoTemplate.count(new Query(), SubmittedVariantEntity.class));
         assertEquals(expectedDbsnpSvOperations, mongoTemplate.count(new Query(),
-                                                                    DbsnpSubmittedVariantOperationEntity.class));
+                DbsnpSubmittedVariantOperationEntity.class));
         assertEquals(expectedSvOperations, mongoTemplate.count(new Query(), SubmittedVariantOperationEntity.class));
     }
 
@@ -373,14 +358,14 @@ public class MergeAccessionClusteringWriterTest {
         // Confine the variants being inspected to the remapped assembly
         List<SubmittedVariantEntity> submittedVariants =
                 mongoTemplate
-                .findAll(SubmittedVariantEntity.class)
-                .stream().filter(entity -> entity.getReferenceSequenceAccession().equals(ASM_2))
-                .collect(Collectors.toList());
+                        .findAll(SubmittedVariantEntity.class)
+                        .stream().filter(entity -> entity.getReferenceSequenceAccession().equals(ASM_2))
+                        .collect(Collectors.toList());
         submittedVariants.addAll(mongoTemplate
-                                         .findAll(DbsnpSubmittedVariantEntity.class)
-                                         .stream()
-                                         .filter(entity -> entity.getReferenceSequenceAccession().equals(ASM_2))
-                                         .collect(Collectors.toList()));
+                .findAll(DbsnpSubmittedVariantEntity.class)
+                .stream()
+                .filter(entity -> entity.getReferenceSequenceAccession().equals(ASM_2))
+                .collect(Collectors.toList()));
         assertClusteredVariantAccessionEqual(Sets.newTreeSet(mergedInto), submittedVariants);
 
         // Confine the variants being inspected to the remapped assembly
@@ -390,9 +375,9 @@ public class MergeAccessionClusteringWriterTest {
                         .stream().filter(entity -> entity.getAssemblyAccession().equals(ASM_2))
                         .collect(Collectors.toList());
         clusteredVariants.addAll(mongoTemplate
-                                         .findAll(DbsnpClusteredVariantEntity.class)
-                                         .stream().filter(entity -> entity.getAssemblyAccession().equals(ASM_2))
-                                         .collect(Collectors.toList()));
+                .findAll(DbsnpClusteredVariantEntity.class)
+                .stream().filter(entity -> entity.getAssemblyAccession().equals(ASM_2))
+                .collect(Collectors.toList()));
         assertAccessionEqual(Sets.newTreeSet(mergedInto), clusteredVariants);
 
         EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity> clusteredOp =
@@ -412,8 +397,8 @@ public class MergeAccessionClusteringWriterTest {
         }
         assertTrue(submittedOps.stream().map(EventDocument::getEventType).allMatch(EventType.UPDATED::equals));
         assertEquals(Sets.newTreeSet(updatedSubmittedVariant), submittedOps.stream()
-                                                                           .map(EventDocument::getAccession)
-                                                                           .collect(Collectors.toSet()));
+                .map(EventDocument::getAccession)
+                .collect(Collectors.toSet()));
     }
 
     @Test
@@ -433,7 +418,7 @@ public class MergeAccessionClusteringWriterTest {
         mongoTemplate.insert(createClusteredVariantEntity(asm1, 200L, rs1, null), getClusteredTable(rs1));
 
         mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap, NOT_REMAPPED),
-                             getSubmittedCollection(ssToRemap));
+                getSubmittedCollection(ssToRemap));
         mongoTemplate.insert(createSubmittedVariantEntity(asm1, 200L, rs1, ss3, NOT_REMAPPED), getSubmittedCollection(ssToRemap));
 
 
@@ -443,7 +428,7 @@ public class MergeAccessionClusteringWriterTest {
         mongoTemplate.insert(createSubmittedVariantEntity(asm2, 100L, rs2, ss2, NOT_REMAPPED), getSubmittedCollection(ss2));
 
         assertDatabaseCounts(0, 3, 0, 0,
-                             0, 3, 0, 0);
+                0, 3, 0, 0);
 
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 100L, rs1, ssToRemap, asm1);
@@ -452,7 +437,7 @@ public class MergeAccessionClusteringWriterTest {
 
         // then
         assertDatabaseCounts(0, 3, 0, 0,
-                             0, 3, 0, 0);
+                0, 3, 0, 0);
 
         assertAssembliesPresent(Sets.newTreeSet(asm1, asm2));
     }
@@ -475,7 +460,7 @@ public class MergeAccessionClusteringWriterTest {
         mongoTemplate.insert(createClusteredVariantEntity(asm1, 200L, rs1, 3), getClusteredTable(rs1));
 
         mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap, NOT_REMAPPED),
-                             getSubmittedCollection(ssToRemap));
+                getSubmittedCollection(ssToRemap));
         mongoTemplate.insert(createSubmittedVariantEntity(asm1, 200L, rs1, ss3, NOT_REMAPPED), getSubmittedCollection(ssToRemap));
 
 
@@ -484,7 +469,7 @@ public class MergeAccessionClusteringWriterTest {
         mongoTemplate.insert(createSubmittedVariantEntity(asm2, 100L, rs2, ss2, NOT_REMAPPED), getSubmittedCollection(ss2));
 
         assertDatabaseCounts(0, 3, 0, 0,
-                             0, 3, 0, 0);
+                0, 3, 0, 0);
 
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 100L, rs1, ssToRemap, asm1);
@@ -493,7 +478,7 @@ public class MergeAccessionClusteringWriterTest {
 
         // then
         assertDatabaseCounts(0, 3, 0, 0,
-                             0, 3, 0, 0);
+                0, 3, 0, 0);
 
         assertAssembliesPresent(Sets.newTreeSet(asm1, asm2));
     }
@@ -526,7 +511,7 @@ public class MergeAccessionClusteringWriterTest {
         mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2, NOT_REMAPPED), getSubmittedCollection(ss2));
 
         assertDatabaseCounts(0, 3, 0, 0,
-                             0, 3, 0, 0);
+                0, 3, 0, 0);
 
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap, asm1);
@@ -534,7 +519,7 @@ public class MergeAccessionClusteringWriterTest {
 
         // then
         assertDatabaseCounts(0, 3, 0, 1,
-                             0, 3, 0, 1);
+                0, 3, 0, 1);
 
         assertAssembliesPresent(Sets.newTreeSet(asm1, asm2, asm3));
         assertMergedInto(rs1, rs2, ss2);
@@ -568,7 +553,7 @@ public class MergeAccessionClusteringWriterTest {
         mongoTemplate.insert(createSubmittedVariantEntity(asm3, 300L, rs2, ss3, NOT_REMAPPED), getSubmittedCollection(ss3));
 
         assertDatabaseCounts(0, 3, 0, 0,
-                             0, 3, 0, 0);
+                0, 3, 0, 0);
 
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap, asm1);
@@ -577,7 +562,7 @@ public class MergeAccessionClusteringWriterTest {
         // then
         // RS2 to RS1 merge will be confined to the ASM2 assembly. Therefore number of CV and SV operations is just 1.
         assertDatabaseCounts(0, 3, 0, 1,
-                             0, 3, 0, 1);
+                0, 3, 0, 1);
 
         assertAssembliesPresent(Sets.newTreeSet(asm1, asm2, asm3));
         assertMergedInto(rs1, rs2, ss2);
@@ -598,7 +583,7 @@ public class MergeAccessionClusteringWriterTest {
         ClusteredVariant cv = new ClusteredVariant(assembly, 1000, "1", start, VariantType.SNV, false, null);
         String cvHash = clusteredHashingFunction.apply(cv);
         return new ClusteredVariantEntity(rs, cvHash, assembly, 1000, "1", start, VariantType.SNV, false, null, 1,
-                                          mapWeight);
+                mapWeight);
     }
 
     private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long start, Long rs, Long ss,
@@ -607,8 +592,8 @@ public class MergeAccessionClusteringWriterTest {
         SubmittedVariant submittedClustered = new SubmittedVariant(assembly, 1000, "project", "1", start, reference, alternate, rs);
         String hash1 = hashingFunction.apply(submittedClustered);
         SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(ss, hash1, submittedClustered, 1,
-                                                                                   remappedFrom, LocalDateTime.now(),
-                                                                                   null);
+                remappedFrom, LocalDateTime.now(),
+                null);
         submittedVariantEntity.setMapWeight(mapWeight);
         return submittedVariantEntity;
     }
@@ -616,53 +601,53 @@ public class MergeAccessionClusteringWriterTest {
     private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long start, Long rs, Long ss,
                                                                 String remappedFrom, Integer mapWeight) {
         return createSubmittedVariantEntity(assembly, start, rs, ss, remappedFrom, mapWeight,
-                                            defaultReferenceAlleleForTesting, defaultAlternateAlleleForTesting);
+                defaultReferenceAlleleForTesting, defaultAlternateAlleleForTesting);
     }
 
     private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long start, Long rs, Long ss,
                                                                 String remappedFrom) {
         return createSubmittedVariantEntity(assembly, start, rs, ss, remappedFrom, null,
-                                            defaultReferenceAlleleForTesting, defaultAlternateAlleleForTesting);
+                defaultReferenceAlleleForTesting, defaultAlternateAlleleForTesting);
     }
 
     private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long start, Long rs, Long ss,
                                                                 String remappedFrom, String reference,
                                                                 String alternate) {
         return createSubmittedVariantEntity(assembly, start, rs, ss, remappedFrom, null,
-                                            reference, alternate);
+                reference, alternate);
     }
 
     private void clusterVariants(List<SubmittedVariantEntity> submittedVariantEntities)
             throws Exception {
-        clusteringWriterPreMergeAndSplit.write(submittedVariantEntities);
+        clusteringWriterPreMergeAndSplit.write(new Chunk<>(submittedVariantEntities));
         List<SubmittedVariantOperationEntity> mergeCandidates = new ArrayList<>();
         List<SubmittedVariantOperationEntity> splitCandidates = new ArrayList<>();
         SubmittedVariantOperationEntity tempSVO;
         rsMergeCandidatesReader.open(new ExecutionContext());
-        while((tempSVO = rsMergeCandidatesReader.read()) != null) {
+        while ((tempSVO = rsMergeCandidatesReader.read()) != null) {
             mergeCandidates.add(tempSVO);
         }
         rsSplitCandidatesReader.open(new ExecutionContext());
-        while((tempSVO = rsSplitCandidatesReader.read()) != null) {
+        while ((tempSVO = rsSplitCandidatesReader.read()) != null) {
             splitCandidates.add(tempSVO);
         }
-        rsMergeWriter.write(mergeCandidates);
-        rsSplitWriter.write(splitCandidates);
+        rsMergeWriter.write(new Chunk<>(mergeCandidates));
+        rsSplitWriter.write(new Chunk<>(splitCandidates));
 
         ClusteringMongoReader unclusteredVariantsReader = new ClusteringMongoReader(this.mongoTemplate, ASM_2, 100,
-                                                                                    false);
+                false);
         unclusteredVariantsReader.initializeReader();
         List<SubmittedVariantEntity> unclusteredVariants = new ArrayList<>();
         SubmittedVariantEntity tempSV;
-        while((tempSV = unclusteredVariantsReader.read()) != null) {
+        while ((tempSV = unclusteredVariantsReader.read()) != null) {
             unclusteredVariants.add(tempSV);
         }
         unclusteredVariantsReader.close();
         // Cluster non-clustered variants
-        clusteringWriterPostMergeAndSplit.write(unclusteredVariants);
+        clusteringWriterPostMergeAndSplit.write(new Chunk<>(unclusteredVariants));
         // Spring has a mandatory requirement of even small functionality being writers.
         // To satisfy that, we pass in a dummy object to invoke the writer
         // which basically clears the merge and split operations after they were processed above
-        clearRSMergeAndSplitCandidates.write(Collections.singletonList(new Object()));
+        clearRSMergeAndSplitCandidates.write(Chunk.of(new Object()));
     }
 }

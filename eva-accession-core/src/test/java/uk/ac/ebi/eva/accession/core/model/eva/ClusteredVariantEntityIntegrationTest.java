@@ -15,40 +15,34 @@
  */
 package uk.ac.ebi.eva.accession.core.model.eva;
 
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.Collections;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RunWith(SpringRunner.class)
-@EnableAutoConfiguration
-@ContextConfiguration(classes = {MongoConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 @TestPropertySource("classpath:test-model.properties")
-public class ClusteredVariantEntityIntegrationTest {
+public class ClusteredVariantEntityIntegrationTest extends MongoTestContainerHelper {
 
     private static final String TEST_DB = "test-db";
 
@@ -57,20 +51,13 @@ public class ClusteredVariantEntityIntegrationTest {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    //Required by nosql-unit
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
-
-    @Before
+    @BeforeEach
     public void setUp() {
+        mongoTemplate.getDb().drop();
         clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         mongoTemplate.getDb().drop();
     }
@@ -105,7 +92,7 @@ public class ClusteredVariantEntityIntegrationTest {
         ClusteredVariant variant = createClusteredVariant();
         String hash = clusteredHashingFunction.apply(variant);
         ClusteredVariantEntity variantEntity = new ClusteredVariantEntity(3000000000L, hash, "asm", 1000, "contig", 100,
-                                                                          VariantType.SNV, false, null, 1, mapWeight);
+                VariantType.SNV, false, null, 1, mapWeight);
         return variantEntity;
     }
 

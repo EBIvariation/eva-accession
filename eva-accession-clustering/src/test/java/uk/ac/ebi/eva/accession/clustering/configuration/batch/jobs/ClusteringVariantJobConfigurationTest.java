@@ -15,50 +15,53 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
-
 import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 
+import javax.sql.DataSource;
 import java.net.URI;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
@@ -78,13 +81,11 @@ import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestCon
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_RS_ACCESSION_RECOVERY;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_STUDY_FROM_MONGO;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class,
+        ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:clustering-writer-test.properties")
-public class ClusteringVariantJobConfigurationTest {
-
-    private static final String TEST_DB = "test-db";
-
+public class ClusteringVariantJobConfigurationTest extends MongoTestContainerHelper {
     @Autowired
     @Qualifier(JOB_LAUNCHER_FROM_MONGO)
     private JobLauncherTestUtils jobLauncherTestUtilsFromMongo;
@@ -100,9 +101,8 @@ public class ClusteringVariantJobConfigurationTest {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    //Required by nosql-unit
     @Autowired
-    private ApplicationContext applicationContext;
+    private ResourceLoader resourceLoader;
 
     @Autowired
     private InputParameters inputParameters;
@@ -113,33 +113,41 @@ public class ClusteringVariantJobConfigurationTest {
     private CountServiceParameters countServiceParameters;
 
     @Autowired
+    private DataSource dataSource;
+
+    @Autowired
     @Qualifier("COUNT_STATS_REST_TEMPLATE")
     private RestTemplate restTemplate;
 
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
 
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
-
-    @Before
+    @BeforeEach
     public void init() throws Exception {
         mongoTemplate.getDb().drop();
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
+
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("DROP TABLE IF EXISTS contiguous_id_blocks");
+        }
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(new ClassPathResource("test-data/contiguous_id_blocks_schema.sql"));
+        populator.execute(dataSource);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         mongoTemplate.getDb().drop();
     }
 
     @Test
     @DirtiesContext
-    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
     public void jobFromMongo() throws Exception {
+        new MongoTestDataLoader(mongoTemplate, resourceLoader).load("/test-data/submittedVariantEntityMongoReader.json");
+
         JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchJob();
         List<String> expectedSteps = new ArrayList<>();
         expectedSteps.add(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
@@ -156,8 +164,9 @@ public class ClusteringVariantJobConfigurationTest {
 
     @Test
     @DirtiesContext
-    @UsingDataSet(locations = {"/test-data/submittedVariantEntityStudyReader.json"})
     public void studyJobFromMongo() throws Exception {
+        new MongoTestDataLoader(mongoTemplate, resourceLoader).load("/test-data/submittedVariantEntityStudyReader.json");
+
         JobExecution jobExecution = jobLauncherTestUtilsStudyFromMongo.launchJob();
         List<String> expectedSteps = new ArrayList<>();
         expectedSteps.add(STUDY_CLUSTERING_STEP);
@@ -168,8 +177,9 @@ public class ClusteringVariantJobConfigurationTest {
 
     @Test
     @DirtiesContext
-    @UsingDataSet(locations = {"/test-data/submittedVariantEntityStudyReader.json"})
     public void testStudyJobFromMongoIdempotent() throws Exception {
+        new MongoTestDataLoader(mongoTemplate, resourceLoader).load("/test-data/submittedVariantEntityStudyReader.json");
+
         jobLauncherTestUtilsStudyFromMongo.launchJob();
         DatabaseState databaseStateAfterFirstRun = DatabaseState.getCurrentDatabaseState(mongoTemplate);
         jobLauncherTestUtilsStudyFromMongo.launchJob();
@@ -192,17 +202,17 @@ public class ClusteringVariantJobConfigurationTest {
         createMergeCandidateEntriesThatExceedChunkSize(numOperations);
         JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchJob();
         assertEquals(numOperations,
-                     jobExecution.getStepExecutions()
-                                 .stream()
-                                 .filter(stepExecution -> stepExecution.getStepName()
-                                                                       .equals(PROCESS_RS_SPLIT_CANDIDATES_STEP))
-                                 .findFirst().get().getReadCount());
+                jobExecution.getStepExecutions()
+                        .stream()
+                        .filter(stepExecution -> stepExecution.getStepName()
+                                .equals(PROCESS_RS_SPLIT_CANDIDATES_STEP))
+                        .findFirst().get().getReadCount());
         assertEquals(numOperations,
-                     jobExecution.getStepExecutions()
-                                 .stream()
-                                 .filter(stepExecution -> stepExecution.getStepName()
-                                                                       .equals(PROCESS_RS_MERGE_CANDIDATES_STEP))
-                                 .findFirst().get().getReadCount());
+                jobExecution.getStepExecutions()
+                        .stream()
+                        .filter(stepExecution -> stepExecution.getStepName()
+                                .equals(PROCESS_RS_MERGE_CANDIDATES_STEP))
+                        .findFirst().get().getReadCount());
     }
 
     @Test
@@ -224,11 +234,11 @@ public class ClusteringVariantJobConfigurationTest {
         for (int i = 0; i < numSplitCandidateOperations; i++) {
             SubmittedVariantOperationEntity mergeOperation = new SubmittedVariantOperationEntity();
             mergeOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATES_EVENT_TYPE,
-                                ss1.getAccession(), null, "Mock merge candidate",
-                                Arrays.asList(ss1, ss2));
+                    ss1.getAccession(), null, "Mock merge candidate",
+                    Arrays.asList(ss1, ss2));
             mergeOperation.setId(MERGE_CANDIDATE_ID_PREFIX + "_" + ss1.getReferenceSequenceAccession() + "_" + i);
             mongoTemplate.insert(mergeOperation,
-                                 mongoTemplate.getCollectionName(SubmittedVariantOperationEntity.class));
+                    mongoTemplate.getCollectionName(SubmittedVariantOperationEntity.class));
         }
     }
 
@@ -241,20 +251,20 @@ public class ClusteringVariantJobConfigurationTest {
         for (int i = 0; i < numSplitCandidateOperations; i++) {
             SubmittedVariantOperationEntity splitOperation = new SubmittedVariantOperationEntity();
             splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
-                                ss3.getAccession(), null, "Mock split candidate",
-                                Arrays.asList(ss3, ss4));
+                    ss3.getAccession(), null, "Mock split candidate",
+                    Arrays.asList(ss3, ss4));
             splitOperation.setId(SPLIT_CANDIDATE_ID_PREFIX + "_" + ss3.getReferenceSequenceAccession() + "_" + i);
             mongoTemplate.insert(splitOperation,
-                                 mongoTemplate.getCollectionName(SubmittedVariantOperationEntity.class));
+                    mongoTemplate.getCollectionName(SubmittedVariantOperationEntity.class));
         }
     }
 
     private SubmittedVariantEntity createSSWithLocus(Long ssAccession, Long rsAccession, Long start, String reference,
                                                      String alternate) {
         return new SubmittedVariantEntity(ssAccession, "hash" + ssAccession, inputParameters.getAssemblyAccession(),
-                                          60711,
-                                          "PRJ1", "chr1", start, reference, alternate, rsAccession, false, false, false,
-                                          false, 1);
+                60711,
+                "PRJ1", "chr1", start, reference, alternate, rsAccession, false, false, false,
+                false, 1);
     }
 
 }

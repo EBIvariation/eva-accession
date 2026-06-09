@@ -34,8 +34,6 @@ public class InputParameters {
 
     private int chunkSize;
 
-    private boolean forceRestart;
-
     public String getVcf() {
         return vcf;
     }
@@ -90,14 +88,6 @@ public class InputParameters {
 
     public void setChunkSize(int chunkSize) {
         this.chunkSize = chunkSize;
-    }
-
-    public boolean isForceRestart() {
-        return forceRestart;
-    }
-
-    public void setForceRestart(boolean forceRestart) {
-        this.forceRestart = forceRestart;
     }
 
     public JobParameters toJobParameters() {

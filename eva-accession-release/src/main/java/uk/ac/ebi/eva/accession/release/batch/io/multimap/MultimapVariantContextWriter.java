@@ -39,8 +39,8 @@ public class MultimapVariantContextWriter extends VariantContextWriter {
     protected Set<VCFHeaderLine> buildHeaderLines() {
         Set<VCFHeaderLine> vcfHeaderLines = super.buildHeaderLines();
         vcfHeaderLines.add(new VCFInfoHeaderLine(MAPPING_WEIGHT_KEY, 1, VCFHeaderLineType.Integer,
-                                                 "mapping weight as defined by dbSNP for database tables at " +
-                                                         DBSNP_MAP_WEIGHT_DEFINITION_URL));
+                "mapping weight as defined by dbSNP for database tables at " +
+                        DBSNP_MAP_WEIGHT_DEFINITION_URL));
         return vcfHeaderLines;
     }
 

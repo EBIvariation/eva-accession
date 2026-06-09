@@ -17,15 +17,17 @@
 package uk.ac.ebi.eva.accession.pipeline.test;
 
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobLauncherTestUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.web.client.RestTemplate;
+import uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.AccessionWriterConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.SSAccFileReaderConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.DuplicateSSAccQCWriterConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.SSAccFileReaderConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.VcfReaderConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.DuplicateSSAccQCJobConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.QCSubsnpAccessionsJobConfiguration;
@@ -47,8 +49,7 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.DUPLICATE
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP_ACCESSION_JOB;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_JOB;
 
-@EnableAutoConfiguration
-@Import({SubsnpAccessionsJobConfiguration.class, SubsnpAccessionsStepConfiguration.class,
+@Import({InMemoryBatchConfiguration.class, SubsnpAccessionsJobConfiguration.class, SubsnpAccessionsStepConfiguration.class,
         QCSubsnpAccessionsJobConfiguration.class, QCSubsnpAccessionsStepConfiguration.class,
         VcfReaderConfiguration.class, VariantProcessorConfiguration.class, AccessionWriterConfiguration.class,
         BuildReportStepConfiguration.class, AccessioningShutdownStepConfiguration.class,
@@ -63,40 +64,42 @@ public class BatchTestConfiguration {
     public static final String JOB_LAUNCHER_DUPLICATE_SS_ACC_QC_JOB = "JOB_LAUNCHER_DUPLICATE_SS_ACC_QC_JOB";
 
     @Bean(JOB_LAUNCHER_SUBSNP_ACCESSION_JOB)
-    public JobLauncherTestUtils jobLauncherTestUtilsCreate() {
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(SUBSNP_ACCESSION_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
+    public JobLauncherTestUtils jobLauncherTestUtilsCreate(JobLauncher jobLauncher, JobRepository jobRepository,
+                                                           @Qualifier(SUBSNP_ACCESSION_JOB) Job job) {
+        JobLauncherTestUtils utils = new JobLauncherTestUtils();
+        utils.setJobLauncher(jobLauncher);
+        utils.setJobRepository(jobRepository);
+        utils.setJob(job);
+        return utils;
     }
 
     @Bean(JOB_LAUNCHER_QC_SUBSNP_ACCESSION_JOB)
-    public JobLauncherTestUtils jobLauncherTestUtilsQC() {
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(QC_SUBSNP_ACCESSION_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
+    public JobLauncherTestUtils jobLauncherTestUtilsQC(JobLauncher jobLauncher, JobRepository jobRepository,
+                                                       @Qualifier(QC_SUBSNP_ACCESSION_JOB) Job job) {
+        JobLauncherTestUtils utils = new JobLauncherTestUtils();
+        utils.setJobLauncher(jobLauncher);
+        utils.setJobRepository(jobRepository);
+        utils.setJob(job);
+        return utils;
     }
 
     @Bean(JOB_LAUNCHER_DUPLICATE_SS_ACC_QC_JOB)
-    public JobLauncherTestUtils jobLauncherTestUtilsDuplicateSSAccQC() {
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(DUPLICATE_SS_ACC_QC_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
+    public JobLauncherTestUtils jobLauncherTestUtilsDuplicateSSAccQC(JobLauncher jobLauncher, JobRepository jobRepository,
+                                                                     @Qualifier(DUPLICATE_SS_ACC_QC_JOB) Job job) {
+        JobLauncherTestUtils utils = new JobLauncherTestUtils();
+        utils.setJobLauncher(jobLauncher);
+        utils.setJobRepository(jobRepository);
+        utils.setJob(job);
+        return utils;
     }
 
     @Bean
     public JobExecutionApplicationListener jobExecutionApplicationListener() {
         return new JobExecutionApplicationListener();
+    }
+
+    @Bean(name = "COUNT_STATS_REST_TEMPLATE")
+    public RestTemplate countStatsRestTemplate() {
+        return new RestTemplate();
     }
 }

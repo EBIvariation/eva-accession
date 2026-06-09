@@ -16,9 +16,10 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io.qc;
 
 import com.mongodb.MongoBulkWriteException;
-import org.apache.commons.collections.CollectionUtils;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -27,9 +28,8 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGen
 import uk.ac.ebi.eva.accession.clustering.batch.io.qc.QCMongoCollections.qcRSIdInSS;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 
-import javax.annotation.Nonnull;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
@@ -50,24 +50,24 @@ public class ExtraneousRSReporter implements ItemWriter<ClusteredVariantEntity> 
     }
 
     @Override
-    public void write(@Nonnull List<? extends ClusteredVariantEntity> clusteredVariantEntities)
+    public void write(@Nonnull Chunk<? extends ClusteredVariantEntity> clusteredVariantEntities)
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException {
         reportExtraneousRS(clusteredVariantEntities);
     }
 
-    private void reportExtraneousRS(List<? extends ClusteredVariantEntity> clusteredVariantEntities) {
+    private void reportExtraneousRS(Chunk<? extends ClusteredVariantEntity> clusteredVariantEntities) {
         String assemblyAccessionPrefix = QCMongoCollections.getAssemblyAccessionPrefix(this.assemblyAccession);
-        List<String> idsFromRSIDCollection = clusteredVariantEntities.stream().map(
+        List<String> idsFromRSIDCollection = clusteredVariantEntities.getItems().stream().map(
                 entity -> assemblyAccessionPrefix + entity.getAccession()).distinct().collect(Collectors.toList());
-        Criteria[]  criteriaToLookupIDs =
+        Criteria[] criteriaToLookupIDs =
                 idsFromRSIDCollection.stream().map(id -> where(IDAttribute).is(id)).toArray(Criteria[]::new);
         if (criteriaToLookupIDs.length == 0) return;
         Query queryToLookupIDs = new Query(new Criteria().orOperator(criteriaToLookupIDs));
-        List<String> idsInSSIDCollection = this.mongoTemplate.find(queryToLookupIDs, qcRSIdInSS.class)
-                .stream().map(qcRSIdInSS::getId).collect(Collectors.toList());
+        Set<String> idsInSSIDCollection = this.mongoTemplate.find(queryToLookupIDs, qcRSIdInSS.class)
+                .stream().map(qcRSIdInSS::getId).collect(Collectors.toSet());
 
-        Arrays.stream(CollectionUtils.subtract(idsFromRSIDCollection, idsInSSIDCollection).toArray())
-                .map(Object::toString)
+        idsFromRSIDCollection.stream()
+                .filter(id -> !idsInSSIDCollection.contains(id))
                 .forEach(extraneousRS ->
                         logger.error("RS ID rs{} was not assigned to any SS in the assembly {}",
                                 extraneousRS.replace(assemblyAccessionPrefix, ""), this.assemblyAccession));

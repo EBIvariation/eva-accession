@@ -1,8 +1,8 @@
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.qc;
 
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemStreamReader;
@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.eva.accession.clustering.batch.io.qc.DuplicateRSAccQCResult;
 
 import java.util.List;
@@ -19,9 +20,9 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.DUPLICA
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.DUPLICATE_RS_ACC_QC_PROCESSOR;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.DUPLICATE_RS_ACC_QC_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.DUPLICATE_RS_ACC_QC_WRITER;
+import static uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration.BATCH_TRANSACTION_MANAGER;
 
 @Configuration
-@EnableBatchProcessing
 public class DuplicateRSAccQCStepConfiguration {
 
     @Autowired
@@ -37,11 +38,12 @@ public class DuplicateRSAccQCStepConfiguration {
     private ItemWriter<List<DuplicateRSAccQCResult>> duplicateRSAccQCWriter;
 
     @Bean(DUPLICATE_RS_ACC_QC_STEP)
-    public Step duplicateRSAccQCStep(StepBuilderFactory stepBuilderFactory) {
-        TaskletStep step = stepBuilderFactory.get(DUPLICATE_RS_ACC_QC_STEP)
+    public Step duplicateRSAccQCStep(JobRepository jobRepository,
+                                     @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager) {
+        TaskletStep step = new StepBuilder(DUPLICATE_RS_ACC_QC_STEP, jobRepository)
                 // hardcoded the chunk size as 1, as the reader takes care of accumulating
                 // and sending the chunk size (defined in properties file) elements to the processor
-                .<List<Long>, List<DuplicateRSAccQCResult>>chunk(1)
+                .<List<Long>, List<DuplicateRSAccQCResult>>chunk(1, transactionManager)
                 .reader(duplicateRSAccFileReader)
                 .processor(duplicateRSAccQCProcessor)
                 .writer(duplicateRSAccQCWriter)

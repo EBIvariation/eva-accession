@@ -16,13 +16,13 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import com.mongodb.MongoBulkWriteException;
-
+import jakarta.annotation.Nonnull;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
-
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
@@ -36,7 +36,6 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
-import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -74,11 +73,10 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
     }
 
     @Override
-    public void write(
-            @Nonnull List<? extends SubmittedVariantEntity> submittedVariantEntitiesInOriginalAssembly)
+    public void write(@Nonnull Chunk<? extends SubmittedVariantEntity> submittedVariantEntitiesInOriginalAssembly)
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException {
         List<SubmittedVariantEntity> ssToLookupInRemappedAssembly =
-                submittedVariantEntitiesInOriginalAssembly
+                submittedVariantEntitiesInOriginalAssembly.getItems()
                         .stream()
                         // Some dbSNP imported variants might have been explicitly de-clustered
                         // because the REF/ALT allele data provided by dbSNP was internally inconsistent
@@ -89,15 +87,15 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
                         .collect(Collectors.toList());
         List<Long> ssIDsToLookupInRemappedAssembly =
                 ssToLookupInRemappedAssembly.stream().map(AccessionedDocument::getAccession)
-                                            .collect(Collectors.toList());
+                        .collect(Collectors.toList());
 
         Map<Long, List<SubmittedVariantEntity>> ssInRemappedAssemblyGroupedByID =
                 submittedVariantAccessioningService
                         .getAllActiveByAssemblyAndAccessionIn(remappedAssembly, ssIDsToLookupInRemappedAssembly)
                         .stream()
                         .map(entity -> new SubmittedVariantEntity(entity.getAccession(), entity.getHash(),
-                                                                  entity.getData(),
-                                                                  entity.getVersion()))
+                                entity.getData(),
+                                entity.getVersion()))
                         .filter(entity -> Objects.nonNull(entity.getClusteredVariantAccession()))
                         .collect(Collectors.groupingBy(SubmittedVariantEntity::getAccession));
         backpropagateRSToSS(ssToLookupInRemappedAssembly, ssInRemappedAssemblyGroupedByID);
@@ -109,21 +107,21 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
 
         // Updates to Submitted Variant Entity (SVE) collection with the RS created above
         BulkOperations evaSVEUpdates = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                             SubmittedVariantEntity.class);
+                SubmittedVariantEntity.class);
         BulkOperations dbsnpSVEUpdates = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                               DbsnpSubmittedVariantEntity.class);
+                DbsnpSubmittedVariantEntity.class);
 
         // Inserts to Submitted Variant Operation Entity (SVOE) collection recording the RS updates made above
         BulkOperations evaSVOEInserts = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                              SubmittedVariantOperationEntity.class);
+                SubmittedVariantOperationEntity.class);
         BulkOperations dbsnpSVOEInserts = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                                DbsnpSubmittedVariantOperationEntity.class);
+                DbsnpSubmittedVariantOperationEntity.class);
 
 
         int numEvaRSAssignments = 0;
         int numDbsnpRSAssignments = 0;
 
-        for (SubmittedVariantEntity submittedVariantEntity: submittedVariantEntitiesInOriginalAssemblyWithNoRS) {
+        for (SubmittedVariantEntity submittedVariantEntity : submittedVariantEntitiesInOriginalAssemblyWithNoRS) {
             Long ssIDToBeClustered = submittedVariantEntity.getAccession();
             Long rsInOriginalAssembly = submittedVariantEntity.getClusteredVariantAccession();
             Long rsToBackPropagate = null;

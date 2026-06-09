@@ -15,22 +15,20 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.batch.io;
 
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.batch.item.ExecutionContext;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
-
-import uk.ac.ebi.eva.accession.core.service.GetOrCreateAccessionWrapperCreator;
-import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.batch.io.FastaSequenceReader;
+import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
-import uk.ac.ebi.eva.accession.core.batch.io.FastaSequenceReader;
-import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.service.GetOrCreateAccessionWrapperCreator;
+import uk.ac.ebi.eva.accession.core.utils.PipelineTemporaryFolderUtil;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
@@ -45,7 +43,8 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.ac.ebi.eva.accession.pipeline.batch.processors.ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME;
 
 public class AccessionReportWriterTest {
@@ -112,14 +111,13 @@ public class AccessionReportWriterTest {
 
     private ExecutionContext executionContext;
 
-    @Rule
-    public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
-
     private ContigMapping contigMapping;
 
-    @Before
+    public PipelineTemporaryFolderUtil temporaryFolderUtil = new PipelineTemporaryFolderUtil();
+
+    @BeforeEach
     public void setUp() throws Exception {
-        output = temporaryFolderRule.newFile();
+        output = temporaryFolderUtil.newFile();
         variantsOutput = new File(output.getAbsolutePath() + AccessionReportWriter.VARIANTS_FILE_SUFFIX);
         contigsOutput = new File(output.getAbsolutePath() + AccessionReportWriter.CONTIGS_FILE_SUFFIX);
         Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").toURI());
@@ -127,9 +125,9 @@ public class AccessionReportWriterTest {
                 new ContigSynonyms(CHROMOSOME_1, "assembled-molecule", "1", CONTIG_1, "refseq_1", "chr1", true),
                 new ContigSynonyms("chr2", "assembled-molecule", "2", GENBANK_2, REFSEQ_2, "chr2", false),
                 new ContigSynonyms(SEQUENCE_NAME_3, "unlocalized-scaffold", "1", GENBANK_3, REFSEQ_3, "chr3_random",
-                                   true),
+                        true),
                 new ContigSynonyms(SEQUENCE_NAME_4, "unlocalized-scaffold", "4", GENBANK_4, REFSEQ_4, "chr4_random",
-                                   true)));
+                        true)));
         fastaSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
         executionContext = new ExecutionContext();
     }
@@ -145,25 +143,25 @@ public class AccessionReportWriterTest {
         Variant variant = buildMockVariant(CONTIG_1, CONTIG_1, start, reference, alternate);
 
         SubmittedVariant submittedVariant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, start,
-                                                                 reference, alternate, CLUSTERED_VARIANT,
-                                                                 SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
-                                                                 VALIDATED, null);
+                reference, alternate, CLUSTERED_VARIANT,
+                SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                VALIDATED, null);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "1",
-                                                                                                    submittedVariant);
+                submittedVariant);
 
         AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader,
-                                                                                contigMapping,
-                                                                                ContigNaming.NO_REPLACEMENT);
+                contigMapping,
+                ContigNaming.NO_REPLACEMENT);
         accessionReportWriter.open(executionContext);
         accessionReportWriter.write(Collections.singletonList(variant),
-                                    GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
-                                            Collections.singletonList(accessionWrapper)));
+                GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
+                        Collections.singletonList(accessionWrapper)));
 
 
         assertEquals(String.join("\t", CONTIG_1, Integer.toString(denormalizedStart), ACCESSION_PREFIX + ACCESSION,
-                                 denormalizedReference, denormalizedAlternate, ".", ".", "."),
-                     getFirstVariantLine(variantsOutput));
+                        denormalizedReference, denormalizedAlternate, ".", ".", "."),
+                getFirstVariantLine(variantsOutput));
     }
 
     public static String getFirstVariantLine(File output) throws IOException {
@@ -212,33 +210,33 @@ public class AccessionReportWriterTest {
 
 
         SubmittedVariant submittedVariant = new SubmittedVariant("accession", TAXONOMY, "project", contig1, start1,
-                                                                 REFERENCE, ALTERNATE, CLUSTERED_VARIANT,
-                                                                 SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
-                                                                 VALIDATED, null);
+                REFERENCE, ALTERNATE, CLUSTERED_VARIANT,
+                SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                VALIDATED, null);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "1",
-                                                                                                    submittedVariant);
+                submittedVariant);
 
         AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader,
-                                                                                contigMapping,
-                                                                                ContigNaming.NO_REPLACEMENT);
+                contigMapping,
+                ContigNaming.NO_REPLACEMENT);
         accessionReportWriter.open(executionContext);
         accessionReportWriter.write(Collections.singletonList(variant),
-                                    GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
-                                            Collections.singletonList(accessionWrapper)));
+                GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
+                        Collections.singletonList(accessionWrapper)));
         accessionReportWriter.close();
 
         // second writer
         AccessionReportWriter resumingWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
-                                                                         ContigNaming.NO_REPLACEMENT);
+                ContigNaming.NO_REPLACEMENT);
         variant = buildMockVariant(originalChromosome2, contig2, start2, REFERENCE, ALTERNATE);
         submittedVariant.setContig(contig2);
         submittedVariant.setStart(start2);
 
         resumingWriter.open(executionContext);
         resumingWriter.write(Collections.singletonList(variant),
-                             GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
-                                     Collections.singletonList(accessionWrapper)));
+                GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
+                        Collections.singletonList(accessionWrapper)));
         resumingWriter.close();
     }
 
@@ -251,7 +249,7 @@ public class AccessionReportWriterTest {
     }
 
     @Test
-    @Ignore("A duplicated variant (two input variants that get the same accession) will appear twice in the VCF "
+    @Disabled("A duplicated variant (two input variants that get the same accession) will appear twice in the VCF "
             + "report if they are processed in different batches. There is no easy solution for this, as we would "
             + "need to cache previous batches. It is even worse if the job fails between the affected batches, as we "
             + "would need to parse the temporary VCF output or keep some variants in the job repository.")
@@ -282,19 +280,19 @@ public class AccessionReportWriterTest {
         Variant variant = buildMockVariant(originalContig, accessionedContig, START_1, REFERENCE, ALTERNATE);
 
         SubmittedVariant submittedVariant = new SubmittedVariant("accession", TAXONOMY, "project", accessionedContig,
-                                                                 START_1, "", ALTERNATE, CLUSTERED_VARIANT,
-                                                                 SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
-                                                                 VALIDATED, null);
+                START_1, "", ALTERNATE, CLUSTERED_VARIANT,
+                SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                VALIDATED, null);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "hash-1",
-                                                                                                    submittedVariant);
+                submittedVariant);
 
         AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader,
-                                                                                contigMapping, requestedReplacement);
+                contigMapping, requestedReplacement);
         accessionReportWriter.open(new ExecutionContext());
         accessionReportWriter.write(Collections.singletonList(variant),
-                                    GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
-                                            Collections.singletonList(accessionWrapper)));
+                GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
+                        Collections.singletonList(accessionWrapper)));
 
         assertEquals(replacementContig, getFirstVariantLine(variantsOutput).split("\t")[CHROMOSOME_COLUMN_VCF]);
     }
@@ -304,11 +302,11 @@ public class AccessionReportWriterTest {
         assertContigReplacement(CHROMOSOME_1, CONTIG_1, ContigNaming.SEQUENCE_NAME, CHROMOSOME_1);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void writeContigWithoutEquivalent() throws IOException {
         String contigMissingInAssemblyReport = "contig_missing_in_assembly_report";
-        assertContigReplacement(contigMissingInAssemblyReport, contigMissingInAssemblyReport, ContigNaming.SEQUENCE_NAME,
-                                contigMissingInAssemblyReport);
+        assertThrows(IllegalArgumentException.class, () -> assertContigReplacement(contigMissingInAssemblyReport, contigMissingInAssemblyReport, ContigNaming.SEQUENCE_NAME,
+                contigMissingInAssemblyReport));
     }
 
     @Test
@@ -324,7 +322,7 @@ public class AccessionReportWriterTest {
     /**
      * This test checks that the context base is added from the FASTA, and it doesn't matter which contig naming the
      * FASTA uses: it's independent of the accessioned contig naming (GenBank) and the VCF report contig naming.
-     *
+     * <p>
      * Note how in the fasta there's no entry for GENBANK_4 nor SEQUENCE_NAME_4, only for REFSEQ_4
      */
     @Test

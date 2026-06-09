@@ -17,22 +17,15 @@ package uk.ac.ebi.eva.accession.deprecate.configuration.batch.jobs;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames;
-import uk.ac.ebi.eva.commons.batch.configuration.SpringBoot1CompatibilityConfiguration;
-
-import javax.persistence.EntityManagerFactory;
-import javax.sql.DataSource;
 
 @Configuration
-@EnableBatchProcessing
 public class DeprecateSubmittedVariantsFromFileJobConfiguration {
 
     @Autowired
@@ -40,17 +33,9 @@ public class DeprecateSubmittedVariantsFromFileJobConfiguration {
     private Step deprecateSubmittedVariantsFromFileStep;
 
     @Bean(BeanNames.DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_JOB)
-    public Job deprecateStudySubmittedVariantsFromFileJob(JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(BeanNames.DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_JOB)
-                .incrementer(new RunIdIncrementer())
+    public Job deprecateStudySubmittedVariantsFromFileJob(JobRepository jobRepository) {
+        return new JobBuilder(BeanNames.DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_JOB, jobRepository)
                 .start(deprecateSubmittedVariantsFromFileStep)
                 .build();
-    }
-
-    @Bean
-    public BatchConfigurer configurer(DataSource dataSource, EntityManagerFactory entityManagerFactory)
-            throws Exception {
-        return SpringBoot1CompatibilityConfiguration.getSpringBoot1CompatibleBatchConfigurer(dataSource,
-                entityManagerFactory);
     }
 }

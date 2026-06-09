@@ -17,15 +17,16 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.batch.processors;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class VariantConverterTest {
 
@@ -55,59 +56,59 @@ public class VariantConverterTest {
 
     private VariantConverter processor;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         processor = new VariantConverter(ASSEMBLY, TAXONOMY, PROJECT);
     }
 
     @Test
-    public void process() throws Exception {
+    public void process() {
         Variant variant = new Variant(CONTIG, START, 1001, REFERENCE_ALLELE, ALTERNATE_ALLELE);
         ISubmittedVariant processed = processor.convert(variant);
         ISubmittedVariant expected = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START, REFERENCE_ALLELE,
-                                                          ALTERNATE_ALLELE, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                          MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+                ALTERNATE_ALLELE, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
+                MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         assertEquals(expected, processed);
         assertNull(processed.getCreatedDate());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldThrowExceptionAssemblyNull() {
-        SubmittedVariant submittedVariant = new SubmittedVariant(null, TAXONOMY, PROJECT, CONTIG, START,
-                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, CLUSTERED_VARIANT,
-                                                                 SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
-                                                                 VALIDATED, null);
+        assertThrows(IllegalArgumentException.class, () -> new SubmittedVariant(null, TAXONOMY, PROJECT, CONTIG, START,
+                REFERENCE_ALLELE, ALTERNATE_ALLELE, CLUSTERED_VARIANT,
+                SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                VALIDATED, null));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldThrowExceptionProjectNull() {
-        SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, null, CONTIG, START,
-                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, CLUSTERED_VARIANT,
-                                                                 SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
-                                                                 VALIDATED, null);
+        assertThrows(IllegalArgumentException.class, () -> new SubmittedVariant(ASSEMBLY, TAXONOMY, null, CONTIG, START,
+                REFERENCE_ALLELE, ALTERNATE_ALLELE, CLUSTERED_VARIANT,
+                SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                VALIDATED, null));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldThrowExceptionContigNull() {
-        SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, null, START,
-                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, CLUSTERED_VARIANT,
-                                                                 SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
-                                                                 VALIDATED, null);
+        assertThrows(IllegalArgumentException.class, () -> new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, null, START,
+                REFERENCE_ALLELE, ALTERNATE_ALLELE, CLUSTERED_VARIANT,
+                SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                VALIDATED, null));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldThrowExceptionReferenceNull() {
-        SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START, null,
-                                                                 ALTERNATE_ALLELE, CLUSTERED_VARIANT,
-                                                                 SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
-                                                                 VALIDATED, null);
+        assertThrows(IllegalArgumentException.class, () -> new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START, null,
+                ALTERNATE_ALLELE, CLUSTERED_VARIANT,
+                SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                VALIDATED, null));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldThrowExceptionAlternateNull() {
-        SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START,
-                                                                 REFERENCE_ALLELE, null, CLUSTERED_VARIANT,
-                                                                 SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
-                                                                 VALIDATED, null);
+        assertThrows(IllegalArgumentException.class, () -> new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START,
+                REFERENCE_ALLELE, null, CLUSTERED_VARIANT,
+                SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                VALIDATED, null));
     }
 }

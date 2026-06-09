@@ -15,15 +15,14 @@
  */
 package uk.ac.ebi.eva.accession.core.model.eva;
 
-import org.junit.Test;
-
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
 import java.time.LocalDateTime;
 import java.time.Month;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class SubmittedVariantEntityTest {
 
@@ -51,7 +50,7 @@ public class SubmittedVariantEntityTest {
     public void getModelWithFlagsTrue() {
         SubmittedVariant variant =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, true, true, true, true, null);
+                        REF_A, ALT_T, CLUSTERED_VARIANT, true, true, true, true, null);
 
         SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant, 1);
         assertEquals(variant, entity.getModel());
@@ -61,7 +60,7 @@ public class SubmittedVariantEntityTest {
     public void getModelWithFlagsFalse() {
         SubmittedVariant variant =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, false, false, false, false, null);
+                        REF_A, ALT_T, CLUSTERED_VARIANT, false, false, false, false, null);
 
         SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant, 1);
         assertEquals(variant, entity.getModel());
@@ -71,7 +70,7 @@ public class SubmittedVariantEntityTest {
     public void getModelWithDefaultFlags() {
         SubmittedVariant variant =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT);
+                        REF_A, ALT_T, CLUSTERED_VARIANT);
 
         SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant, 1);
         variant.setSupportedByEvidence(true);
@@ -81,11 +80,11 @@ public class SubmittedVariantEntityTest {
         assertEquals(variant, entity.getModel());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void flagsShouldNotBeNull() {
-        new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION,
-                                   PROJECT_ACCESSION, CONTIG, START, REF_A, ALT_T, CLUSTERED_VARIANT, null, null, null,
-                                   null, 1);
+        assertThrows(IllegalArgumentException.class, () -> new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION,
+                PROJECT_ACCESSION, CONTIG, START, REF_A, ALT_T, CLUSTERED_VARIANT, null, null, null,
+                null, 1));
     }
 
     @Test
@@ -94,7 +93,7 @@ public class SubmittedVariantEntityTest {
         LocalDateTime createdDate = LocalDateTime.of(2018, Month.SEPTEMBER, 18, 9, 0);
         SubmittedVariant variant =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, false, false, false, false, createdDate);
+                        REF_A, ALT_T, CLUSTERED_VARIANT, false, false, false, false, createdDate);
 
         SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant, 1);
         assertEquals(createdDate, entity.getModel().getCreatedDate());
@@ -105,7 +104,7 @@ public class SubmittedVariantEntityTest {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION,
                 PROJECT_ACCESSION, CONTIG, START, "a", "t", CLUSTERED_VARIANT, false,
                 false, false, false, LocalDateTime.of(2018, Month.SEPTEMBER, 18, 9, 0));
-        SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(123L, "hashedMessage", submittedVariant,1 );
+        SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(123L, "hashedMessage", submittedVariant, 1);
         assertEquals("A", submittedVariantEntity.getReferenceAllele());
         assertEquals("T", submittedVariantEntity.getAlternateAllele());
     }

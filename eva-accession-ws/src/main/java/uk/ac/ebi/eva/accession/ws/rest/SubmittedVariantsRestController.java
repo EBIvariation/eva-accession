@@ -17,17 +17,18 @@
  */
 package uk.ac.ebi.eva.accession.ws.rest;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
@@ -35,7 +36,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistE
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
-
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
@@ -45,7 +45,6 @@ import uk.ac.ebi.eva.accession.ws.dto.BeaconError;
 import uk.ac.ebi.eva.accession.ws.service.SubmittedVariantsBeaconService;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -54,7 +53,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/v1/submitted-variants")
-@Api(tags = {"Submitted variants"})
+@Tag(name = "Submitted variants")
 public class SubmittedVariantsRestController {
 
     private static final Logger logger = LoggerFactory.getLogger(SubmittedVariantsRestController.class);
@@ -74,19 +73,19 @@ public class SubmittedVariantsRestController {
      * will be thrown and a redirection to an active SS will be done by {@link EvaControllerAdvice}. Although it is
      * not entirely correct, it was decided to return only one of those merges as redirection, doesn't matter which one.
      */
-    @ApiOperation(value = "Find submitted variants (SS) by identifier", notes = "This endpoint returns the submitted "
+    @Operation(summary = "Find submitted variants (SS) by identifier", description = "This endpoint returns the submitted "
             + "variants (SS) represented by a given identifier. For a description of the response, see "
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#submitted-variant-subsnp-or-ss")
     @GetMapping(value = "/{identifier}", produces = "application/json")
     public ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>> get(
-            @PathVariable @ApiParam(value = "Numerical identifier of a submitted variant, e.g.: 5000000000",
-                                    required = true) Long identifier,
-            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired, default is INSDC")
+            @PathVariable @Parameter(description = "Numerical identifier of a submitted variant, e.g.: 5000000000",
+                    required = true) Long identifier,
+            @RequestParam(required = false) @Parameter(description = "Contig naming convention desired, default is INSDC")
             ContigNamingConvention contigNamingConvention)
             throws AccessionMergedException, AccessionDoesNotExistException {
         try {
             return ResponseEntity.ok(service.getAllByAccession(identifier, contigNamingConvention).stream()
-                                            .map(this::toDTO).collect(Collectors.toList()));
+                    .map(this::toDTO).collect(Collectors.toList()));
         } catch (NoSuchElementException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (AccessionDeprecatedException e) {
@@ -103,7 +102,7 @@ public class SubmittedVariantsRestController {
 
     /**
      * Retrieve the information in the collection for inactive objects.
-     *
+     * <p>
      * This method is necessary because the behaviour of BasicRestController is to return the HttpStatus.GONE with an
      * error message in the body. We want instead to return the HttpStatus.GONE with the variant in the body.
      */
@@ -117,27 +116,26 @@ public class SubmittedVariantsRestController {
 
     @GetMapping(value = "/beacon/query", produces = "application/json")
     public BeaconAlleleResponse doesVariantExist(
-            @RequestParam(name="assemblyId") @ApiParam(value = "assembly accession in GCA format, e.g.: GCA_000002305.1")
-                    String assembly,
-            @RequestParam(name="referenceName") @ApiParam(value = "chromosome name, e.g.: 16") String chromosome,
-            @RequestParam(name="datasetIds") @ApiParam(value = "study accession, e.g.: PRJEB30116") List<String> studies,
-            @RequestParam(name="start") @ApiParam(value = "start position, e.g.: 12856868") long start,
-            @RequestParam(name="referenceBases") @ApiParam(value = "reference base(s), e.g.: C") String reference,
-            @RequestParam(name="alternateBases") @ApiParam(value = "alternate base(s), e.g.: T") String alternate,
+            @RequestParam(name = "assemblyId") @Parameter(description = "assembly accession in GCA format, e.g.: GCA_000002305.1")
+            String assembly,
+            @RequestParam(name = "referenceName") @Parameter(description = "chromosome name, e.g.: 16") String chromosome,
+            @RequestParam(name = "datasetIds") @Parameter(description = "study accession, e.g.: PRJEB30116") List<String> studies,
+            @RequestParam(name = "start") @Parameter(description = "start position, e.g.: 12856868") long start,
+            @RequestParam(name = "referenceBases") @Parameter(description = "reference base(s), e.g.: C") String reference,
+            @RequestParam(name = "alternateBases") @Parameter(description = "alternate base(s), e.g.: T") String alternate,
             HttpServletResponse response) {
         if (start < 1) {
             int responseStatus = HttpServletResponse.SC_BAD_REQUEST;
             response.setStatus(responseStatus);
             return getBeaconResponseObjectWithError(alternate, reference, chromosome, start, assembly, studies,
-                                                    responseStatus,
-                                                    "Please provide a positive number as start position");
+                    responseStatus,
+                    "Please provide a positive number as start position");
         }
         try {
             ContigNamingConvention contigNamingConvention = ContigNamingConvention.ENA_SEQUENCE_NAME;
             return submittedVariantsBeaconService.queryBeacon(studies, alternate, reference, chromosome, start,
-                                                              assembly, contigNamingConvention, false);
-        }
-        catch (Exception ex) {
+                    assembly, contigNamingConvention, false);
+        } catch (Exception ex) {
             logger.error("Unexpected error in beacon query for chromosome={}, start={}, assembly={}, studies={}",
                          chromosome, start, assembly, studies, ex);
             int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
@@ -152,32 +150,32 @@ public class SubmittedVariantsRestController {
                                                                   int errorCode, String errorMessage) {
         BeaconAlleleResponse result = new BeaconAlleleResponse();
         BeaconAlleleRequest request = new BeaconAlleleRequest(alternate, reference, chromosome, start,
-                                                              assembly, studies, false);
+                assembly, studies, false);
         result.setAlleleRequest(request);
         result.setError(new BeaconError(errorCode, errorMessage));
         return result;
     }
 
-    @ApiOperation(value = "Find submitted variants (SS) by the identifying fields", notes = "This endpoint returns "
+    @Operation(summary = "Find submitted variants (SS) by the identifying fields", description = "This endpoint returns "
             + "the submitted variants (SS) represented by a given identifier. For a description of the response, see "
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#submitted-variant"
             + "-subsnp-or-ss")
     @GetMapping(produces = "application/json")
     public ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>> getByIdFields(
-            @RequestParam(name="assemblyId") @ApiParam(value = "assembly accession in GCA format, e.g.: GCA_000002305.1")
-                    String assembly,
-            @RequestParam(name="referenceName") @ApiParam(value = "chromosome name or accession, e.g.: CM000392.2")
-                    String chromosome,
-            @RequestParam(name="datasetIds") @ApiParam(value = "study accession, e.g.: PRJEB30116") List<String> studies,
-            @RequestParam(name="start") @ApiParam(value = "start position, e.g.: 12856868") long start,
-            @RequestParam(name="referenceBases") @ApiParam(value = "reference base(s), e.g.: C") String reference,
-            @RequestParam(name="alternateBases") @ApiParam(value = "alternate base(s), e.g.: T") String alternate,
-            @RequestParam(required = false) @ApiParam(value = "Chromosome naming convention used, default is INSDC")
-                    ContigNamingConvention contigNamingConvention) {
+            @RequestParam(name = "assemblyId") @Parameter(description = "assembly accession in GCA format, e.g.: GCA_000002305.1")
+            String assembly,
+            @RequestParam(name = "referenceName") @Parameter(description = "chromosome name or accession, e.g.: CM000392.2")
+            String chromosome,
+            @RequestParam(name = "datasetIds") @Parameter(description = "study accession, e.g.: PRJEB30116") List<String> studies,
+            @RequestParam(name = "start") @Parameter(description = "start position, e.g.: 12856868") long start,
+            @RequestParam(name = "referenceBases") @Parameter(description = "reference base(s), e.g.: C") String reference,
+            @RequestParam(name = "alternateBases") @Parameter(description = "alternate base(s), e.g.: T") String alternate,
+            @RequestParam(required = false) @Parameter(description = "Chromosome naming convention used, default is INSDC")
+            ContigNamingConvention contigNamingConvention) {
         try {
             return ResponseEntity.ok(
                     submittedVariantsBeaconService.getVariantByIdFields(assembly, chromosome, studies, start, reference,
-                                                                        alternate, contigNamingConvention));
+                            alternate, contigNamingConvention));
         } catch (NoSuchElementException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (Exception e) {

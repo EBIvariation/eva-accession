@@ -15,26 +15,25 @@
  */
 package uk.ac.ebi.eva.accession.core.service.human.dbsnp;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
-
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.test.configuration.human.MongoHumanTestConfiguration;
-import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.time.LocalDateTime;
@@ -42,14 +41,12 @@ import java.time.Month;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RunWith(SpringRunner.class)
-@DataJpaTest
+@ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:ss-accession-test.properties")
-@UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantEntity.json", "/test-data/dbsnpClusteredVariantOperationEntity.json"})
-@ContextConfiguration(classes = {MongoHumanTestConfiguration.class})
-public class HumanDbsnpClusteredVariantAccessioningServiceTest {
+@ContextConfiguration(classes = {MongoHumanTestConfiguration.class, ContiguousIdBlocksDataSourceConfiguration.class})
+public class HumanDbsnpClusteredVariantAccessioningServiceTest extends MongoTestContainerHelper {
 
     private static final Long HUMAN_ACTIVE_RS_ID_1 = 1118L;
 
@@ -64,16 +61,27 @@ public class HumanDbsnpClusteredVariantAccessioningServiceTest {
             "CM000663.2", 72348112L, VariantType.INDEL, false, LocalDateTime.of(2017, Month.NOVEMBER, 11, 9, 55, 0));
 
     @Autowired
+    private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private ResourceLoader resourceLoader;
+
+    @BeforeEach
+    public void setUp() {
+        mongoTemplate.getDb().drop();
+        MongoTestDataLoader mongoTestDataLoader = new MongoTestDataLoader(mongoTemplate, resourceLoader);
+        mongoTestDataLoader.load("/test-data/dbsnpClusteredVariantEntity.json");
+        mongoTestDataLoader.load("/test-data/dbsnpClusteredVariantOperationEntity.json");
+    }
+
+    @AfterEach
+    public void tearDown() {
+        mongoTemplate.getDb().drop();
+    }
+
+    @Autowired
     @Qualifier("humanService")
     private HumanDbsnpClusteredVariantAccessioningService humanService;
-
-    //Required by nosql-unit
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName("human-variants-test").build());
 
     @Test
     public void getHumanActiveVariant() {
@@ -85,7 +93,7 @@ public class HumanDbsnpClusteredVariantAccessioningServiceTest {
     }
 
     @Test
-    @Ignore("humanService.getAllByAccession is not returning multiple variants yet")
+    @Disabled("humanService.getAllByAccession is not returning multiple variants yet")
     public void getHumanActiveMultipleVariants() {
         List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants =
                 humanService.getAllByAccession(HUMAN_ACTIVE_RS_ID_2);

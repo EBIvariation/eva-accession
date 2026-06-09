@@ -17,8 +17,8 @@
  */
 package uk.ac.ebi.eva.accession.core.summary;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
@@ -26,8 +26,8 @@ import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import java.time.LocalDateTime;
 import java.time.Month;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class SubmittedVariantSummaryFunctionTest {
 
@@ -57,7 +57,7 @@ public class SubmittedVariantSummaryFunctionTest {
 
     private SubmittedVariantSummaryFunction summaryFunction;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         summaryFunction = new SubmittedVariantSummaryFunction();
     }

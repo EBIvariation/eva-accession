@@ -15,30 +15,28 @@
  */
 package uk.ac.ebi.eva.accession.release.batch.io.active;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.mongodb.MongoClient;
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
-
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
-import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
-import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.ArrayList;
@@ -47,10 +45,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader.REMAPPED_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
@@ -60,14 +58,10 @@ import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariant
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:application.properties")
-@UsingDataSet(locations = {
-        "/test-data/dbsnpClusteredVariantEntity.json",
-        "/test-data/dbsnpSubmittedVariantEntity.json",
-        "/test-data/submittedVariantEntity.json"})  // includes 1 variant with dbsnp rsid
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
-public class AccessionedVariantMongoReaderTest {
+public class AccessionedVariantMongoReaderTest extends MongoTestContainerHelper {
 
     private static final String ASSEMBLY_ACCESSION_1 = "GCA_000409795.2";
 
@@ -126,19 +120,28 @@ public class AccessionedVariantMongoReaderTest {
     @Autowired
     private MongoClient mongoClient;
 
-    //Required by nosql-unit
     @Autowired
-    private ApplicationContext applicationContext;
+    private MongoTemplate mongoTemplate;
 
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
+    @Autowired
+    private ResourceLoader resourceLoader;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
+        mongoTemplate.getDb().drop();
         executionContext = new ExecutionContext();
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_1, TAXONOMY_1, mongoClient, TEST_DB, CHUNK_SIZE,
-                                                   new DbsnpCollectionNames());
+                new DbsnpCollectionNames());
+
+        MongoTestDataLoader mongoTestDataLoader = new MongoTestDataLoader(mongoTemplate, resourceLoader);
+        mongoTestDataLoader.load("/test-data/dbsnpClusteredVariantEntity.json");
+        mongoTestDataLoader.load("/test-data/dbsnpSubmittedVariantEntity.json");
+        mongoTestDataLoader.load("/test-data/submittedVariantEntity.json");
+    }
+
+    @AfterEach
+    public void tearDown() {
+        mongoTemplate.getDb().drop();
     }
 
     @Test
@@ -146,9 +149,7 @@ public class AccessionedVariantMongoReaderTest {
         MongoDatabase db = mongoClient.getDatabase(TEST_DB);
         MongoCollection<Document> collection = db.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY);
 
-        AggregateIterable<Document> result = collection.aggregate(reader.buildAggregation())
-                                                       .allowDiskUse(true)
-                                                       .useCursor(true);
+        AggregateIterable<Document> result = collection.aggregate(reader.buildAggregation()).allowDiskUse(true);
 
         MongoCursor<Document> cursor = result.iterator();
 
@@ -158,15 +159,15 @@ public class AccessionedVariantMongoReaderTest {
             variants.addAll(reader.getVariants(clusteredVariant));
         }
         assertEquals(EXPECTED_LINES, variants.size());
-     }
+    }
 
     @Test
-    public void reader() throws Exception {
+    public void reader() {
         List<Variant> variants = readIntoList();
         assertEquals(EXPECTED_LINES, variants.size());
     }
 
-    private List<Variant> readIntoList() throws Exception {
+    private List<Variant> readIntoList() {
         reader.open(executionContext);
         List<Variant> allVariants = new ArrayList<>();
         List<Variant> variants;
@@ -178,7 +179,7 @@ public class AccessionedVariantMongoReaderTest {
     }
 
     @Test
-    public void linkedSubmittedVariants() throws Exception {
+    public void linkedSubmittedVariants() {
         Map<String, Variant> variants = readIntoMap();
         assertEquals(EXPECTED_LINES, variants.size());
         assertEquals(3, variants.values().stream().filter(v -> v.getMainId().equals(RS_1)).count());
@@ -188,7 +189,7 @@ public class AccessionedVariantMongoReaderTest {
         assertEquals(1, variants.get(RS_2_T_G).getSourceEntries().size());
     }
 
-    private Map<String, Variant> readIntoMap() throws Exception {
+    private Map<String, Variant> readIntoMap() {
         reader.open(executionContext);
         Map<String, Variant> allVariants = new HashMap<>();
         List<Variant> variants;
@@ -207,9 +208,9 @@ public class AccessionedVariantMongoReaderTest {
     }
 
     @Test
-    public void queryOtherAssembly() throws Exception {
+    public void queryOtherAssembly() {
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_2, TAXONOMY_2, mongoClient, TEST_DB, CHUNK_SIZE,
-                                                   new DbsnpCollectionNames());
+                new DbsnpCollectionNames());
         Map<String, Variant> variants = readIntoMap();
 
         assertEquals(3, variants.size());
@@ -220,60 +221,60 @@ public class AccessionedVariantMongoReaderTest {
     }
 
     @Test
-    public void snpVariantClassAttribute() throws Exception {
+    public void snpVariantClassAttribute() {
         Map<String, Variant> variants = readIntoMap();
         assertEquals(EXPECTED_LINES, variants.size());
         String snpSequenceOntology = "SO:0001483";
         assertTrue(variants
-                           .get(RS_1_G_A)
-                           .getSourceEntries()
-                           .stream()
-                           .allMatch(se -> snpSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY))));
+                .get(RS_1_G_A)
+                .getSourceEntries()
+                .stream()
+                .allMatch(se -> snpSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY))));
         assertTrue(variants
-                           .get(RS_1_G_T)
-                           .getSourceEntries()
-                           .stream()
-                           .allMatch(se -> snpSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY))));
+                .get(RS_1_G_T)
+                .getSourceEntries()
+                .stream()
+                .allMatch(se -> snpSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY))));
         assertTrue(variants
-                           .get(RS_2_T_G)
-                           .getSourceEntries()
-                           .stream()
-                           .allMatch(se -> snpSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY))));
+                .get(RS_2_T_G)
+                .getSourceEntries()
+                .stream()
+                .allMatch(se -> snpSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY))));
     }
 
     @Test
-    public void insertionVariantClassAttribute() throws Exception {
+    public void insertionVariantClassAttribute() {
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, TAXONOMY_4, mongoClient, TEST_DB, CHUNK_SIZE,
-                                                   new DbsnpCollectionNames());
+                new DbsnpCollectionNames());
         List<Variant> variants = readIntoList();
         assertEquals(1, variants.size());
         String insertionSequenceOntology = "SO:0000667";
         assertTrue(variants.get(0)
-                           .getSourceEntries()
-                           .stream()
-                           .allMatch(se -> insertionSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY))));
+                .getSourceEntries()
+                .stream()
+                .allMatch(se -> insertionSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY))));
     }
 
     @Test
-    public void otherVariantClasses() throws Exception {
+    public void otherVariantClasses() {
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, TAXONOMY_5, mongoClient, TEST_DB, CHUNK_SIZE,
-                                                   new DbsnpCollectionNames());
+                new DbsnpCollectionNames());
         List<Variant> variants = readIntoList();
         assertEquals(4, variants.size());
         String indelSequenceOntology = "SO:1000032";
         String tandemRepeatSequenceOntology = "SO:0000705";
         assertEquals(3, variants.stream()
-                                .flatMap(v -> v.getSourceEntries().stream())
-                                .filter(se -> tandemRepeatSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY)))
-                                .count());
+                .flatMap(v -> v.getSourceEntries().stream())
+                .filter(se -> tandemRepeatSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY)))
+                .count());
         assertEquals(1, variants.stream()
-                                .flatMap(v -> v.getSourceEntries().stream())
-                                .filter(se -> indelSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY)))
-                                .count());
+                .flatMap(v -> v.getSourceEntries().stream())
+                .filter(se -> indelSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY)))
+                .count());
     }
 
     @Test
-    public void studyIdAttribute() throws Exception {
+    public void studyIdAttribute() {
         Map<String, Variant> variants = readIntoMap();
         assertEquals(EXPECTED_LINES, variants.size());
 
@@ -287,9 +288,9 @@ public class AccessionedVariantMongoReaderTest {
     }
 
     @Test
-    public void clusteredVariantWithoutSubmittedVariants() throws Exception {
+    public void clusteredVariantWithoutSubmittedVariants() {
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_3, TAXONOMY_3, mongoClient, TEST_DB, CHUNK_SIZE,
-                                                   new DbsnpCollectionNames());
+                new DbsnpCollectionNames());
         List<Variant> variants = readIntoList();
         assertEquals(0, variants.size());
     }
@@ -301,105 +302,105 @@ public class AccessionedVariantMongoReaderTest {
     }
 
     @Test
-    public void includeRemappedFlag() throws Exception {
+    public void includeRemappedFlag() {
         List<Variant> variants = readIntoList();
         assertNotEquals(0, variants.size());
         List<Variant> rsToLookFor = variants.stream().filter(v -> v.getMainId().equals("rs8181"))
-                                            .collect(Collectors.toList());
+                .collect(Collectors.toList());
         assertNotEquals(0, rsToLookFor.size());
         // Both the SS clustered by the RS 8181 has the "remappedFrom" attribute
         assertTrue(rsToLookFor.stream().flatMap(v -> v.getSourceEntries().stream())
-                              .map(se -> se.getAttribute(REMAPPED_KEY))
-                              .map(Boolean::new)
-                              .allMatch(v -> v.equals(true)));
+                .map(se -> se.getAttribute(REMAPPED_KEY))
+                .map(Boolean::parseBoolean)
+                .allMatch(v -> v.equals(true)));
         rsToLookFor = variants.stream().filter(v -> v.getMainId().equals("rs869808637"))
-                              .collect(Collectors.toList());
+                .collect(Collectors.toList());
         assertNotEquals(0, rsToLookFor.size());
         // Only one of the SS clustered by the RS 869808637 has the "remappedFrom" attribute
         assertTrue(rsToLookFor.stream().flatMap(v -> v.getSourceEntries().stream())
-                              .map(se -> se.getAttribute(REMAPPED_KEY))
-                              .map(Boolean::new)
-                              .allMatch(v -> v.equals(false)));
+                .map(se -> se.getAttribute(REMAPPED_KEY))
+                .map(Boolean::parseBoolean)
+                .allMatch(v -> v.equals(false)));
     }
 
-    private void assertFlagEqualsInAllVariants(String key, boolean value) throws Exception {
+    private void assertFlagEqualsInAllVariants(String key, boolean value) {
         List<Variant> variants = readIntoList();
         assertNotEquals(0, variants.size());
         assertTrue(variants.stream()
-                           .flatMap(v -> v.getSourceEntries().stream())
-                           .map(se -> se.getAttribute(key))
-                           .map(Boolean::new)
-                           .allMatch(v -> v.equals(value)));
+                .flatMap(v -> v.getSourceEntries().stream())
+                .map(se -> se.getAttribute(key))
+                .map(Boolean::parseBoolean)
+                .allMatch(v -> v.equals(value)));
     }
 
     @Test
-    public void includeAssemblyMatchFlag() throws Exception {
+    public void includeAssemblyMatchFlag() {
         assertFlagEqualsInAllVariants(ASSEMBLY_MATCH_KEY, true);
     }
 
     @Test
-    public void includeAllelesMatchFlag() throws Exception {
+    public void includeAllelesMatchFlag() {
         assertFlagEqualsInAllVariants(ALLELES_MATCH_KEY, true);
     }
 
     @Test
-    public void includeEvidenceFlag() throws Exception {
+    public void includeEvidenceFlag() {
         assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, true);
     }
 
     @Test
-    public void includeValidatedNonDefaultFlag() throws Exception {
+    public void includeValidatedNonDefaultFlag() {
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, TAXONOMY_5, mongoClient, TEST_DB, CHUNK_SIZE,
-                                                   new DbsnpCollectionNames());
+                new DbsnpCollectionNames());
         assertFlagEqualsInAllVariants(SUBMITTED_VARIANT_VALIDATED_KEY, true);
         assertFlagEqualsInRS(CLUSTERED_VARIANT_VALIDATED_KEY, false, RS_4);
         assertFlagEqualsInRS(CLUSTERED_VARIANT_VALIDATED_KEY, true, RS_5);
     }
 
-    private void assertFlagEqualsInRS(String key, boolean value, String clusteredVariantAccession) throws Exception {
+    private void assertFlagEqualsInRS(String key, boolean value, String clusteredVariantAccession) {
         List<Variant> variants = readIntoList();
         assertNotEquals(0, variants.size());
         assertTrue(variants.stream()
-                           .filter(v -> v.getMainId().equals(clusteredVariantAccession))
-                           .flatMap(v -> v.getSourceEntries().stream())
-                           .map(se -> se.getAttribute(key))
-                           .map(Boolean::new)
-                           .allMatch(v -> v.equals(value)));
+                .filter(v -> v.getMainId().equals(clusteredVariantAccession))
+                .flatMap(v -> v.getSourceEntries().stream())
+                .map(se -> se.getAttribute(key))
+                .map(Boolean::parseBoolean)
+                .allMatch(v -> v.equals(value)));
     }
 
 
     @Test
-    public void includeAssemblyMatchNonDefaultFlag() throws Exception {
+    public void includeAssemblyMatchNonDefaultFlag() {
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, TAXONOMY_4, mongoClient, TEST_DB, CHUNK_SIZE,
-                                                   new DbsnpCollectionNames());
+                new DbsnpCollectionNames());
         assertFlagEqualsInAllVariants(ASSEMBLY_MATCH_KEY, false);
     }
 
     @Test
-    public void includeAllelesMatchNonDefaultFlag() throws Exception {
+    public void includeAllelesMatchNonDefaultFlag() {
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, TAXONOMY_4, mongoClient, TEST_DB, CHUNK_SIZE,
-                                                   new DbsnpCollectionNames());
+                new DbsnpCollectionNames());
         assertFlagEqualsInAllVariants(ALLELES_MATCH_KEY, false);
     }
 
     @Test
-    public void includeEvidenceNonDefaultFlag() throws Exception {
+    public void includeEvidenceNonDefaultFlag() {
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, TAXONOMY_5, mongoClient, TEST_DB, CHUNK_SIZE,
-                                                   new DbsnpCollectionNames());
+                new DbsnpCollectionNames());
         assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, false);
     }
 
     /**
      * Two clustered variants with the same accession but mapped against different locations. Each clustered variant
      * should only appear with the alleles of the its corresponding submitted variants.
-     *
+     * <p>
      * This means variants will only be returned by the reader when the clustered and submitted variant have the same location
      * (contig and start)
      */
     @Test
-    public void includeOnlyVariantsWithTheSameChromosomeAndStartInRsAndSs() throws Exception {
+    public void includeOnlyVariantsWithTheSameChromosomeAndStartInRsAndSs() {
         reader = new AccessionedVariantMongoReader("GCA_000002775.1", 3694, mongoClient,
-                                                   TEST_DB, CHUNK_SIZE, new DbsnpCollectionNames());
+                TEST_DB, CHUNK_SIZE, new DbsnpCollectionNames());
         List<Variant> allVariants = readIntoList();
 
         assertEquals(3, allVariants.size());
@@ -423,31 +424,31 @@ public class AccessionedVariantMongoReaderTest {
      * For ambiguous INDELS the start position in the clustered variant and its submitted variants can be different
      * because the renormalization process is performed only for submitted variants. this will be handled by trying to
      * match with the exact position or either the one before or after.
-     *
+     * <p>
      * Variants are represented in different ways by dbSNP and the EVA
      * dbSNP    (start: 7356605, reference: , alternate: GAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCACA)
      * EVA      (start: 7356604, reference: , alternate: AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC)
-     *
+     * <p>
      * FASTA (NC_024803.1:7356603-7356606) TATC
-     *
+     * <p>
      * dbSNP remove the context nucleotide before an INDEL while the EVA removes the rightmost bases
-     *
+     * <p>
      * dbSNP:   TA(GAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCACA)TC, start: 7356605
      * EVA:     T(AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC)ATC, start: 7356604
-     *
+     * <p>
      * For the rs268233057 (start: 7356605) and its ss490570267 (start: 7356604) the submitted variant start will be
      * used along with its alleles even when the start position does not exactly match.
      */
     @Test
-    public void includeAmbiguousVariantsWithDifferentStartInSsAndRs() throws Exception {
+    public void includeAmbiguousVariantsWithDifferentStartInSsAndRs() {
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, TAXONOMY_4, mongoClient, TEST_DB, CHUNK_SIZE,
-                                                   new DbsnpCollectionNames());
+                new DbsnpCollectionNames());
         List<Variant> allVariants = readIntoList();
 
         assertEquals(1, allVariants.size());
 
         assertTrue(isVariantPresent(allVariants, "CM001642.1", 7356604L, "",
-                                    "AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC"));
+                "AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC"));
     }
 
     /*
@@ -455,9 +456,9 @@ public class AccessionedVariantMongoReaderTest {
     ensure that the variant list only uses the ss1 entry in ASM1
      */
     @Test
-    public void ensureOnlySSInReleaseAssemblyIsUsed() throws Exception {
+    public void ensureOnlySSInReleaseAssemblyIsUsed() {
         Variant variantInTwoAssemblies = readIntoList().stream().filter(e -> e.getIds().contains("rs100"))
-                                                       .findFirst().get();
+                .findFirst().get();
         // Ensure that only one SS entry is available in the variant that was read
         assertEquals(1, variantInTwoAssemblies.getSourceEntries().size());
     }

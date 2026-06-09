@@ -20,25 +20,20 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.StepExecution;
-
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.job.builder.FlowBuilder;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.flow.FlowExecutionStatus;
 import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.core.job.flow.support.SimpleFlow;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.core.scope.context.ChunkContext;
-import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
-
+import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.ACCESSIONING_SHUTDOWN_STEP;
@@ -51,29 +46,27 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.JOB_EXECUTION_LISTENER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_MERGE_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
+import static uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration.BATCH_TRANSACTION_MANAGER;
 
 @Configuration
-@EnableBatchProcessing
 public class ClusteringFromMongoJobConfiguration {
     private JobExecutionDecider isRemappedAssemblyPresent(InputParameters inputParameters) {
         return new JobExecutionDecider() {
             @Override
             @NonNull
             public FlowExecutionStatus decide(@NonNull JobExecution jobExecution, StepExecution stepExecution) {
-                String status = (!StringUtil.isBlank(inputParameters.getRemappedFrom())) ? "TRUE": "FALSE";
+                String status = (!StringUtil.isBlank(inputParameters.getRemappedFrom())) ? "TRUE" : "FALSE";
                 return new FlowExecutionStatus(status);
             }
         };
     }
 
-    private Step dummyStep(StepBuilderFactory stepBuilderFactory) {
-        return stepBuilderFactory.get("step_" + "dummyStep").tasklet(new Tasklet() {
-            @Override
-            public RepeatStatus execute(@NonNull StepContribution stepContribution,
-                                        @NonNull ChunkContext chunkContext) {
-                return RepeatStatus.FINISHED;
-            }
-        }).build();
+    private Step dummyStep(JobRepository jobRepository,
+                           @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager) {
+        return new StepBuilder("step_" + "dummyStep", jobRepository)
+                .tasklet((stepContribution, chunkContext) -> RepeatStatus.FINISHED,
+                        transactionManager)
+                .build();
     }
 
     @Bean(CLUSTERING_FROM_MONGO_JOB)
@@ -87,36 +80,35 @@ public class ClusteringFromMongoJobConfiguration {
                                       @Qualifier(BACK_PROPAGATE_NEW_RS_STEP) Step backPropagateNewRSStep,
                                       // Back-propagate RS in the remapped assembly that were split or merged
                                       @Qualifier(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP)
-                                                  Step backPropagateSplitMergedRSStep,
+                                      Step backPropagateSplitMergedRSStep,
                                       @Qualifier(JOB_EXECUTION_LISTENER) JobExecutionListener jobExecutionListener,
-                                      StepBuilderFactory stepBuilderFactory,
-                                      JobBuilderFactory jobBuilderFactory,
+                                      JobRepository jobRepository,
+                                      @Qualifier(BATCH_TRANSACTION_MANAGER) PlatformTransactionManager transactionManager,
                                       InputParameters inputParameters) {
         JobExecutionDecider jobExecutionDecider = isRemappedAssemblyPresent(inputParameters);
-        Step dummyStep = dummyStep(stepBuilderFactory);
-        return jobBuilderFactory.get(CLUSTERING_FROM_MONGO_JOB)
-                .incrementer(new RunIdIncrementer())
+        Step dummyStep = dummyStep(jobRepository, transactionManager);
+        return new JobBuilder(CLUSTERING_FROM_MONGO_JOB, jobRepository)
                 //We need the dummy step here because Spring won't conditionally start the first step
                 .start(dummyStep)
                 .listener(jobExecutionListener)
                 .next(jobExecutionDecider)
-                    .on("TRUE")
-                    .to(new FlowBuilder<SimpleFlow>("remappedAssemblyClusteringFlow")
-                            .start(clusteringClusteredVariantsFromMongoStep)
-                            .next(processRSMergeCandidatesStep)
-                            .next(processRSSplitCandidatesStep)
-                            .next(clearRSMergeAndSplitCandidatesStep)
-                            .next(clusteringNonClusteredVariantsFromMongoStep)
-                            .next(accessioningShutdownStep)
-                            .next(backPropagateNewRSStep)
-                            .next(backPropagateSplitMergedRSStep)
-                            .build())
-                    .on("*").end()
+                .on("TRUE")
+                .to(new FlowBuilder<SimpleFlow>("remappedAssemblyClusteringFlow")
+                        .start(clusteringClusteredVariantsFromMongoStep)
+                        .next(processRSMergeCandidatesStep)
+                        .next(processRSSplitCandidatesStep)
+                        .next(clearRSMergeAndSplitCandidatesStep)
+                        .next(clusteringNonClusteredVariantsFromMongoStep)
+                        .next(accessioningShutdownStep)
+                        .next(backPropagateNewRSStep)
+                        .next(backPropagateSplitMergedRSStep)
+                        .build())
+                .on("*").end()
                 .from(jobExecutionDecider)
-                    .on("FALSE")
-                    .to(clusteringNonClusteredVariantsFromMongoStep)
-                    .next(accessioningShutdownStep)
-                    .on("*").end()
+                .on("FALSE")
+                .to(clusteringNonClusteredVariantsFromMongoStep)
+                .next(accessioningShutdownStep)
+                .on("*").end()
                 .end().build();
     }
 }

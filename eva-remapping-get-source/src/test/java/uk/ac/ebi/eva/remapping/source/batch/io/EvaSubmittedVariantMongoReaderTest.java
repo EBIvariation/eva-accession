@@ -16,69 +16,59 @@
 
 package uk.ac.ebi.eva.remapping.source.batch.io;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
-
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
-import uk.ac.ebi.eva.remapping.source.test.configuration.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:application.properties")
-@UsingDataSet(locations = {
-        "/test-data/submittedVariantEntity.json"
-})
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
-public class EvaSubmittedVariantMongoReaderTest {
-
-    private static final String TEST_DB = "test-db";
-
+public class EvaSubmittedVariantMongoReaderTest extends MongoTestContainerHelper {
     private static final String ASSEMBLY = "GCA_000409795.2";
 
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    //Required by nosql-unit
     @Autowired
-    private ApplicationContext applicationContext;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
+    private ResourceLoader resourceLoader;
 
     private EvaSubmittedVariantMongoReader reader;
 
-    @Before
+    @BeforeEach
     public void setUp() {
+        mongoTemplate.getDb().drop();
+
+        new MongoTestDataLoader(mongoTemplate, resourceLoader).load("/test-data/submittedVariantEntity.json");
+
         ExecutionContext executionContext = new ExecutionContext();
         reader = new EvaSubmittedVariantMongoReader(ASSEMBLY, mongoTemplate, null, 0);
         reader.open(executionContext);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         reader.close();
+        mongoTemplate.getDb().drop();
     }
 
     @Test

@@ -3,9 +3,8 @@ package uk.ac.ebi.eva.accession.release.configuration.batch.jobs;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -17,7 +16,6 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_MERGE
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_STEP;
 
 @Configuration
-@EnableBatchProcessing
 public class DumpRSAccessionsJobConfiguration {
 
     @Autowired
@@ -29,17 +27,15 @@ public class DumpRSAccessionsJobConfiguration {
     private Step dumpMergedAndDeprecatedAccessionsStep;
 
     @Bean(DUMP_ACTIVE_ACCESSIONS_JOB)
-    public Job dumpActiveAccessionJob(JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(DUMP_ACTIVE_ACCESSIONS_JOB)
-                .incrementer(new RunIdIncrementer())
+    public Job dumpActiveAccessionJob(JobRepository jobRepository) {
+        return new JobBuilder(DUMP_ACTIVE_ACCESSIONS_JOB, jobRepository)
                 .start(dumpActiveAccessionsStep)
                 .build();
     }
 
     @Bean(DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB)
-    public Job dumpMergedAndDeprecatedAccessionJob(JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB)
-                .incrementer(new RunIdIncrementer())
+    public Job dumpMergedAndDeprecatedAccessionJob(JobRepository jobRepository) {
+        return new JobBuilder(DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB, jobRepository)
                 .start(dumpMergedAndDeprecatedAccessionsStep)
                 .build();
     }

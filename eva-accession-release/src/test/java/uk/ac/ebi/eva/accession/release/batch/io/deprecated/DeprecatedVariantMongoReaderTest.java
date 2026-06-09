@@ -16,21 +16,17 @@
 
 package uk.ac.ebi.eva.accession.release.batch.io.deprecated;
 
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.mongodb.MongoClient;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import com.mongodb.client.MongoClient;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
@@ -44,9 +40,9 @@ import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantInactiveEnt
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
-import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
-import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.ArrayList;
@@ -57,13 +53,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:application.properties")
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
-public class DeprecatedVariantMongoReaderTest {
+public class DeprecatedVariantMongoReaderTest extends MongoTestContainerHelper {
 
     private static final String TEST_DB = "test-db";
 
@@ -83,22 +79,14 @@ public class DeprecatedVariantMongoReaderTest {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    //Required by nosql-unit
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
-
     private DeprecatedVariantMongoReader reader;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         this.mongoTemplate.getDb().drop();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         this.mongoTemplate.getDb().drop();
         this.reader.close();
@@ -128,22 +116,22 @@ public class DeprecatedVariantMongoReaderTest {
         // create RS
         this.mongoTemplate.insert(Stream.of(ss1, ss2, ss3, ss4).map(ss -> {
             DbsnpSubmittedVariantOperationEntity dbsnpSvoeObj = new DbsnpSubmittedVariantOperationEntity();
-            dbsnpSvoeObj.fill( EventType.UPDATED, ss.getAccession(),
-                              "Declustered: None of the variant alleles match the reference allele.",
-                              Arrays.asList(new DbsnpSubmittedVariantInactiveEntity(ss)));
+            dbsnpSvoeObj.fill(EventType.UPDATED, ss.getAccession(),
+                    "Declustered: None of the variant alleles match the reference allele.",
+                    Arrays.asList(new DbsnpSubmittedVariantInactiveEntity(ss)));
             return dbsnpSvoeObj;
         }).collect(Collectors.toList()), DbsnpSubmittedVariantOperationEntity.class);
         this.mongoTemplate.insert(Stream.of(rs1, rs2, rs3, rs4).map(rs -> {
             DbsnpClusteredVariantOperationEntity dbsnpCvoeObj = new DbsnpClusteredVariantOperationEntity();
-            dbsnpCvoeObj.fill( EventType.DEPRECATED, rs.getAccession(),
-                               "Clustered variant completely declustered",
-                               Arrays.asList(new DbsnpClusteredVariantInactiveEntity(rs)));
+            dbsnpCvoeObj.fill(EventType.DEPRECATED, rs.getAccession(),
+                    "Clustered variant completely declustered",
+                    Arrays.asList(new DbsnpClusteredVariantInactiveEntity(rs)));
             return dbsnpCvoeObj;
         }).collect(Collectors.toList()), DbsnpClusteredVariantOperationEntity.class);
 
         // Test records returned when the mongo reader is given TAXONOMY_1
         this.reader = new DeprecatedVariantMongoReader(ASSEMBLY, TAXONOMY_1, mongoClient, TEST_DB, CHUNK_SIZE,
-                                                  new DbsnpCollectionNames());
+                new DbsnpCollectionNames());
         this.reader.open(new ExecutionContext());
         List<Variant> deprecatedVariants = this.readIntoList();
         assertEquals(1, deprecatedVariants.size());
@@ -153,7 +141,7 @@ public class DeprecatedVariantMongoReaderTest {
         // Note rs3 is returned even though in Mongo it was originally issued in TAXONOMY_1
         // This is because there is a SS record in TAXONOMY_2 that was declustered from rs3
         this.reader = new DeprecatedVariantMongoReader(ASSEMBLY, TAXONOMY_2, mongoClient, TEST_DB, CHUNK_SIZE,
-                                                       new DbsnpCollectionNames());
+                new DbsnpCollectionNames());
         this.reader.open(new ExecutionContext());
         deprecatedVariants = this.readIntoList();
         assertEquals(2, deprecatedVariants.size());
@@ -171,22 +159,22 @@ public class DeprecatedVariantMongoReaderTest {
     private DbsnpSubmittedVariantEntity createSS(String assembly, int taxonomy, Long ssAccession, Long rsAccession,
                                                  Long start, String reference, String alternate) {
         return new DbsnpSubmittedVariantEntity(ssAccession, "hash" + ssAccession, assembly, taxonomy,
-                                               "PRJ1", "chr1", start, reference, alternate, rsAccession, false, false,
-                                               false, false, 1);
+                "PRJ1", "chr1", start, reference, alternate, rsAccession, false, false,
+                false, false, 1);
     }
 
     private DbsnpClusteredVariantEntity createRS(SubmittedVariantEntity sve, Integer alternateTaxonomy, Long start) {
-        Function<IClusteredVariant, String> hashingFunction =  new ClusteredVariantSummaryFunction().andThen(
+        Function<IClusteredVariant, String> hashingFunction = new ClusteredVariantSummaryFunction().andThen(
                 new SHA1HashingFunction());
-        int taxonomyToUse = Objects.isNull(alternateTaxonomy)? sve.getTaxonomyAccession(): alternateTaxonomy;
+        int taxonomyToUse = Objects.isNull(alternateTaxonomy) ? sve.getTaxonomyAccession() : alternateTaxonomy;
         long startToUse = Objects.isNull(start) ? sve.getStart() : start;
         ClusteredVariant cv = new ClusteredVariant(sve.getReferenceSequenceAccession(), taxonomyToUse,
-                                                   sve.getContig(),
-                                                   startToUse,
-                                                   new Variant(sve.getContig(), sve.getStart(), sve.getStart(),
-                                                               sve.getReferenceAllele(),
-                                                               sve.getAlternateAllele()).getType(),
-                                                   true, null);
+                sve.getContig(),
+                startToUse,
+                new Variant(sve.getContig(), sve.getStart(), sve.getStart(),
+                        sve.getReferenceAllele(),
+                        sve.getAlternateAllele()).getType(),
+                true, null);
         String hash = hashingFunction.apply(cv);
         return new DbsnpClusteredVariantEntity(sve.getClusteredVariantAccession(), hash, cv);
     }

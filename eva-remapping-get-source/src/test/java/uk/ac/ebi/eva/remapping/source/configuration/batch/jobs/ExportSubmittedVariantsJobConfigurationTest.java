@@ -15,31 +15,29 @@
  */
 package uk.ac.ebi.eva.remapping.source.configuration.batch.jobs;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
-
-import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.core.utils.MongoTestDataLoader;
+import uk.ac.ebi.eva.commons.core.utils.FileUtils;
+import uk.ac.ebi.eva.remapping.source.configuration.BeanNames;
 import uk.ac.ebi.eva.remapping.source.parameters.InputParameters;
 import uk.ac.ebi.eva.remapping.source.parameters.ReportPathResolver;
 import uk.ac.ebi.eva.remapping.source.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.remapping.source.test.configuration.MongoTestConfiguration;
-import uk.ac.ebi.eva.commons.core.utils.FileUtils;
-import uk.ac.ebi.eva.remapping.source.configuration.BeanNames;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -48,55 +46,55 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static uk.ac.ebi.eva.remapping.source.test.configuration.BatchTestConfiguration.JOB_EXPORT_SUBMITTED_VARIANTS_JOB;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
-@UsingDataSet(locations = {
-        "/test-data/dbsnpSubmittedVariantEntity.json",
-        "/test-data/submittedVariantEntity.json"})
+@ExtendWith(SpringExtension.class)
 @TestPropertySource("classpath:with-projects.properties")
-public class ExportSubmittedVariantsJobConfigurationTest {
-
-    private static final String TEST_DB = "test-db";
-
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
+public class ExportSubmittedVariantsJobConfigurationTest extends MongoTestContainerHelper {
     private static final long EXPECTED_LINES_DBSNP = 3;
 
     private static final long EXPECTED_LINES_EVA = 1;
 
     @Autowired
+    @Qualifier(JOB_EXPORT_SUBMITTED_VARIANTS_JOB)
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
     private InputParameters inputParameters;
 
-    //Required by nosql-unit
     @Autowired
-    private ApplicationContext applicationContext;
+    private MongoTemplate mongoTemplate;
 
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
+    @Autowired
+    private ResourceLoader resourceLoader;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
+        mongoTemplate.getDb().drop();
         deleteOutputFiles();
+
+        MongoTestDataLoader mongoTestDataLoader = new MongoTestDataLoader(mongoTemplate, resourceLoader);
+        mongoTestDataLoader.load("/test-data/dbsnpSubmittedVariantEntity.json");
+        mongoTestDataLoader.load("/test-data/submittedVariantEntity.json");
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
+        mongoTemplate.getDb().drop();
         deleteOutputFiles();
     }
 
     private void deleteOutputFiles() {
         ReportPathResolver.getDbsnpReportPath(inputParameters.getOutputFolder(),
-                                              inputParameters.getAssemblyAccession(),
-                                              inputParameters.getTaxonomy())
-                          .toFile().delete();
+                        inputParameters.getAssemblyAccession(),
+                        inputParameters.getTaxonomy())
+                .toFile().delete();
         ReportPathResolver.getEvaReportPath(inputParameters.getOutputFolder(),
-                                            inputParameters.getAssemblyAccession(),
-                                            inputParameters.getTaxonomy())
-                          .toFile().delete();
+                        inputParameters.getAssemblyAccession(),
+                        inputParameters.getTaxonomy())
+                .toFile().delete();
     }
 
     @Test
@@ -104,7 +102,7 @@ public class ExportSubmittedVariantsJobConfigurationTest {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
 
         List<String> expectedSteps = Arrays.asList(BeanNames.EXPORT_EVA_SUBMITTED_VARIANTS_STEP,
-                                                   BeanNames.EXPORT_DBSNP_SUBMITTED_VARIANTS_STEP);
+                BeanNames.EXPORT_DBSNP_SUBMITTED_VARIANTS_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
 
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
@@ -122,16 +120,16 @@ public class ExportSubmittedVariantsJobConfigurationTest {
 
     private FileInputStream getExportedEva() throws FileNotFoundException {
         return new FileInputStream(ReportPathResolver.getEvaReportPath(inputParameters.getOutputFolder(),
-                                                                       inputParameters.getAssemblyAccession(),
-                                                                       inputParameters.getTaxonomy())
-                                                     .toFile());
+                        inputParameters.getAssemblyAccession(),
+                        inputParameters.getTaxonomy())
+                .toFile());
     }
 
     private FileInputStream getExportedDbsnp() throws FileNotFoundException {
         return new FileInputStream(ReportPathResolver.getDbsnpReportPath(inputParameters.getOutputFolder(),
-                                                                         inputParameters.getAssemblyAccession(),
-                                                                         inputParameters.getTaxonomy())
-                                                     .toFile());
+                        inputParameters.getAssemblyAccession(),
+                        inputParameters.getTaxonomy())
+                .toFile());
     }
 
     private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {

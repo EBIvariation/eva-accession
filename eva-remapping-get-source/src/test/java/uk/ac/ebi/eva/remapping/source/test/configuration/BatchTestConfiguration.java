@@ -16,30 +16,42 @@
 
 package uk.ac.ebi.eva.remapping.source.test.configuration;
 
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobLauncherTestUtils;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-
+import uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
+import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 import uk.ac.ebi.eva.remapping.source.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.remapping.source.configuration.batch.jobs.ExportSubmittedVariantsJobConfiguration;
 import uk.ac.ebi.eva.remapping.source.configuration.batch.policies.PoliciesConfiguration;
 import uk.ac.ebi.eva.remapping.source.runner.AccessionRemappingJobLauncherCommandLineRunner;
-import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
-@EnableAutoConfiguration
-@Import({MongoConfiguration.class,
-         InputParametersConfiguration.class,
-         ExportSubmittedVariantsJobConfiguration.class,
-         PoliciesConfiguration.class,
-         AccessionRemappingJobLauncherCommandLineRunner.class
+import static uk.ac.ebi.eva.remapping.source.configuration.BeanNames.EXPORT_SUBMITTED_VARIANTS_JOB;
+
+@Import({InMemoryBatchConfiguration.class,
+        MongoConfiguration.class,
+        InputParametersConfiguration.class,
+        ExportSubmittedVariantsJobConfiguration.class,
+        PoliciesConfiguration.class,
+        AccessionRemappingJobLauncherCommandLineRunner.class
 })
 public class BatchTestConfiguration {
 
-    @Bean
-    public JobLauncherTestUtils jobLauncherTestUtils() {
-        return new JobLauncherTestUtils();
+    public static final String JOB_EXPORT_SUBMITTED_VARIANTS_JOB = "JOB_EXPORT_SUBMITTED_VARIANTS_JOB";
+
+    @Bean(JOB_EXPORT_SUBMITTED_VARIANTS_JOB)
+    public JobLauncherTestUtils jobLauncherTestUtilsFromMongo(JobLauncher jobLauncher, JobRepository jobRepository,
+                                                              @Qualifier(EXPORT_SUBMITTED_VARIANTS_JOB) Job job) {
+        JobLauncherTestUtils utils = new JobLauncherTestUtils();
+        utils.setJobLauncher(jobLauncher);
+        utils.setJobRepository(jobRepository);
+        utils.setJob(job);
+        return utils;
     }
 
     @Bean

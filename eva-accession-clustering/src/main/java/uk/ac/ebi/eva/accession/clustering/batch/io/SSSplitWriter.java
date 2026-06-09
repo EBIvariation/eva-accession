@@ -16,20 +16,19 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import com.mongodb.MongoBulkWriteException;
-
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
-
 import org.springframework.data.mongodb.core.query.Query;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
-
 import uk.ac.ebi.eva.accession.clustering.batch.io.SubmittedVariantSplittingPolicy.SplitDeterminants;
 import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -41,7 +40,6 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -95,11 +93,11 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
      * Providing duplicates is harmless but may make the writer inefficient
      * since it will result in extra queries to the database.
      */
-    public void write(@Nonnull List<? extends SubmittedVariantEntity> submittedVariantEntities)
+    public void write(@Nonnull Chunk<? extends SubmittedVariantEntity> submittedVariantEntities)
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException, InstantiationException,
             IllegalAccessException {
         // We do this to avoid tedious generic type signatures in the method calls
-        List<SubmittedVariantEntity> svesWithDuplicateID = new ArrayList<>(submittedVariantEntities);
+        List<SubmittedVariantEntity> svesWithDuplicateID = new ArrayList<>(submittedVariantEntities.getItems());
 
         // All the following steps are designed to be idempotent
         registerSplitCandidates(svesWithDuplicateID);
@@ -110,19 +108,19 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
     protected void processSplitCandidates(List<SubmittedVariantOperationEntity> splitCandidateOperations)
             throws AccessionCouldNotBeGeneratedException {
         Map<String, SubmittedVariantEntity> svesToCreateWithNewIDs = new HashMap<>();
-        for (SubmittedVariantOperationEntity operation: splitCandidateOperations) {
+        for (SubmittedVariantOperationEntity operation : splitCandidateOperations) {
             List<SplitDeterminants> splitCandidates =
                     operation.getInactiveObjects()
-                             .stream().map(svie -> new SplitDeterminants(svie.toSubmittedVariantEntity(),
-                                                                         svie.getHashedMessage(),
-                                                                         svie.getClusteredVariantAccession()))
-                             .collect(Collectors.toList());
+                            .stream().map(svie -> new SplitDeterminants(svie.toSubmittedVariantEntity(),
+                                    svie.getHashedMessage(),
+                                    svie.getClusteredVariantAccession()))
+                            .collect(Collectors.toList());
             // Based on the split policy, one of the SS hashes will retain the SS associated with it
             // and the other hashes should be associated with new SS IDs
-            List<SubmittedVariantEntity> svesThatShouldGetNewIDs =  getSVEsThatShouldGetNewIDs(splitCandidates);
+            List<SubmittedVariantEntity> svesThatShouldGetNewIDs = getSVEsThatShouldGetNewIDs(splitCandidates);
 
-            for(SplitDeterminants splitCandidate: splitCandidates) {
-                if(svesThatShouldGetNewIDs.contains(splitCandidate.getSubmittedVariantEntity())) {
+            for (SplitDeterminants splitCandidate : splitCandidates) {
+                if (svesThatShouldGetNewIDs.contains(splitCandidate.getSubmittedVariantEntity())) {
                     svesToCreateWithNewIDs.put(splitCandidate.getSSHash(), splitCandidate.getSubmittedVariantEntity());
                 }
             }
@@ -141,14 +139,13 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> existingSSList =
                 this.submittedVariantAccessioningService.get(new ArrayList<>(ssHashesAndAssociatedSS.values()));
 
-        for(AccessionWrapper<ISubmittedVariant, String, Long> existingSSEntryInDB: existingSSList) {
+        for (AccessionWrapper<ISubmittedVariant, String, Long> existingSSEntryInDB : existingSSList) {
             // If some existing SS in the database have already been provided an updated accession
             // when processing a split operation previously, remove such SS from being considered for split
             String existingSSEntryInDBHash = existingSSEntryInDB.getHash();
-            if(ssHashesAndAssociatedSS.containsKey(existingSSEntryInDBHash) &&
+            if (ssHashesAndAssociatedSS.containsKey(existingSSEntryInDBHash) &&
                     !existingSSEntryInDB.getAccession().equals(ssHashesAndAssociatedSS
-                                                                       .get(existingSSEntryInDBHash).getAccession()))
-            {
+                            .get(existingSSEntryInDBHash).getAccession())) {
                 ssHashesAndAssociatedSS.remove(existingSSEntryInDB.getHash());
             }
         }
@@ -168,34 +165,33 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
         Map<String, EventDocument<ISubmittedVariant, Long,
                 ? extends SubmittedVariantInactiveEntity>> dbsnpSvoeOpsToWrite = new HashMap<>();
 
-        for(GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long> newlyCreatedSVE: newlyCreatedSVEs) {
+        for (GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long> newlyCreatedSVE : newlyCreatedSVEs) {
             SubmittedVariantEntity oldSVE = oldSVEs.get(newlyCreatedSVE.getHash());
             String idForSplitOperation = String.format("SS_SPLIT_FROM_%s_TO_%s", oldSVE.getAccession(),
-                                                       newlyCreatedSVE.getAccession());
+                    newlyCreatedSVE.getAccession());
             logger.info("Processed split operation " + idForSplitOperation + "...");
             SubmittedVariantOperationEntity splitOperation = new SubmittedVariantOperationEntity();
             splitOperation.fill(EventType.SS_SPLIT,
-                                oldSVE.getAccession(), newlyCreatedSVE.getAccession(),
-                                String.format("SS split from %s to %s", oldSVE.getAccession(),
-                                              newlyCreatedSVE.getAccession()) +
-                                        " due to same SS ID being assigned to different SS loci",
-                                Collections.singletonList(new SubmittedVariantInactiveEntity(oldSVE)));
+                    oldSVE.getAccession(), newlyCreatedSVE.getAccession(),
+                    String.format("SS split from %s to %s", oldSVE.getAccession(),
+                            newlyCreatedSVE.getAccession()) +
+                            " due to same SS ID being assigned to different SS loci",
+                    Collections.singletonList(new SubmittedVariantInactiveEntity(oldSVE)));
             splitOperation.setId(idForSplitOperation);
             if (this.clusteringWriter.isEvaSubmittedVariant(oldSVE)) {
                 svoeOpsToWrite.put(idForSplitOperation, splitOperation);
-            }
-            else {
+            } else {
                 dbsnpSvoeOpsToWrite.put(idForSplitOperation, splitOperation);
             }
         }
 
         // Remove entries for which operations have already been recorded
         this.mongoTemplate.find(query(where(ID_ATTRIBUTE).in(svoeOpsToWrite.keySet())),
-                                SubmittedVariantOperationEntity.class)
-                          .forEach(existingSvoeOp -> svoeOpsToWrite.remove(existingSvoeOp.getId()));
+                        SubmittedVariantOperationEntity.class)
+                .forEach(existingSvoeOp -> svoeOpsToWrite.remove(existingSvoeOp.getId()));
         this.mongoTemplate.find(query(where(ID_ATTRIBUTE).in(dbsnpSvoeOpsToWrite.keySet())),
-                                DbsnpSubmittedVariantOperationEntity.class)
-                          .forEach(existingDbsnpSvoeOp -> dbsnpSvoeOpsToWrite.remove(existingDbsnpSvoeOp.getId()));
+                        DbsnpSubmittedVariantOperationEntity.class)
+                .forEach(existingDbsnpSvoeOp -> dbsnpSvoeOpsToWrite.remove(existingDbsnpSvoeOp.getId()));
 
         if (svoeOpsToWrite.values().size() > 0) {
             this.mongoTemplate.insert(svoeOpsToWrite.values(), SubmittedVariantOperationEntity.class);
@@ -209,7 +205,7 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
         List<String> splitCandidateIDsToFind = splitCandidatesForCurrentBatch.stream().map(
                 SubmittedVariantOperationEntity::getId).collect(Collectors.toList());
         this.mongoTemplate.remove(query(where(ID_ATTRIBUTE).in(splitCandidateIDsToFind)),
-                                  SubmittedVariantOperationEntity.class);
+                SubmittedVariantOperationEntity.class);
     }
 
     protected void registerSplitCandidates(List<SubmittedVariantEntity> svesWithDuplicateID) {
@@ -225,7 +221,7 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
         this.allSplitCandidatesForCurrentBatch.addAll(existingSplitCandidateOperationsInDB);
         Set<String> existingSplitCandidateOperationIdsInDB =
                 existingSplitCandidateOperationsInDB.stream().map(SubmittedVariantOperationEntity::getId)
-                                                    .collect(Collectors.toSet());
+                        .collect(Collectors.toSet());
         // Remove operations that are already in DB
         idsForSplitCandidateOperationsToWrite.removeAll(existingSplitCandidateOperationIdsInDB);
         // Bulk write split candidates for current batch
@@ -236,7 +232,7 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
             List<SubmittedVariantEntity> svesWithDuplicateID) {
         Map<String, List<SubmittedVariantEntity>> idSVEMapForSplitCandidateOperations = new HashMap<>();
         List<Long> duplicateSSIDs = svesWithDuplicateID.stream().map(SubmittedVariantEntity::getAccession)
-                                                       .collect(Collectors.toList());
+                .collect(Collectors.toList());
 
         // The input list that we get may only have one of the SS entries that share duplicate IDs
         // We have to fetch the actual duplicates themselves in order to construct split candidates
@@ -245,20 +241,19 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
                         .getAllActiveByAssemblyAndAccessionIn(this.assembly, duplicateSSIDs)
                         .stream()
                         .map(result -> new SubmittedVariantEntity(result.getAccession(), result.getHash(),
-                                                                  result.getData(), result.getVersion()))
+                                result.getData(), result.getVersion()))
                         .filter(sve -> !this.variantHasMultiMapOrMismatchedAlleles(sve)
                                 && Objects.isNull(sve.getRemappedFrom()))
                         .collect(Collectors.toList());
 
-        for (SubmittedVariantEntity sve: svesWithDuplicateIDAlongWithActualDuplicates) {
+        for (SubmittedVariantEntity sve : svesWithDuplicateIDAlongWithActualDuplicates) {
             String idForSplitCandidateOperation = String.format("SS_SPLIT_CANDIDATES_%s_%s",
-                                                                sve.getReferenceSequenceAccession(),
-                                                                sve.getAccession());
+                    sve.getReferenceSequenceAccession(),
+                    sve.getAccession());
             if (!idSVEMapForSplitCandidateOperations.containsKey(idForSplitCandidateOperation)) {
                 idSVEMapForSplitCandidateOperations.put(idForSplitCandidateOperation,
-                                                        new ArrayList<>(Collections.singletonList(sve)));
-            }
-            else {
+                        new ArrayList<>(Collections.singletonList(sve)));
+            } else {
                 idSVEMapForSplitCandidateOperations.get(idForSplitCandidateOperation).add(sve);
             }
         }
@@ -269,7 +264,7 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
                                                          Set<String> idsForSplitCandidateOperationsToWrite) {
         // Only new split candidates in the current batch should be written to the database
         List<SubmittedVariantOperationEntity> newSplitCandidatesForCurrentBatch = new ArrayList<>();
-        for (String id: idsForSplitCandidateOperationsToWrite) {
+        for (String id : idsForSplitCandidateOperationsToWrite) {
             SubmittedVariantOperationEntity splitCandidateOperation = new SubmittedVariantOperationEntity();
             List<SubmittedVariantEntity> svesThatShareSameID = idSVEMap.get(id);
             // Ensure that non-duplicate SS IDs are not processed
@@ -278,9 +273,9 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
                         svesThatShareSameID.stream().map(SubmittedVariantInactiveEntity::new).collect(
                                 Collectors.toList());
                 splitCandidateOperation.fill(EventType.SS_SPLIT_CANDIDATES,
-                                             svesThatShareSameID.get(0).getAccession(),
-                                             "Same SS ID assigned to different SS loci",
-                                             splitCandidates);
+                        svesThatShareSameID.get(0).getAccession(),
+                        "Same SS ID assigned to different SS loci",
+                        splitCandidates);
                 splitCandidateOperation.setId(id);
                 newSplitCandidatesForCurrentBatch.add(splitCandidateOperation);
             }

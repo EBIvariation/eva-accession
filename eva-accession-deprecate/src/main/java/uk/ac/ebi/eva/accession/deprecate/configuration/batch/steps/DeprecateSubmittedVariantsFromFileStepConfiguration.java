@@ -17,8 +17,8 @@ package uk.ac.ebi.eva.accession.deprecate.configuration.batch.steps;
 
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.ItemWriter;
@@ -27,11 +27,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames;
 
+import static uk.ac.ebi.eva.accession.core.configuration.InMemoryBatchConfiguration.BATCH_TRANSACTION_MANAGER;
+
 @Configuration
-@EnableBatchProcessing
 public class DeprecateSubmittedVariantsFromFileStepConfiguration {
 
     @Autowired
@@ -47,10 +49,12 @@ public class DeprecateSubmittedVariantsFromFileStepConfiguration {
     private StepExecutionListener progressListener;
 
     @Bean(BeanNames.DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_STEP)
-    public Step deprecateSubmittedVariantsFromFileStep(StepBuilderFactory stepBuilderFactory,
-                                               SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(BeanNames.DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_STEP)
-                .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
+    public Step deprecateSubmittedVariantsFromFileStep(JobRepository jobRepository,
+                                                       @Qualifier(BATCH_TRANSACTION_MANAGER)
+                                                       PlatformTransactionManager transactionManager,
+                                                       SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+        TaskletStep step = new StepBuilder(BeanNames.DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_STEP, jobRepository)
+                .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy, transactionManager)
                 .reader(submittedVariantsFileReader)
                 .writer(submittedVariantDeprecationWriter)
                 .listener(progressListener)

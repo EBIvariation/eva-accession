@@ -27,16 +27,15 @@ public class InputParameters {
     private int previousImportedBuild;
     private boolean incrementalImport;
     private int chunkSize;
-    private boolean forceRestart;
     private boolean forceImport;
 
     public JobParameters toJobParameters() {
         return new JobParametersBuilder()
-            .addString("input", input)
-            .addString("genbankAssembly", genbankAssembly)
-            .addString("refseqAssembly", refseqAssembly)
-            .addLong("chunkSize", (long) chunkSize, false)
-            .toJobParameters();
+                .addString("input", input)
+                .addString("genbankAssembly", genbankAssembly)
+                .addString("refseqAssembly", refseqAssembly)
+                .addLong("chunkSize", (long) chunkSize, false)
+                .toJobParameters();
     }
 
     public String getInput() {
@@ -93,14 +92,6 @@ public class InputParameters {
 
     public void setChunkSize(int chunkSize) {
         this.chunkSize = chunkSize;
-    }
-
-    public boolean isForceRestart() {
-        return forceRestart;
-    }
-
-    public void setForceRestart(boolean forceRestart) {
-        this.forceRestart = forceRestart;
     }
 
     public boolean isForceImport() {

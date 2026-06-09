@@ -18,9 +18,8 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,19 +30,17 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_C
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_STEP;
 
 @Configuration
-@EnableBatchProcessing
 public class StudyClusteringJobConfiguration {
 
     @Bean(STUDY_CLUSTERING_JOB)
     public Job studyClusteringJob(@Qualifier(STUDY_CLUSTERING_STEP) Step clusteringStep,
                                   @Qualifier(ACCESSIONING_SHUTDOWN_STEP) Step accessioningShutdownStep,
                                   @Qualifier(JOB_EXECUTION_LISTENER) JobExecutionListener jobExecutionListener,
-                                  JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(STUDY_CLUSTERING_JOB)
-                                .incrementer(new RunIdIncrementer())
-                                .start(clusteringStep)
-                                .next(accessioningShutdownStep)
-                                .listener(jobExecutionListener)
-                                .build();
+                                  JobRepository jobRepository) {
+        return new JobBuilder(STUDY_CLUSTERING_JOB, jobRepository)
+                .start(clusteringStep)
+                .next(accessioningShutdownStep)
+                .listener(jobExecutionListener)
+                .build();
     }
 }

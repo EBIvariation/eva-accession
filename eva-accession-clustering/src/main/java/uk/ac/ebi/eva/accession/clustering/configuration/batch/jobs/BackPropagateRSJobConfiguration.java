@@ -17,26 +17,26 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.*;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_NEW_RS_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_NEW_RS_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_OR_MERGED_RS_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP;
 
 @Configuration
-@EnableBatchProcessing
 public class BackPropagateRSJobConfiguration {
     // Deal with back-propagation of new RS, that were assigned to SS in the remapped assembly, to the original assembly
     @Bean(BACK_PROPAGATE_NEW_RS_JOB)
     public Job backPropagateNewRSJob(
             // Back-propagate RS that were newly created in the remapped assembly
             @Qualifier(BACK_PROPAGATE_NEW_RS_STEP) Step backPropagateNewRSStep,
-            JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(BACK_PROPAGATE_NEW_RS_JOB)
-                .incrementer(new RunIdIncrementer())
+            JobRepository jobRepository) {
+        return new JobBuilder(BACK_PROPAGATE_NEW_RS_JOB, jobRepository)
                 .start(backPropagateNewRSStep)
                 .build();
     }
@@ -47,9 +47,8 @@ public class BackPropagateRSJobConfiguration {
     public Job backPropagateSplitOrMergedRSJob(
             // Back-propagate RS in the remapped assembly that were split or merged
             @Qualifier(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP) Step backPropagateSplitMergedRSStep,
-            JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_JOB)
-                .incrementer(new RunIdIncrementer())
+            JobRepository jobRepository) {
+        return new JobBuilder(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_JOB, jobRepository)
                 .start(backPropagateSplitMergedRSStep)
                 .build();
     }
