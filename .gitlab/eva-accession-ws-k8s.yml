@@ -57,6 +57,8 @@ variables:
     - curl -u $GITHUB_USER:$GITHUB_TOKEN -H "Accept:$MEDIA_TYPE" $KUBECONFIG_FILE > ~/.kube/config
     - chmod 600 ~/.kube/config
   script:
+    # Create the target namespace if it doesn't already exist
+    - kubectl apply -f $K8S_MANIFEST_PATH/namespace.yaml
     # Create/update the image pull secret in the target namespace from DOCKER_AUTH_CONFIG. It only updates if DOCKER_AUTH_CONFIG changes
     - kubectl create secret generic regcred --type=kubernetes.io/dockerconfigjson --from-literal=.dockerconfigjson="$DOCKER_AUTH_CONFIG" -n $K8S_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
     - source $HOME/.venv/bin/activate
