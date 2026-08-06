@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Lazy;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationPropertiesConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.ContigAliasConfiguration;
@@ -48,14 +47,6 @@ public class ReadOnlySubmittedVariantAccessioningConfiguration {
     @Autowired
     private DbsnpSubmittedVariantOperationRepository dbsnpOperationRepository;
 
-    @Lazy
-    @Autowired
-    private SubmittedVariantInactiveService inactiveService;
-
-    @Lazy
-    @Autowired
-    private DbsnpSubmittedVariantInactiveService dbsnpInactiveService;
-
     @Autowired
     private ContigAliasService contigAliasService;
 
@@ -85,12 +76,12 @@ public class ReadOnlySubmittedVariantAccessioningConfiguration {
 
     @Bean
     public SubmittedVariantAccessioningDatabaseService submittedVariantAccessioningDatabaseService() {
-        return new SubmittedVariantAccessioningDatabaseService(repository, inactiveService);
+        return new SubmittedVariantAccessioningDatabaseService(repository, submittedVariantInactiveService());
     }
 
     @Bean
     public DbsnpSubmittedVariantAccessioningDatabaseService dbsnpSubmittedVariantAccessioningDatabaseService() {
-        return new DbsnpSubmittedVariantAccessioningDatabaseService(dbsnpRepository, dbsnpInactiveService);
+        return new DbsnpSubmittedVariantAccessioningDatabaseService(dbsnpRepository, dbsnpSubmittedVariantInactiveService());
     }
 
     @Bean

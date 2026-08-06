@@ -44,11 +44,11 @@ import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantOperationService;
 import uk.ac.ebi.eva.accession.ws.dto.VariantHistory;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
 import uk.ac.ebi.eva.accession.ws.service.ReadOnlyClusteredVariantService;
+import uk.ac.ebi.eva.accession.ws.service.ReadOnlyHumanClusteredVariantService;
 import uk.ac.ebi.eva.accession.ws.service.ReadOnlySubmittedVariantService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -71,7 +71,7 @@ public class ClusteredVariantsRestController {
 
     private ClusteredVariantsBeaconService beaconService;
 
-    private HumanDbsnpClusteredVariantAccessioningService humanService;
+    private ReadOnlyHumanClusteredVariantService humanService;
 
     private ReadOnlyClusteredVariantService nonHumanActiveService;
 
@@ -80,7 +80,7 @@ public class ClusteredVariantsRestController {
     public ClusteredVariantsRestController(
             ReadOnlySubmittedVariantService submittedVariantsService,
             ClusteredVariantsBeaconService beaconService,
-            @Qualifier("humanService") HumanDbsnpClusteredVariantAccessioningService humanService,
+            @Qualifier("humanReadOnlyService") ReadOnlyHumanClusteredVariantService humanService,
             @Qualifier("nonhumanReadOnlyActiveService") ReadOnlyClusteredVariantService nonHumanActiveService,
             ClusteredVariantOperationService clusterdVariantOperationService
     ) {

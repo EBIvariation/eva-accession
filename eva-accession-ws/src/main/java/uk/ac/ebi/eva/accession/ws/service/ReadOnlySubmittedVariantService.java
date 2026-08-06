@@ -3,11 +3,9 @@ package uk.ac.ebi.eva.accession.ws.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessioningService;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
@@ -17,7 +15,6 @@ import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -44,7 +41,6 @@ public class ReadOnlySubmittedVariantService implements AccessioningService<ISub
         this.contigAliasService = contigAliasService;
     }
 
-
     private List<AccessionWrapper<ISubmittedVariant, String, Long>> joinLists(
             List<AccessionWrapper<ISubmittedVariant, String, Long>> l1,
             List<AccessionWrapper<ISubmittedVariant, String, Long>> l2) {
@@ -53,7 +49,7 @@ public class ReadOnlySubmittedVariantService implements AccessioningService<ISub
     }
 
     @Override
-    public List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> getOrCreate(List<? extends ISubmittedVariant> messages, String applicationInstanceId) throws AccessionCouldNotBeGeneratedException {
+    public List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> getOrCreate(List<? extends ISubmittedVariant> messages, String applicationInstanceId) {
         throw new UnsupportedOperationException("Not supported in read-only service");
     }
 
@@ -91,11 +87,6 @@ public class ReadOnlySubmittedVariantService implements AccessioningService<ISub
         }
     }
 
-    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllByAccession(Long accession)
-            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        return getAllByAccession(accession, ContigNamingConvention.INSDC);
-    }
-
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllByAccession(
             Long accession, ContigNamingConvention contigNamingConvention) throws AccessionMergedException,
             AccessionDoesNotExistException, AccessionDeprecatedException, NoSuchElementException {
@@ -119,22 +110,22 @@ public class ReadOnlySubmittedVariantService implements AccessioningService<ISub
     }
 
     @Override
-    public AccessionVersionsWrapper<ISubmittedVariant, String, Long> update(Long aLong, int version, ISubmittedVariant message) throws AccessionDoesNotExistException, HashAlreadyExistsException, AccessionDeprecatedException, AccessionMergedException {
+    public AccessionVersionsWrapper<ISubmittedVariant, String, Long> update(Long aLong, int version, ISubmittedVariant message) {
         throw new UnsupportedOperationException("Not supported in read-only service");
     }
 
     @Override
-    public AccessionVersionsWrapper<ISubmittedVariant, String, Long> patch(Long aLong, ISubmittedVariant message) throws AccessionDoesNotExistException, HashAlreadyExistsException, AccessionDeprecatedException, AccessionMergedException {
+    public AccessionVersionsWrapper<ISubmittedVariant, String, Long> patch(Long aLong, ISubmittedVariant message) {
         throw new UnsupportedOperationException("Not supported in read-only service");
     }
 
     @Override
-    public void deprecate(Long aLong, String reason) throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+    public void deprecate(Long aLong, String reason) {
         throw new UnsupportedOperationException("Not supported in read-only service");
     }
 
     @Override
-    public void merge(Long accessionOrigin, Long mergeInto, String reason) throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+    public void merge(Long accessionOrigin, Long mergeInto, String reason) {
         throw new UnsupportedOperationException("Not supported in read-only service");
     }
 
@@ -157,23 +148,6 @@ public class ReadOnlySubmittedVariantService implements AccessioningService<ISub
         } else {
             return accessioningServiceDbsnp.getLastInactive(accession);
         }
-    }
-
-    public List<AccessionWrapper<ISubmittedVariant, String, Long>>
-    getAllActiveByAssemblyAndAccessionIn(String assembly, List<Long> accessionList) {
-        List<Long> evaAccessions = new ArrayList<>();
-        List<Long> dbsnpAccessions = new ArrayList<>();
-        for (Long accession : accessionList) {
-            if (accession >= accessioningMonotonicInitSs) {
-                evaAccessions.add(accession);
-            } else {
-                dbsnpAccessions.add(accession);
-            }
-        }
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> result =
-                accessioningService.getAllActiveByAssemblyAndAccessionIn(assembly, evaAccessions);
-        result.addAll(accessioningServiceDbsnp.getAllActiveByAssemblyAndAccessionIn(assembly, dbsnpAccessions));
-        return result;
     }
 
 }

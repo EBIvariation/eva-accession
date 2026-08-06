@@ -30,7 +30,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -66,7 +65,6 @@ import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVari
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpSubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
-import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantOperationService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
@@ -79,6 +77,7 @@ import uk.ac.ebi.eva.accession.ws.configuration.ReadOnlySubmittedVariantAccessio
 import uk.ac.ebi.eva.accession.ws.rest.ClusteredVariantsRestController;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
 import uk.ac.ebi.eva.accession.ws.service.ReadOnlyClusteredVariantService;
+import uk.ac.ebi.eva.accession.ws.service.ReadOnlyHumanClusteredVariantService;
 import uk.ac.ebi.eva.accession.ws.service.ReadOnlySubmittedVariantService;
 import uk.ac.ebi.eva.accession.ws.test.NoContigTranslationArgumentMatcher;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
@@ -116,7 +115,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import({ClusteredVariantAccessioningConfiguration.class, ReadOnlyClusteredVariantAccessioningConfiguration.class,
-        ReadOnlySubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class})
+        ReadOnlySubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class,
+        ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:accession-ws-test.properties")
 public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelper {
 
@@ -157,9 +157,6 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
 
     @Autowired
     private DbsnpClusteredVariantAccessioningRepository dbsnpRepository;
-
-    @Autowired
-    private HumanDbsnpClusteredVariantAccessioningService humanDbsnpClusteredVariantAccessioningService;
 
     @Autowired
     private DbsnpSubmittedVariantAccessioningRepository dbsnpSubmittedVariantRepository;
@@ -222,7 +219,7 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
     private ReadOnlySubmittedVariantService mockService;
 
     @Mock
-    private HumanDbsnpClusteredVariantAccessioningService mockHumanService;
+    private ReadOnlyHumanClusteredVariantService mockHumanService;
 
     @MockitoBean
     private ContigAliasService contigAliasService;

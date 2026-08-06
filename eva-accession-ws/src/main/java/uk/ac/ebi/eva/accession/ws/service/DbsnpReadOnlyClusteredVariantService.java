@@ -41,18 +41,9 @@ public class DbsnpReadOnlyClusteredVariantService {
         return this.dbService.findByAccessionVersion(accession, version);
     }
 
-    public String getHash(IClusteredVariant variant) {
-        return this.hashingFunction.apply(variant);
-    }
-
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long accession)
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         return dbService.getAllByAccession(accession);
-    }
-
-    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllActiveByAssemblyAndAccessionIn
-            (String assembly, List<Long> accessionList) {
-        return dbService.getAllActiveByAssemblyAndAccessionIn(assembly, accessionList);
     }
 
     public AccessionWrapper<IClusteredVariant, String, Long> getLastInactive(Long accession) {

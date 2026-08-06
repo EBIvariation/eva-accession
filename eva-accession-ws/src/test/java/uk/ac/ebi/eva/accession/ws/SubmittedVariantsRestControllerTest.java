@@ -50,6 +50,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
+import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -98,7 +99,8 @@ import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_VALID
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({SubmittedVariantAccessioningConfiguration.class, ReadOnlySubmittedVariantAccessioningConfiguration.class})
+@Import({SubmittedVariantAccessioningConfiguration.class, ReadOnlySubmittedVariantAccessioningConfiguration.class,
+        ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:accession-ws-test.properties")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelper {

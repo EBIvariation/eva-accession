@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Lazy;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationPropertiesConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.ContigAliasConfiguration;
@@ -48,14 +47,6 @@ public class ReadOnlyClusteredVariantAccessioningConfiguration {
 
     @Autowired
     private DbsnpClusteredVariantOperationRepository dbsnpOperationRepository;
-
-    @Lazy
-    @Autowired
-    private ClusteredVariantInactiveService inactiveService;
-
-    @Lazy
-    @Autowired
-    private DbsnpClusteredVariantInactiveService dbsnpInactiveService;
 
     @Autowired
     private ContigAliasService contigAliasService;

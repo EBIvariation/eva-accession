@@ -25,7 +25,6 @@ import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconDatasetAlleleResponse;
@@ -54,13 +53,13 @@ public class ClusteredVariantsBeaconService {
 
     private ReadOnlyClusteredVariantService clusteredVariantService;
 
-    private HumanDbsnpClusteredVariantAccessioningService humanService;
+    private ReadOnlyHumanClusteredVariantService humanService;
 
     private ReadOnlySubmittedVariantService submittedVariantsService;
 
     public ClusteredVariantsBeaconService(
             @Qualifier("nonhumanReadOnlyActiveService") ReadOnlyClusteredVariantService clusteredVariantAccessioningService,
-            @Qualifier("humanService") HumanDbsnpClusteredVariantAccessioningService humanService,
+            @Qualifier("humanReadOnlyService") ReadOnlyHumanClusteredVariantService humanService,
             ReadOnlySubmittedVariantService submittedVariantsService) {
         this.clusteredVariantService = clusteredVariantAccessioningService;
         this.humanService = humanService;

@@ -40,7 +40,7 @@ public class HumanDbsnpClusteredVariantOperationAccessioningService {
         this.operationAccessionRepository = operationAccessionRepository;
     }
 
-    List<AccessionWrapper<IClusteredVariant, String, Long>> getByAccession(Long identifier) {
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getByAccession(Long identifier) {
         List<DbsnpClusteredVariantOperationEntity> operations = operationAccessionRepository.findAllByAccession(identifier);
         return getAccessionWrappers(operations);
     }
@@ -59,7 +59,7 @@ public class HumanDbsnpClusteredVariantOperationAccessioningService {
         return wrappers;
     }
 
-    List<AccessionWrapper<IClusteredVariant, String, Long>> getOriginalVariant(
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getOriginalVariant(
             IClusteredVariant clusteredVariant) {
         String hash =  hashingFunctionClustered.apply(clusteredVariant);
         List<DbsnpClusteredVariantOperationEntity> clusteredVariants = operationAccessionRepository.

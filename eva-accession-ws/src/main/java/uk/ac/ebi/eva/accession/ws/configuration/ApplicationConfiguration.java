@@ -34,7 +34,6 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableBasicRestControllerAdvice;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
-import uk.ac.ebi.eva.accession.core.configuration.human.HumanClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -45,8 +44,9 @@ import uk.ac.ebi.eva.accession.ws.service.ReadOnlySubmittedVariantService;
 
 @Configuration
 @EnableBasicRestControllerAdvice
-@Import({ReadOnlyClusteredVariantAccessioningConfiguration.class, ReadOnlySubmittedVariantAccessioningConfiguration.class,
-        HumanClusteredVariantAccessioningConfiguration.class})
+@Import({ReadOnlyClusteredVariantAccessioningConfiguration.class,
+        ReadOnlySubmittedVariantAccessioningConfiguration.class,
+        ReadOnlyHumanClusteredVariantAccessioningConfiguration.class})
 @AutoConfigureAfter(HttpMessageConvertersAutoConfiguration.class)
 public class ApplicationConfiguration {
 

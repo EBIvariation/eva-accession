@@ -2,13 +2,10 @@ package uk.ac.ebi.eva.accession.ws.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.util.Pair;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessioningService;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
@@ -19,10 +16,8 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessionin
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ReadOnlyClusteredVariantService implements AccessioningService<IClusteredVariant, String, Long> {
@@ -47,20 +42,6 @@ public class ReadOnlyClusteredVariantService implements AccessioningService<IClu
         this.contigAliasService = contigAliasService;
     }
 
-    private List<IClusteredVariant> removeFromList(List<? extends IClusteredVariant> allVariants,
-                                                   List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>>
-                                                           variantsToDelete) {
-        Set<String> hashesToDelete = variantsToDelete.stream()
-                .map(AccessionWrapper::getHash)
-                .collect(Collectors.toSet());
-
-        return allVariants.stream()
-                .map(variant -> Pair.of(accessioningServiceDbsnp.getHash(variant), variant))
-                .filter(pair -> !hashesToDelete.contains(pair.getFirst()))
-                .map(Pair::getSecond)
-                .collect(Collectors.toList());
-    }
-
     private List<AccessionWrapper<IClusteredVariant, String, Long>> joinLists(
             List<AccessionWrapper<IClusteredVariant, String, Long>> l1,
             List<AccessionWrapper<IClusteredVariant, String, Long>> l2) {
@@ -69,7 +50,7 @@ public class ReadOnlyClusteredVariantService implements AccessioningService<IClu
     }
 
     @Override
-    public List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> getOrCreate(List<? extends IClusteredVariant> messages, String applicationInstanceId) throws AccessionCouldNotBeGeneratedException {
+    public List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> getOrCreate(List<? extends IClusteredVariant> messages, String applicationInstanceId) {
         throw new UnsupportedOperationException("Not supported in read-only service");
     }
 
@@ -94,11 +75,6 @@ public class ReadOnlyClusteredVariantService implements AccessioningService<IClu
         }
     }
 
-    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long accession)
-            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        return getAllByAccession(accession, ContigNamingConvention.INSDC);
-    }
-
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(
             Long accession, ContigNamingConvention contigNamingConvention)
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
@@ -109,24 +85,6 @@ public class ReadOnlyClusteredVariantService implements AccessioningService<IClu
             clusteredVariants = accessioningServiceDbsnp.getAllByAccession(accession);
         }
         return contigAliasService.getClusteredVariantsWithTranslatedContig(clusteredVariants, contigNamingConvention);
-    }
-
-    public List<AccessionWrapper<IClusteredVariant, String, Long>>
-    getAllActiveByAssemblyAndAccessionIn(String assembly, List<Long> accessionList) {
-        List<Long> evaAccessions = new ArrayList<>();
-        List<Long> dbsnpAccessions = new ArrayList<>();
-        for (Long accession : accessionList) {
-            if (accession >= accessioningMonotonicInitRs) {
-                evaAccessions.add(accession);
-            } else {
-                dbsnpAccessions.add(accession);
-            }
-        }
-
-        List<AccessionWrapper<IClusteredVariant, String, Long>> result =
-                accessioningService.getAllActiveByAssemblyAndAccessionIn(assembly, evaAccessions);
-        result.addAll(accessioningServiceDbsnp.getAllActiveByAssemblyAndAccessionIn(assembly, dbsnpAccessions));
-        return result;
     }
 
     @Override
@@ -140,22 +98,22 @@ public class ReadOnlyClusteredVariantService implements AccessioningService<IClu
     }
 
     @Override
-    public AccessionVersionsWrapper<IClusteredVariant, String, Long> update(Long aLong, int version, IClusteredVariant message) throws AccessionDoesNotExistException, HashAlreadyExistsException, AccessionDeprecatedException, AccessionMergedException {
+    public AccessionVersionsWrapper<IClusteredVariant, String, Long> update(Long aLong, int version, IClusteredVariant message) {
         throw new UnsupportedOperationException("Not supported in read-only service");
     }
 
     @Override
-    public AccessionVersionsWrapper<IClusteredVariant, String, Long> patch(Long aLong, IClusteredVariant message) throws AccessionDoesNotExistException, HashAlreadyExistsException, AccessionDeprecatedException, AccessionMergedException {
+    public AccessionVersionsWrapper<IClusteredVariant, String, Long> patch(Long aLong, IClusteredVariant message) {
         throw new UnsupportedOperationException("Not supported in read-only service");
     }
 
     @Override
-    public void deprecate(Long aLong, String reason) throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+    public void deprecate(Long aLong, String reason) {
         throw new UnsupportedOperationException("Not supported in read-only service");
     }
 
     @Override
-    public void merge(Long accessionOrigin, Long mergeInto, String reason) throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+    public void merge(Long accessionOrigin, Long mergeInto, String reason) {
         throw new UnsupportedOperationException("Not supported in read-only service");
     }
 
