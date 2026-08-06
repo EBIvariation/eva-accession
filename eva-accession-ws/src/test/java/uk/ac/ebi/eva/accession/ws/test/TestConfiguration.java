@@ -18,41 +18,33 @@ package uk.ac.ebi.eva.accession.ws.test;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import uk.ac.ebi.ampt2d.commons.accession.core.AccessionSaveMode;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-import uk.ac.ebi.eva.accession.core.generators.DbsnpMonotonicAccessionGenerator;
-import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningDatabaseService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantAccessioningDatabaseService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.ws.service.DbsnpReadOnlyClusteredVariantService;
+import uk.ac.ebi.eva.accession.ws.service.DbsnpReadOnlySubmittedVariantService;
 
 @Configuration
 public class TestConfiguration {
 
     @Bean
-    public DbsnpSubmittedVariantMonotonicAccessioningService dbsnpSubmittedService(
-            DbsnpMonotonicAccessionGenerator<ISubmittedVariant> dbsnpSubmittedVariantAccessionGenerator,
+    public DbsnpReadOnlySubmittedVariantService dbsnpSubmittedService(
             DbsnpSubmittedVariantAccessioningDatabaseService dbsnpSubmittedVariantAccessioningDatabaseService) {
-        return new DbsnpSubmittedVariantMonotonicAccessioningService(dbsnpSubmittedVariantAccessionGenerator,
-                                                                     dbsnpSubmittedVariantAccessioningDatabaseService,
-                                                                     new SubmittedVariantSummaryFunction(),
-                                                                     new SHA1HashingFunction(),
-                                                                     AccessionSaveMode.SAVE_ALL_THEN_RESOLVE);
+        return new DbsnpReadOnlySubmittedVariantService(
+                dbsnpSubmittedVariantAccessioningDatabaseService,
+                new SubmittedVariantSummaryFunction(),
+                new SHA1HashingFunction());
     }
 
     @Bean
     @Qualifier("dbsnpClusteredService")
-    public DbsnpClusteredVariantMonotonicAccessioningService dbsnpClusteredService(
-            DbsnpMonotonicAccessionGenerator<IClusteredVariant> dbsnpClusteredVariantAccessionGenerator,
+    public DbsnpReadOnlyClusteredVariantService dbsnpClusteredService(
             DbsnpClusteredVariantAccessioningDatabaseService dbsnpClusteredVariantAccessioningDatabaseService) {
-        return new DbsnpClusteredVariantMonotonicAccessioningService(dbsnpClusteredVariantAccessionGenerator,
-                                                                     dbsnpClusteredVariantAccessioningDatabaseService,
-                                                                     new ClusteredVariantSummaryFunction(),
-                                                                     new SHA1HashingFunction(),
-                                                                     AccessionSaveMode.SAVE_ALL_THEN_RESOLVE);
+        return new DbsnpReadOnlyClusteredVariantService(
+                dbsnpClusteredVariantAccessioningDatabaseService,
+                new ClusteredVariantSummaryFunction(),
+                new SHA1HashingFunction());
     }
 }

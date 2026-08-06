@@ -26,7 +26,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
@@ -40,6 +39,7 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.server.ResponseStatusException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
@@ -50,7 +50,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
-import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -62,11 +61,12 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantInactiveService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.ws.configuration.ReadOnlySubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
 import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantsRestController;
+import uk.ac.ebi.eva.accession.ws.service.ReadOnlySubmittedVariantService;
 import uk.ac.ebi.eva.accession.ws.service.SubmittedVariantsBeaconService;
 import uk.ac.ebi.eva.accession.ws.test.NoContigTranslationArgumentMatcher;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
@@ -98,7 +98,7 @@ import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_VALID
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({SubmittedVariantAccessioningConfiguration.class, ContiguousIdBlocksDataSourceConfiguration.class})
+@Import({SubmittedVariantAccessioningConfiguration.class, ReadOnlySubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:accession-ws-test.properties")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelper {
@@ -112,10 +112,7 @@ public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelpe
     private SubmittedVariantAccessioningRepository repository;
 
     @Autowired
-    private SubmittedVariantAccessioningService service;
-
-    @Autowired
-    private DbsnpSubmittedVariantMonotonicAccessioningService dbsnpService;
+    private ReadOnlySubmittedVariantService service;
 
     @Autowired
     private DbsnpSubmittedVariantInactiveService dbsnpInactiveService;
@@ -131,13 +128,17 @@ public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelpe
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    // Write-enabled service, used only to set up the test data
+    @Autowired
+    private SubmittedVariantAccessioningService submittedServiceForWrite;
+
     @Mock
     private BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> mockBasicRestController;
 
     @Mock
-    private SubmittedVariantAccessioningService mockService;
+    private ReadOnlySubmittedVariantService mockService;
 
-    @MockBean
+    @MockitoBean
     private ContigAliasService contigAliasService;
 
     @Autowired
@@ -171,7 +172,7 @@ public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelpe
         variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT", CLUSTERED_VARIANT);
         variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT", CLUSTERED_VARIANT);
         variant3 = new SubmittedVariant("ASMACC02", 1102, "PROJACC03", "CHROM2", 1234, "REF", "ALT", CLUSTERED_VARIANT);
-        generatedAccessions = service.getOrCreate(Arrays.asList(variant1, variant2, variant3), TEST_APPLICATION_INSTANCE_ID);
+        generatedAccessions = submittedServiceForWrite.getOrCreate(Arrays.asList(variant1, variant2, variant3), TEST_APPLICATION_INSTANCE_ID);
 
         SubmittedVariantsBeaconService mockSubmittedVariantsBeaconService = Mockito.spy(new SubmittedVariantsBeaconService(service));
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockSubmittedVariantsBeaconService).queryBeacon(null, "alt", "ref",
@@ -180,8 +181,6 @@ public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelpe
         mockController = new SubmittedVariantsRestController(mockService, mockSubmittedVariantsBeaconService);
 
         setUpContigAliasMock();
-
-
     }
 
     private void setUpContigAliasMock() {
@@ -494,12 +493,12 @@ public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelpe
                 CLUSTERED_VARIANT);
         SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 2000, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
                 CLUSTERED_VARIANT);
-        List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(
+        List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessions = submittedServiceForWrite.getOrCreate(
                 Arrays.asList(variant1, variant2), TEST_APPLICATION_INSTANCE_ID);
 
         Long outdatedAccession = accessions.get(0).getAccession();
         Long currentAccession = accessions.get(1).getAccession();
-        service.merge(outdatedAccession,
+        submittedServiceForWrite.merge(outdatedAccession,
                 currentAccession,
                 "Just for testing the endpoint, let's pretend the variants are equivalent");
 
@@ -552,7 +551,7 @@ public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelpe
         mongoTemplate.insert(Arrays.asList(submittedVariantEntity1, submittedVariantEntity2),
                 DbsnpSubmittedVariantEntity.class);
 
-        dbsnpService.merge(outdatedAccession,
+        submittedServiceForWrite.merge(outdatedAccession,
                 currentAccession,
                 "Just for testing the endpoint, let's pretend the variants are equivalent");
 
@@ -592,7 +591,7 @@ public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelpe
         // given
         Long accession = generatedAccessions.stream().filter(wrapper -> wrapper.getData().equals(variant1))
                 .findFirst().get().getAccession();
-        service.deprecate(accession, "deprecated for testing");
+        submittedServiceForWrite.deprecate(accession, "deprecated for testing");
         String getVariantUrl = URL + accession;
 
         // when
@@ -624,7 +623,7 @@ public class SubmittedVariantsRestControllerTest extends MongoTestContainerHelpe
 
         mongoTemplate.insert(Arrays.asList(submittedVariantEntity1, submittedVariantEntity2),
                 DbsnpSubmittedVariantEntity.class);
-        service.deprecate(deprecatedAccession, "deprecated for testing");
+        submittedServiceForWrite.deprecate(deprecatedAccession, "deprecated for testing");
         String getVariantUrl = URL + deprecatedAccession;
 
         // when
