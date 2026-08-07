@@ -25,12 +25,16 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariant
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.ws.service.DbsnpReadOnlySubmittedVariantService;
-import uk.ac.ebi.eva.accession.ws.service.EvaReadOnlySubmittedVariantService;
+import uk.ac.ebi.eva.accession.ws.service.dbsnp.DbsnpReadOnlySubmittedVariantService;
+import uk.ac.ebi.eva.accession.ws.service.eva.EvaReadOnlySubmittedVariantService;
 import uk.ac.ebi.eva.accession.ws.service.ReadOnlySubmittedVariantService;
 
+/**
+ * Equivalent to {@link uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration}
+ * with accession generators removed and accessioning services replaced by read-only equivalents.
+ */
 @Configuration
-@Import({ApplicationPropertiesConfiguration.class, MongoConfiguration.class, ContigAliasConfiguration.class})
+@Import({MongoConfiguration.class, ContigAliasConfiguration.class})
 public class ReadOnlySubmittedVariantAccessioningConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ReadOnlySubmittedVariantAccessioningConfiguration.class);

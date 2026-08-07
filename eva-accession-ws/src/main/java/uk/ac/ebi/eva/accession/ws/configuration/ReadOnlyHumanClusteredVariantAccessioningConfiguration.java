@@ -2,6 +2,7 @@ package uk.ac.ebi.eva.accession.ws.configuration;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.core.configuration.ContigAliasConfiguration;
@@ -15,9 +16,14 @@ import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVaria
 import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantOperationAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.ws.service.DbsnpReadOnlyHumanClusteredVariantService;
+import uk.ac.ebi.eva.accession.ws.service.dbsnp.DbsnpReadOnlyHumanClusteredVariantService;
 import uk.ac.ebi.eva.accession.ws.service.ReadOnlyHumanClusteredVariantService;
 
+/**
+ * Equivalent to {@link uk.ac.ebi.eva.accession.core.configuration.human.HumanClusteredVariantAccessioningConfiguration}
+ * with accession generators removed and accessioning services replaced by read-only equivalents.
+ */
+@Configuration
 @Import({HumanMongoConfiguration.class, ContigAliasConfiguration.class})
 public class ReadOnlyHumanClusteredVariantAccessioningConfiguration {
 
@@ -30,7 +36,7 @@ public class ReadOnlyHumanClusteredVariantAccessioningConfiguration {
     @Autowired
     private ContigAliasService contigAliasService;
 
-    @Bean("humanActiveService")
+    @Bean("humanReadOnlyActiveService")
     public DbsnpReadOnlyHumanClusteredVariantService humanDbsnpClusteredActiveVariantAccessioningService() {
         return new DbsnpReadOnlyHumanClusteredVariantService(
                 humanDbsnpClusteredVariantAccessioningDatabaseService(),

@@ -1,24 +1,27 @@
-package uk.ac.ebi.eva.accession.ws.service;
+package uk.ac.ebi.eva.accession.ws.service.dbsnp;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantAccessioningDatabaseService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantAccessioningDatabaseService;
 
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class EvaReadOnlySubmittedVariantService {
+/**
+ * Read-only version of {@link uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantMonotonicAccessioningService}
+ */
+public class DbsnpReadOnlySubmittedVariantService {
 
-    private final SubmittedVariantAccessioningDatabaseService dbService;
+    private final DbsnpSubmittedVariantAccessioningDatabaseService dbService;
 
     private final Function<ISubmittedVariant, String> hashingFunction;
 
-    public EvaReadOnlySubmittedVariantService(
-            SubmittedVariantAccessioningDatabaseService dbService,
+    public DbsnpReadOnlySubmittedVariantService(
+            DbsnpSubmittedVariantAccessioningDatabaseService dbService,
             Function<ISubmittedVariant, String> summaryFunction,
             Function<String, String> hashingFunction
     ) {

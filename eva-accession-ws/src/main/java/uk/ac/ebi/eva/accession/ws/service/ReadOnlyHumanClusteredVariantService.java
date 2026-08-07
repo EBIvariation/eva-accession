@@ -10,6 +10,7 @@ import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantOperationAccessioningService;
+import uk.ac.ebi.eva.accession.ws.service.dbsnp.DbsnpReadOnlyHumanClusteredVariantService;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
@@ -18,6 +19,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Read-only version of {@link uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService}
+ */
 public class ReadOnlyHumanClusteredVariantService {
 
     private final DbsnpReadOnlyHumanClusteredVariantService humanService;
@@ -27,16 +31,12 @@ public class ReadOnlyHumanClusteredVariantService {
     private final ContigAliasService contigAliasService;
 
     public ReadOnlyHumanClusteredVariantService(
-            @Qualifier("humanActiveService") DbsnpReadOnlyHumanClusteredVariantService humanService,
+            @Qualifier("humanReadOnlyActiveService") DbsnpReadOnlyHumanClusteredVariantService humanService,
             @Qualifier("humanOperationsService") HumanDbsnpClusteredVariantOperationAccessioningService operationsService,
             ContigAliasService contigAliasService) {
         this.humanService = humanService;
         this.operationsService = operationsService;
         this.contigAliasService = contigAliasService;
-    }
-
-    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long identifier) {
-        return getAllByAccession(identifier, ContigNamingConvention.INSDC);
     }
 
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long identifier, ContigNamingConvention contigNamingConvention) {

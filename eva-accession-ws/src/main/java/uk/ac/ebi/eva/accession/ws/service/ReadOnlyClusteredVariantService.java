@@ -13,6 +13,8 @@ import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.ws.service.dbsnp.DbsnpReadOnlyClusteredVariantService;
+import uk.ac.ebi.eva.accession.ws.service.eva.EvaReadOnlyClusteredVariantService;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
@@ -20,6 +22,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Read-only version of {@link uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService}
+ */
 public class ReadOnlyClusteredVariantService implements AccessioningService<IClusteredVariant, String, Long> {
 
     private static Logger logger = LoggerFactory.getLogger(ClusteredVariantAccessioningService.class);

@@ -13,12 +13,17 @@ import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.ws.service.dbsnp.DbsnpReadOnlySubmittedVariantService;
+import uk.ac.ebi.eva.accession.ws.service.eva.EvaReadOnlySubmittedVariantService;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+/**
+ * Read-only version of {@link uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService}
+ */
 public class ReadOnlySubmittedVariantService implements AccessioningService<ISubmittedVariant, String, Long> {
 
     private static Logger logger = LoggerFactory.getLogger(SubmittedVariantAccessioningService.class);

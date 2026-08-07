@@ -26,12 +26,16 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariant
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.ws.service.DbsnpReadOnlyClusteredVariantService;
-import uk.ac.ebi.eva.accession.ws.service.EvaReadOnlyClusteredVariantService;
+import uk.ac.ebi.eva.accession.ws.service.dbsnp.DbsnpReadOnlyClusteredVariantService;
+import uk.ac.ebi.eva.accession.ws.service.eva.EvaReadOnlyClusteredVariantService;
 import uk.ac.ebi.eva.accession.ws.service.ReadOnlyClusteredVariantService;
 
+/**
+ * Equivalent to {@link uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration}
+ * with accession generators removed and accessioning services replaced by read-only equivalents.
+ */
 @Configuration
-@Import({ApplicationPropertiesConfiguration.class, MongoConfiguration.class, ContigAliasConfiguration.class})
+@Import({MongoConfiguration.class, ContigAliasConfiguration.class})
 public class ReadOnlyClusteredVariantAccessioningConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ReadOnlyClusteredVariantAccessioningConfiguration.class);

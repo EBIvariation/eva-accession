@@ -23,8 +23,8 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariant
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.ws.service.DbsnpReadOnlyClusteredVariantService;
-import uk.ac.ebi.eva.accession.ws.service.DbsnpReadOnlySubmittedVariantService;
+import uk.ac.ebi.eva.accession.ws.service.dbsnp.DbsnpReadOnlyClusteredVariantService;
+import uk.ac.ebi.eva.accession.ws.service.dbsnp.DbsnpReadOnlySubmittedVariantService;
 
 @Configuration
 public class TestConfiguration {
