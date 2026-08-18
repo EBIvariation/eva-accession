@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  */
 public class ReadOnlyClusteredVariantService implements AccessioningService<IClusteredVariant, String, Long> {
 
-    private static Logger logger = LoggerFactory.getLogger(ClusteredVariantAccessioningService.class);
+    private static Logger logger = LoggerFactory.getLogger(ReadOnlyClusteredVariantService.class);
 
     private EvaReadOnlyClusteredVariantService accessioningService;
 

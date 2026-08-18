@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  */
 public class ReadOnlySubmittedVariantService implements AccessioningService<ISubmittedVariant, String, Long> {
 
-    private static Logger logger = LoggerFactory.getLogger(SubmittedVariantAccessioningService.class);
+    private static Logger logger = LoggerFactory.getLogger(ReadOnlySubmittedVariantService.class);
 
     private EvaReadOnlySubmittedVariantService accessioningService;
 
