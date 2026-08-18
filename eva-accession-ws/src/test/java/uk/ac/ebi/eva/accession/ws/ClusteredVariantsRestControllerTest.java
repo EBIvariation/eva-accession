@@ -29,7 +29,6 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
@@ -40,6 +39,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.server.ResponseStatusException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
@@ -51,7 +51,6 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.Accession
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 import uk.ac.ebi.eva.accession.core.configuration.ContiguousIdBlocksDataSourceConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
@@ -66,17 +65,20 @@ import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVari
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpSubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
-import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantOperationService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.utils.MongoTestContainerHelper;
+import uk.ac.ebi.eva.accession.ws.configuration.ReadOnlyClusteredVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.ws.configuration.ReadOnlySubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.ws.rest.ClusteredVariantsRestController;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
+import uk.ac.ebi.eva.accession.ws.service.ReadOnlyClusteredVariantService;
+import uk.ac.ebi.eva.accession.ws.service.ReadOnlyHumanClusteredVariantService;
+import uk.ac.ebi.eva.accession.ws.service.ReadOnlySubmittedVariantService;
 import uk.ac.ebi.eva.accession.ws.test.NoContigTranslationArgumentMatcher;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
@@ -112,8 +114,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({ClusteredVariantAccessioningConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
-        MongoTestConfiguration.class, ContiguousIdBlocksDataSourceConfiguration.class})
+@Import({ClusteredVariantAccessioningConfiguration.class, ReadOnlyClusteredVariantAccessioningConfiguration.class,
+        ReadOnlySubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class,
+        ContiguousIdBlocksDataSourceConfiguration.class})
 @TestPropertySource("classpath:accession-ws-test.properties")
 public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelper {
 
@@ -156,9 +159,6 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
     private DbsnpClusteredVariantAccessioningRepository dbsnpRepository;
 
     @Autowired
-    private HumanDbsnpClusteredVariantAccessioningService humanDbsnpClusteredVariantAccessioningService;
-
-    @Autowired
     private DbsnpSubmittedVariantAccessioningRepository dbsnpSubmittedVariantRepository;
 
     @Autowired
@@ -168,8 +168,8 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
     private ClusteredVariantsRestController controller;
 
     @Autowired
-    @Qualifier("nonhumanActiveService")
-    private ClusteredVariantAccessioningService clusteredService;
+    @Qualifier("nonhumanReadOnlyActiveService")
+    private ReadOnlyClusteredVariantService clusteredService;
 
     @Autowired
     private TestRestTemplate testRestTemplate;
@@ -181,9 +181,12 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
     @Qualifier("humanMongoTemplate")
     private MongoTemplate humanMongoTemplate;
 
+    // Write-enabled services, used only to set up the test data
     @Autowired
-    @Qualifier("dbsnpClusteredService")
-    private DbsnpClusteredVariantMonotonicAccessioningService dbsnpService;
+    @Qualifier("nonhumanActiveService")
+    private ClusteredVariantAccessioningService clusteringServiceForWrite;
+    @Autowired
+    private DbsnpClusteredVariantMonotonicAccessioningService dbsnpServiceForWrite;
 
     private ClusteredVariantsRestController mockController;
 
@@ -213,12 +216,12 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
     private ClusteredVariantOperationService clusteredVariantOperationService;
 
     @Mock
-    private SubmittedVariantAccessioningService mockService;
+    private ReadOnlySubmittedVariantService mockService;
 
     @Mock
-    private HumanDbsnpClusteredVariantAccessioningService mockHumanService;
+    private ReadOnlyHumanClusteredVariantService mockHumanService;
 
-    @MockBean
+    @MockitoBean
     private ContigAliasService contigAliasService;
 
     @BeforeEach
@@ -667,7 +670,7 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
     public void testGetRedirectionForMergedVariants()
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         // given
-        clusteredService.merge(DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
+        clusteringServiceForWrite.merge(DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
                 DBSNP_CLUSTERED_VARIANT_ACCESSION_2,
                 "Just for testing the endpoint, let's pretend the variants are equivalent");
 
@@ -689,7 +692,7 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
 
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
         assertEquals(1, getVariantsResponse.getBody().size());
-        assertEquals(new Long(DBSNP_CLUSTERED_VARIANT_ACCESSION_2),
+        assertEquals(Long.valueOf(DBSNP_CLUSTERED_VARIANT_ACCESSION_2),
                 getVariantsResponse.getBody().get(0).getAccession());
         assertClusteredVariantCreatedDateNotNull(getVariantsResponse.getBody());
     }
@@ -698,7 +701,7 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
     public void testGetRedirectionForSubmittedVariantByMergedClusteredVariant()
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         // given
-        clusteredService.merge(DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
+        clusteringServiceForWrite.merge(DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
                 DBSNP_CLUSTERED_VARIANT_ACCESSION_2,
                 "Just for testing the endpoint, let's pretend the variants are equivalent");
 
@@ -722,7 +725,7 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
         assertEquals(2, getVariantsResponse.getBody().size());
         for (AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long> bodyEntry :
                 getVariantsResponse.getBody()) {
-            assertEquals(new Long(DBSNP_CLUSTERED_VARIANT_ACCESSION_2),
+            assertEquals(Long.valueOf(DBSNP_CLUSTERED_VARIANT_ACCESSION_2),
                     bodyEntry.getData().getClusteredVariantAccession());
         }
 
@@ -761,11 +764,11 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
         mongoTemplate.insert(Arrays.asList(clusteredVariantEntity1, clusteredVariantEntity4, clusteredVariantEntity5),
                 DbsnpClusteredVariantEntity.class);
-        dbsnpService.merge(outdatedAccession, currentAccession,
+        dbsnpServiceForWrite.merge(outdatedAccession, currentAccession,
                 "Just for testing the endpoint, let's pretend the variants are equivalent");
 
         mongoTemplate.insert(Arrays.asList(clusteredVariantEntity2), DbsnpClusteredVariantEntity.class);
-        dbsnpService.merge(outdatedAccession, anotherCurrentAccession,
+        dbsnpServiceForWrite.merge(outdatedAccession, anotherCurrentAccession,
                 "Second merge. This can totally happen importing from dbSNP. See rs106458077");
 
         // when
@@ -827,15 +830,15 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
         mongoTemplate.insert(Arrays.asList(clusteredVariantEntity1, clusteredVariantEntity4, clusteredVariantEntity5),
                 DbsnpClusteredVariantEntity.class);
-        dbsnpService.merge(outdatedAccession, currentAccession,
+        dbsnpServiceForWrite.merge(outdatedAccession, currentAccession,
                 "Just for testing the endpoint, let's pretend the variants are equivalent");
 
         mongoTemplate.insert(Arrays.asList(clusteredVariantEntity2), DbsnpClusteredVariantEntity.class);
-        dbsnpService.merge(outdatedAccession, anotherCurrentAccession,
+        dbsnpServiceForWrite.merge(outdatedAccession, anotherCurrentAccession,
                 "Second merge. This can totally happen importing from dbSNP. See rs106458077");
 
         mongoTemplate.insert(Arrays.asList(clusteredVariantEntity3), DbsnpClusteredVariantEntity.class);
-        dbsnpService.deprecate(outdatedAccession, "And then deprecated it.");
+        dbsnpServiceForWrite.deprecate(outdatedAccession, "And then deprecated it.");
 
         // when
         String getVariantUrl = URL + outdatedAccession;
@@ -853,7 +856,7 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
     public void testGetDeprecatedDbsnpClusteredVariant()
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         // given
-        clusteredService.deprecate(DBSNP_CLUSTERED_VARIANT_ACCESSION_1, "deprecated for testing");
+        clusteringServiceForWrite.deprecate(DBSNP_CLUSTERED_VARIANT_ACCESSION_1, "deprecated for testing");
         String getVariantUrl = URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_1;
 
         // when
@@ -874,13 +877,13 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
     public void testGetSeveralDeprecatedDbsnpClusteredVariants()
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         // given
-        clusteredService.deprecate(DBSNP_CLUSTERED_VARIANT_ACCESSION_1, "deprecated for testing");
+        clusteringServiceForWrite.deprecate(DBSNP_CLUSTERED_VARIANT_ACCESSION_1, "deprecated for testing");
         ClusteredVariant modifiedVariant = new ClusteredVariant(clusteredVariantEntity1);
         modifiedVariant.setTaxonomyAccession(modifiedVariant.getTaxonomyAccession() + 1);
         DbsnpClusteredVariantEntity clusteredVariantEntityCopy = new DbsnpClusteredVariantEntity(
                 DBSNP_CLUSTERED_VARIANT_ACCESSION_1, clusteredVariantEntity1.getHashedMessage(), modifiedVariant);
         dbsnpRepository.saveAll(Arrays.asList(clusteredVariantEntityCopy));
-        clusteredService.deprecate(DBSNP_CLUSTERED_VARIANT_ACCESSION_1, "deprecated again");
+        clusteringServiceForWrite.deprecate(DBSNP_CLUSTERED_VARIANT_ACCESSION_1, "deprecated again");
 
         String getVariantUrl = URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_1;
 
@@ -915,7 +918,7 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
         mongoTemplate.insert(Arrays.asList(clusteredVariantEntity1, clusteredVariantEntity2),
                 DbsnpClusteredVariantEntity.class);
-        clusteredService.deprecate(deprecatedAccession, "deprecated for testing");
+        clusteringServiceForWrite.deprecate(deprecatedAccession, "deprecated for testing");
         String getVariantUrl = URL + deprecatedAccession;
 
         // when

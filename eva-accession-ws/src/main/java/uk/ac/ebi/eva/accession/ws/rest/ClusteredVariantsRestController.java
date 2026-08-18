@@ -44,12 +44,12 @@ import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantOperationService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.ws.dto.VariantHistory;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
+import uk.ac.ebi.eva.accession.ws.service.ReadOnlyClusteredVariantService;
+import uk.ac.ebi.eva.accession.ws.service.ReadOnlyHumanClusteredVariantService;
+import uk.ac.ebi.eva.accession.ws.service.ReadOnlySubmittedVariantService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
@@ -67,21 +67,21 @@ public class ClusteredVariantsRestController {
 
     private static final Logger logger = LoggerFactory.getLogger(ClusteredVariantsRestController.class);
 
-    private SubmittedVariantAccessioningService submittedVariantsService;
+    private ReadOnlySubmittedVariantService submittedVariantsService;
 
     private ClusteredVariantsBeaconService beaconService;
 
-    private HumanDbsnpClusteredVariantAccessioningService humanService;
+    private ReadOnlyHumanClusteredVariantService humanService;
 
-    private ClusteredVariantAccessioningService nonHumanActiveService;
+    private ReadOnlyClusteredVariantService nonHumanActiveService;
 
     private ClusteredVariantOperationService clusteredVariantOperationService;
 
     public ClusteredVariantsRestController(
-            SubmittedVariantAccessioningService submittedVariantsService,
+            ReadOnlySubmittedVariantService submittedVariantsService,
             ClusteredVariantsBeaconService beaconService,
-            @Qualifier("humanService") HumanDbsnpClusteredVariantAccessioningService humanService,
-            @Qualifier("nonhumanActiveService") ClusteredVariantAccessioningService nonHumanActiveService,
+            @Qualifier("humanReadOnlyService") ReadOnlyHumanClusteredVariantService humanService,
+            @Qualifier("nonhumanReadOnlyActiveService") ReadOnlyClusteredVariantService nonHumanActiveService,
             ClusteredVariantOperationService clusterdVariantOperationService
     ) {
         this.submittedVariantsService = submittedVariantsService;

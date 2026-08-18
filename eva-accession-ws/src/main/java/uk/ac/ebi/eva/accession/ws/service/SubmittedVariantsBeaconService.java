@@ -24,7 +24,6 @@ import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
@@ -35,9 +34,9 @@ import java.util.stream.Collectors;
 @Service
 public class SubmittedVariantsBeaconService {
 
-    private SubmittedVariantAccessioningService submittedVariantsService;
+    private ReadOnlySubmittedVariantService submittedVariantsService;
 
-    public SubmittedVariantsBeaconService(SubmittedVariantAccessioningService submittedVariantAccessioningService) {
+    public SubmittedVariantsBeaconService(ReadOnlySubmittedVariantService submittedVariantAccessioningService) {
         this.submittedVariantsService = submittedVariantAccessioningService;
     }
 

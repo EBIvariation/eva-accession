@@ -34,21 +34,19 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableBasicRestControllerAdvice;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
-import uk.ac.ebi.eva.accession.core.configuration.human.HumanClusteredVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.ws.response.NonRedirectingClientHttpRequestFactory;
+import uk.ac.ebi.eva.accession.ws.service.ReadOnlyClusteredVariantService;
+import uk.ac.ebi.eva.accession.ws.service.ReadOnlySubmittedVariantService;
 
 @Configuration
 @EnableBasicRestControllerAdvice
-@Import({ClusteredVariantAccessioningConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
-        HumanClusteredVariantAccessioningConfiguration.class})
+@Import({ReadOnlyClusteredVariantAccessioningConfiguration.class,
+        ReadOnlySubmittedVariantAccessioningConfiguration.class,
+        ReadOnlyHumanClusteredVariantAccessioningConfiguration.class})
 @AutoConfigureAfter(HttpMessageConvertersAutoConfiguration.class)
 public class ApplicationConfiguration {
 
@@ -63,13 +61,13 @@ public class ApplicationConfiguration {
 
     @Bean
     public BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicClusteredRestController(
-            @Qualifier("nonhumanActiveService") ClusteredVariantAccessioningService service) {
+            @Qualifier("nonhumanReadOnlyActiveService") ReadOnlyClusteredVariantService service) {
         return new BasicRestController<>(service, ClusteredVariant::new);
     }
 
     @Bean
     public BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicSubmittedRestController(
-            SubmittedVariantAccessioningService service) {
+            ReadOnlySubmittedVariantService service) {
         return new BasicRestController<>(service, SubmittedVariant::new);
     }
 
