@@ -46,8 +46,6 @@ import java.net.UnknownHostException;
 @EnableMongoAuditing
 public class HumanMongoConfiguration {
 
-    private static final String INACTIVE_OBJECTS_HASHED_MESSAGE = "inactiveObjects.hashedMessage";
-
     @Value("${mongodb.read-preference}")
     private String readPreference;
 
