@@ -19,7 +19,6 @@ package uk.ac.ebi.eva.accession.ws;
 
 import com.mongodb.BasicDBObject;
 import jakarta.servlet.http.HttpServletResponse;
-import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -89,13 +88,11 @@ import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
 import java.time.LocalDateTime;
 import java.time.Month;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -149,8 +146,6 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
 
     private static final String DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY = "dbsnpClusteredVariantOperationEntity";
-
-    private static final String INACTIVE_OBJECTS_HASHED_MESSAGE = "inactiveObjects.hashedMessage";
 
     @Autowired
     private ClusteredVariantAccessioningRepository clusteredVariantAccessioningRepository;
@@ -414,24 +409,6 @@ public class ClusteredVariantsRestControllerTest extends MongoTestContainerHelpe
         mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY).deleteMany(new BasicDBObject());
         humanMongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY).deleteMany(new BasicDBObject());
         humanMongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY).deleteMany(new BasicDBObject());
-    }
-
-    @Test
-    public void checkIndexInactiveObjectHashedMessageOnlyInHumanDB() {
-        assertFalse(isIndexInCollection(mongoTemplate, DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY,
-                INACTIVE_OBJECTS_HASHED_MESSAGE));
-
-        assertTrue(isIndexInCollection(humanMongoTemplate, DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY,
-                INACTIVE_OBJECTS_HASHED_MESSAGE));
-    }
-
-    private boolean isIndexInCollection(MongoTemplate template, String collection, String indexName) {
-        List<String> indexNames = new ArrayList<>();
-        template.getCollection(collection).listIndexes().forEach(
-                (Consumer<Document>) d -> indexNames.add(d.get("name").toString()));
-        List<String> matchingIndexes = indexNames.stream().filter(name -> name.contains(indexName)).collect(
-                Collectors.toList());
-        return !matchingIndexes.isEmpty();
     }
 
     @Test

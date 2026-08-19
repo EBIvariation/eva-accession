@@ -25,7 +25,6 @@ import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -34,11 +33,9 @@ import org.springframework.data.mongodb.core.WriteResultChecking;
 import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
 import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
-import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import uk.ac.ebi.eva.accession.core.configuration.MongoClientCreator;
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 
 import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
@@ -48,8 +45,6 @@ import java.net.UnknownHostException;
 @EntityScan(basePackages = {"uk.ac.ebi.eva.accession.core.repositoryHuman"})
 @EnableMongoAuditing
 public class HumanMongoConfiguration {
-
-    private static final String INACTIVE_OBJECTS_HASHED_MESSAGE = "inactiveObjects.hashedMessage";
 
     @Value("${mongodb.read-preference}")
     private String readPreference;
@@ -88,8 +83,6 @@ public class HumanMongoConfiguration {
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
         MongoTemplate mongoTemplate = new MongoTemplate(mongoDbFactory, converter);
         mongoTemplate.setWriteResultChecking(WriteResultChecking.EXCEPTION);
-        mongoTemplate.indexOps(DbsnpClusteredVariantOperationEntity.class).ensureIndex(
-                new Index().on(INACTIVE_OBJECTS_HASHED_MESSAGE, Sort.Direction.ASC).background());
         return mongoTemplate;
     }
 }

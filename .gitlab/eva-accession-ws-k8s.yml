@@ -125,7 +125,7 @@ deploy-to-cluster:staging:
   variables:
     IMAGE_TAG: eva-accession-ws-dev-$CI_COMMIT_SHORT_SHA
     ENV: staging
-    MAVEN_PROFILE: development
+    MAVEN_PROFILE: production_processing
     K8S_MANIFEST_PATH: k8s-manifests/eva-accession-ws/overlays/staging
     K8S_NAMESPACE: eva-accession-ws-stage
     KUBECONFIG_FILE: $KUBECONFIG_FILE_STAGING
