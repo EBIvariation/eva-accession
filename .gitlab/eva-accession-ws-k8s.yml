@@ -1,104 +1,13 @@
-variables:
-  DOCKER_REGISTRY: dockerhub.ebi.ac.uk
-  DOCKER_IMAGE: dockerhub.ebi.ac.uk/ebivariation/eva-accession
-  K8S_REPO_URL: https://github.com/EBIvariation/eva-k8s.git
-  MAVEN_SETTINGS: maven-settings.xml
-  URL_MAVEN_SETTINGS: https://api.github.com/repos/EBIvariation/configuration/contents/eva-maven-settings.xml
-  KUBECONFIG_FILE_DEV: https://api.github.com/repos/EBIvariation/configuration/contents/kubernetes-clusters/development-k8s-team-admin-conf.conf
-  KUBECONFIG_FILE_STAGING: https://api.github.com/repos/EBIvariation/configuration/contents/kubernetes-clusters/staging-k8s-team-admin-conf.conf
-  KUBECONFIG_FILE_PROD: https://api.github.com/repos/EBIvariation/configuration/contents/kubernetes-clusters/production-k8s-team-admin-conf.conf
-  MEDIA_TYPE: application/vnd.github.raw
 
-# REQUIRED GitLab CI/CD Variables (Global or per-project):
+# Shared .build_docker / .update_and_deploy templates live in eva-k8s
+# See https://github.com/EBIvariation/eva-k8s/blob/main/gitlab-ci/webservice.yml.
+include:
+  - remote: 'https://raw.githubusercontent.com/EBIvariation/eva-k8s/refs/tags/v1.0/gitlab-ci/webservice.yml'
+
+# REQUIRED GitLab CI/CD Variables (Global):
 # DOCKER_AUTH_CONFIG: Contains username and password for the docker registry above
 # GITHUB_USER: GitHub username for accessing private maven settings repository
 # GITHUB_TOKEN: GitHub personal access token for accessing private maven settings repository
-#
-# ============================================================================
-# Base Job Templates
-# ============================================================================
-
-.build_docker:
-  stage: package
-  image: docker:latest
-  # Force all build based on the same commit to run sequentially
-  resource_group: build-$CI_COMMIT_SHORT_SHA
-  services:
-    - name: docker:dind
-      alias: docker
-      command: ["--storage-driver=overlay2", "--insecure-registry=localhost"]
-  variables:
-    DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: ""
-    DOCKER_HOST: tcp://docker:2375
-  before_script:
-    - echo "Waiting for Docker daemon to be ready..."
-    - docker info
-  script:
-    # An image for this exact commit may already have been built and pushed by another
-    # environment's pipeline. Add a tag for that image instead of rebuilding it if it exists
-    # Only fall back to building from scratch if no image exists.
-    - |
-      if docker pull "$DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA"; then
-        docker tag "$DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA" "$DOCKER_IMAGE:$IMAGE_TAG"
-        docker tag "$DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA" "$DOCKER_IMAGE:$IMAGE_LATEST"
-      else
-        echo "No existing image for commit $CI_COMMIT_SHORT_SHA - building from scratch"
-        docker build -f eva-accession-ws/Dockerfile -t "$DOCKER_IMAGE:$IMAGE_TAG" -t "$DOCKER_IMAGE:$IMAGE_LATEST" -t "$DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA" .
-        docker push "$DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA"
-      fi
-    - docker push $DOCKER_IMAGE:$IMAGE_TAG
-    - docker push $DOCKER_IMAGE:$IMAGE_LATEST
-
-.update_and_deploy:
-  stage: deploy
-  image: alpine:latest
-  before_script:
-    - apk add --no-cache git curl python3 kubectl
-    - python3 -m venv $HOME/.venv
-    - source $HOME/.venv/bin/activate
-    - git config --global user.email "gitlab-ci@ebi.ac.uk"
-    - git config --global user.name "GitLab CI"
-    - git config --global credential.helper store
-    # Clone eva-k8s for scripts and manifests
-    - git clone --depth 1 https://github.com/EBIvariation/eva-k8s.git k8s-repo
-    - cd k8s-repo
-    - pip install --no-cache-dir lxml retry cached-property pyyaml requests
-    - pip install --no-dependencies -r scripts/requirements.txt
-    - echo "https://${GITHUB_TOKEN}:x-oauth-basic@github.com" > ~/.git-credentials
-    - mkdir -p ~/.kube
-    # Download kubernetes cluster configuration from private repository
-    - curl -u $GITHUB_USER:$GITHUB_TOKEN -H "Accept:$MEDIA_TYPE" $KUBECONFIG_FILE > ~/.kube/config
-    - chmod 600 ~/.kube/config
-  script:
-    # Create the target namespace if it doesn't already exist
-    - kubectl apply -f $K8S_MANIFEST_PATH/namespace.yaml
-    # Create/update the image pull secret in the target namespace from DOCKER_AUTH_CONFIG. It only updates if DOCKER_AUTH_CONFIG changes
-    - kubectl create secret generic regcred --type=kubernetes.io/dockerconfigjson --from-literal=.dockerconfigjson="$DOCKER_AUTH_CONFIG" -n $K8S_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
-    - source $HOME/.venv/bin/activate
-    # Download Maven settings from private repository
-    - curl -u $GITHUB_USER:$GITHUB_TOKEN -H "Accept:$MEDIA_TYPE" $URL_MAVEN_SETTINGS > maven-settings.xml
-    # Convert Maven settings to application.properties
-    - python scripts/maven-settings-to-properties.py --maven_file maven-settings.xml --property_set eva-accession-ws --profile $MAVEN_PROFILE --output application.properties
-    # Update image tag in kustomization
-    - python scripts/update-image-tag.py "$K8S_MANIFEST_PATH/kustomization.yaml" "${IMAGE_TAG}"
-    - git add "$K8S_MANIFEST_PATH/kustomization.yaml"
-    # Only commit if the image tag has changed
-    - |
-      if ! git diff --cached --quiet; then
-        git commit -m "Update eva-accession-ws ${ENV} image tag to ${IMAGE_TAG}"
-        git push https://${GITHUB_TOKEN}:x-oauth-basic@github.com/EBIvariation/eva-k8s.git main
-      fi
-
-    # Copy the application.properties where it is expected -- DO NOT COMMIT
-    - cp -vf application.properties $K8S_MANIFEST_PATH/
-
-    # Deploy to cluster
-    - kubectl apply -k $K8S_MANIFEST_PATH
-    - kubectl rollout status deployment/eva-accession-ws -n $K8S_NAMESPACE --timeout=5m
-  environment:
-    kubernetes:
-      namespace: $K8S_NAMESPACE
 
 # ============================================================================
 # PRODUCTION: Deploy on tags
@@ -107,8 +16,9 @@ variables:
 build:docker:prod:
   extends: .build_docker
   variables:
+    SERVICE_NAME: eva-accession-ws
+    IMAGE_REPOSITORY: dockerhub.ebi.ac.uk/ebivariation/eva-accession
     IMAGE_TAG: eva-accession-ws-$CI_COMMIT_TAG
-    IMAGE_LATEST: eva-accession-ws-latest
   only:
     - tags
 
@@ -117,6 +27,7 @@ deploy-to-cluster:prod:
   needs:
     - build:docker:prod
   variables:
+    SERVICE_NAME: eva-accession-ws
     IMAGE_TAG: eva-accession-ws-$CI_COMMIT_TAG
     ENV: prod
     MAVEN_PROFILE: production
@@ -135,8 +46,9 @@ deploy-to-cluster:prod:
 build:docker:dev:
   extends: .build_docker
   variables:
+    SERVICE_NAME: eva-accession-ws
+    IMAGE_REPOSITORY: dockerhub.ebi.ac.uk/ebivariation/eva-accession
     IMAGE_TAG: eva-accession-ws-dev-$CI_COMMIT_SHORT_SHA
-    IMAGE_LATEST: eva-accession-ws-dev-latest
   only:
     - master
 
@@ -145,6 +57,7 @@ deploy-to-cluster:dev:
   needs:
     - build:docker:dev
   variables:
+    SERVICE_NAME: eva-accession-ws
     IMAGE_TAG: eva-accession-ws-dev-$CI_COMMIT_SHORT_SHA
     ENV: development
     MAVEN_PROFILE: development
@@ -165,6 +78,7 @@ deploy-to-cluster:staging:
   needs:
     - build:docker:dev
   variables:
+    SERVICE_NAME: eva-accession-ws
     IMAGE_TAG: eva-accession-ws-dev-$CI_COMMIT_SHORT_SHA
     ENV: staging
     MAVEN_PROFILE: production_processing
