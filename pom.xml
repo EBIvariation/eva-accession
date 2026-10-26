@@ -28,7 +28,7 @@
         <variation-commons-version>1.0.0</variation-commons-version>
         <accession-commons-version>1.0.1</accession-commons-version>
         <samtools-htsjdk-version>4.0.0</samtools-htsjdk-version>
-        <eva-metrics-version>1.0.0</eva-metrics-version>
+        <eva-metrics-version>1.0.1-SNAPSHOT</eva-metrics-version>
         <springdoc.version>2.8.17</springdoc.version>
     </properties>
 
