@@ -19,7 +19,7 @@ services:
       start_period: 60s
 
   mongodb:
-    image: mongo:8.0.38
+    image: percona/percona-server-mongodb:8.0.38-16
     ports:
       - "27017:27017"
     environment:
